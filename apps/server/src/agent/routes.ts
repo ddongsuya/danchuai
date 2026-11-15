@@ -42,7 +42,7 @@ const TurnBody = z.object({ text: z.string().trim().min(1).max(LIMITS.textChars)
 const OutboundBody = z
   .object({
     version: z.number().int().positive(),
-    recipientOrgIds: z.array(z.string().min(1).max(64)).min(1).max(LIMITS.recipients).optional(),
+    recipientOrgIds: z.array(z.string().uuid()).min(1).max(LIMITS.recipients).optional(),
     // 기관 회신: 사람이 넣은 항목 금액(원 단위 정수). 합계는 서버가 계산한다.
     quoteLines: z
       .array(z.object({ label: z.string().min(1).max(60), amountWon: z.number().int().nonnegative().max(1e12) }).strict())

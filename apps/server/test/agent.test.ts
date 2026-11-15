@@ -41,10 +41,10 @@ class FakeProvider implements LlmProvider {
 }
 
 const sessions: Record<string, Session> = {
-  "Bearer req": { userId: "u1", orgId: "req-org", role: "requester" },
-  "Bearer req2": { userId: "u9", orgId: "other-req-org", role: "requester" },
-  "Bearer cro": { userId: "u2", orgId: "cro-a", role: "cro" },
-  "Bearer cro-b": { userId: "u3", orgId: "cro-b", role: "cro" },
+  "Bearer req": { userId: "u1", orgId: "00000000-0000-4000-8000-0000000000a1", role: "requester" },
+  "Bearer req2": { userId: "u9", orgId: "00000000-0000-4000-8000-0000000000a9", role: "requester" },
+  "Bearer cro": { userId: "u2", orgId: "00000000-0000-4000-8000-0000000000c1", role: "cro" },
+  "Bearer cro-b": { userId: "u3", orgId: "00000000-0000-4000-8000-0000000000c2", role: "cro" },
 };
 
 const FULL: RequestSheet = {
@@ -62,7 +62,7 @@ function setup(provider: LlmProvider | null = new FakeProvider()) {
   const outbound = new MemoryOutboundRepo();
   const conversations = new MemoryConversationRepo();
   const requests = new MemoryRequestDirectory({
-    r1: { sheet: FULL, requesterOrgId: "req-org", sentTo: ["cro-a"] },
+    r1: { sheet: FULL, requesterOrgId: "00000000-0000-4000-8000-0000000000a1", sentTo: ["00000000-0000-4000-8000-0000000000c1"] },
   });
   const app = createApp({
     auth: { resolve: async (h) => (h ? sessions[h] ?? null : null) },
@@ -294,7 +294,7 @@ describe("보내기 초안 만들기", () => {
     const { call, id } = await withDraft();
     const res = await call("POST", `/v1/agent/conversations/${id}/outbound`, "Bearer req", {
       version: 1,
-      recipientOrgIds: ["cro-a", "cro-b", "cro-a"],
+      recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1", "00000000-0000-4000-8000-0000000000c2", "00000000-0000-4000-8000-0000000000c1"],
     });
     expect(res.status).toBe(201);
     const { outbound } = (await res.json()) as { outbound: Array<{ id: string; text: string; epoch: number; textHash: string }> };
@@ -311,16 +311,17 @@ describe("보내기 초안 만들기", () => {
   it("앱이 보낸 본문은 받지 않고, 같은 판은 한 번만, 옛 판은 409", async () => {
     const { call, id } = await withDraft();
     const path = `/v1/agent/conversations/${id}/outbound`;
-    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["cro-a"], text: "딴 본문" })).status).toBe(400);
-    expect((await call("POST", path, "Bearer req", { version: 2, recipientOrgIds: ["cro-a"] })).status).toBe(409);
-    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["cro-a"] })).status).toBe(201);
-    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["cro-a"] })).status).toBe(409);
+    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["a"] })).status).toBe(400);
+    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1"], text: "딴 본문" })).status).toBe(400);
+    expect((await call("POST", path, "Bearer req", { version: 2, recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1"] })).status).toBe(409);
+    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1"] })).status).toBe(201);
+    expect((await call("POST", path, "Bearer req", { version: 1, recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1"] })).status).toBe(409);
   });
 
   it("자기 조직에는 보낼 수 없다", async () => {
     const { call, id } = await withDraft();
     expect(
-      (await call("POST", `/v1/agent/conversations/${id}/outbound`, "Bearer req", { version: 1, recipientOrgIds: ["req-org"] })).status,
+      (await call("POST", `/v1/agent/conversations/${id}/outbound`, "Bearer req", { version: 1, recipientOrgIds: ["00000000-0000-4000-8000-0000000000a1"] })).status,
     ).toBe(400);
   });
 });
@@ -359,7 +360,7 @@ describe("기관 대화", () => {
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { outbound: Array<{ id: string; counterpartyOrgId: string; text: string }> };
-    expect(body.outbound[0]!.counterpartyOrgId).toBe("req-org");
+    expect(body.outbound[0]!.counterpartyOrgId).toBe("00000000-0000-4000-8000-0000000000a1");
     expect(body.outbound[0]!.text).not.toContain("9천만");
     expect(body.outbound[0]!.text).toContain("견적 총액(부가세 포함) 1억 560만원");
     expect((await outbound.get(body.outbound[0]!.id))!.kind).toBe("reply");
@@ -371,7 +372,7 @@ describe("기관 대화", () => {
     const { conv } = await create("Bearer cro", { requestId: "r1" });
     await turn(conv.id, "회신 써 줘", "Bearer cro");
     expect(
-      (await call("POST", `/v1/agent/conversations/${conv.id}/outbound`, "Bearer cro", { version: 1, recipientOrgIds: ["x"] })).status,
+      (await call("POST", `/v1/agent/conversations/${conv.id}/outbound`, "Bearer cro", { version: 1, recipientOrgIds: ["00000000-0000-4000-8000-0000000000ff"] })).status,
     ).toBe(400);
   });
 });

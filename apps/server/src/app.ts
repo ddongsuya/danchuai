@@ -64,6 +64,7 @@ export function createApp(deps: Deps) {
 
   app.onError((err, c) => {
     if (err instanceof ApprovalError) return c.json({ error: err.code, message: err.message }, STATUS_BY_CODE[err.code]);
+    if (err instanceof Error && err.message === "unknown_recipient") return c.json({ error: "unknown_recipient" }, 400);
     // 본문·프롬프트·접속 문자열은 남기지 않는다. 원인을 좁힐 수 있게 오류 이름과 코드(예: 28P01, ECONNREFUSED)만 남긴다.
     const code = (err as { code?: unknown }).code;
     console.error("unhandled", err instanceof Error ? err.name : "unknown", typeof code === "string" ? code : "");

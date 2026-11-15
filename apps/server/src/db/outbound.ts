@@ -51,6 +51,8 @@ export class PgOutboundRepo implements OutboundRepo {
     } catch (e) {
       // 같은 판 중복(unique_violation)만 false. 나머지는 그대로 올린다.
       if ((e as { code?: string }).code === "23505") return false;
+      // 없는 기관(foreign_key_violation)은 요청 오류로 돌려준다.
+      if ((e as { code?: string }).code === "23503") throw Object.assign(new Error("unknown_recipient"), { status: 400 });
       throw e;
     }
   }
