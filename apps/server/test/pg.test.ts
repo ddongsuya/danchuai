@@ -104,7 +104,17 @@ describe.skipIf(!BASE)("Postgres 저장소와 Supabase 로그인", () => {
   afterAll(async () => {
     await pool?.end();
     if (admin) {
-      await admin.query(`drop database if exists ${dbName} with (force)`);
+      // 강제 종료(with force)는 막 닫히는 연결에 FATAL을 보내 처리되지 않은 오류가 된다(CI에서 확인).
+      // 연결이 다 닫힐 때까지 잠깐 기다렸다가 지운다.
+      for (let i = 0; i < 50; i++) {
+        try {
+          await admin.query(`drop database if exists ${dbName}`);
+          break;
+        } catch (e) {
+          if ((e as { code?: string }).code !== "55006" || i === 49) throw e; // object_in_use
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
       await admin.end();
     }
   });
