@@ -1,6 +1,6 @@
 // 서버와 연결된 대화 화면. 답은 흐르는 대로 보이고, 질문 카드·요약·보내기 전 승인 카드가 이어진다.
 // 보내기는 사람이 승인 카드에서 누를 때만 일어난다. 에이전트는 보내지 못한다.
-import { amountBlock, SHEET_LABELS, type QuoteLine, type SheetField } from '@danchuai/core';
+import { amountBlock, computeTotals, formatWonShort, SHEET_LABELS, type QuoteLine, type SheetField } from '@danchuai/core';
 import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -44,13 +44,17 @@ interface Props {
   quoteLines?: QuoteLine[];
   /** 기관: 담당자가 넣은 소요 기간(주) */
   durationWeeks?: number;
-  /** 기관: 견적 줄이 비었으면 보내기 전에 넣게 한다 */
-  onNeedQuote?: () => void;
+  /** 기관: 의뢰자가 승인해 보낸 요청 본문 */
+  requestMessage?: string | null;
+  /** 기관: 견적 금액 입력 화면 열기 */
+  onEditQuote?: () => void;
+  /** 보내기가 끝났을 때(화면이 결과를 다시 읽는다) */
+  onSent?: () => void;
 }
 
 type SendState = { kind: 'idle' } | { kind: 'sending' } | { kind: 'done'; sent: number; unknown: number } | { kind: 'error' };
 
-export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, onNeedQuote }: Props) {
+export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, requestMessage, onEditQuote, onSent }: Props) {
   const { state, send, retry } = useAgentChat(role, requestId, conversationId);
   // 이어 쓰는 대화는 요청서에서 제목을 만든다(서버 목록과 같은 규칙).
   const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
@@ -86,6 +90,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       setOut({ kind: 'done', sent: m.sent.size, unknown });
       setSentRequestId(m.requestId);
       setReviewing(false);
+      if (!unknown) onSent?.();
     } catch {
       setOut({ kind: 'error' });
     }
@@ -95,7 +100,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const needsQuote = role === 'cro' && !quoteLines.length;
   const openReview = () => {
     if (role === 'requester' && !recipients.length) return setPicking(true);
-    if (needsQuote) return onNeedQuote?.();
+    if (needsQuote) return onEditQuote?.();
     setReviewing(true);
   };
 
@@ -131,7 +136,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
 
   return (
     <ChatShell title={heading} bottom={bottom} dim={reviewing}>
-      {role === 'cro' && state.sheet && !state.messages.length && <SheetCard sheet={state.sheet} />}
+      {role === 'cro' && state.sheet && <SheetCard sheet={state.sheet} message={requestMessage} />}
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
         <AgentText>어떤 시험 견적이 필요해요?</AgentText>
       )}
@@ -190,6 +195,17 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
               {`점검에서 뺀 문장 ${draft!.dropped}개`}
             </Txt>
           )}
+          {role === 'cro' && quoteLines.length > 0 && (
+            <View style={styles.to}>
+              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
+                견적 총액
+              </Txt>
+              <Txt variant="small" tabular style={{ flex: 1, fontFamily: fonts.bold }}>
+                {`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
+              </Txt>
+              <Button title="고치기" kind="ghost" onPress={onEditQuote} />
+            </View>
+          )}
           <View style={styles.act}>
             <Button
               title={role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
@@ -230,7 +246,7 @@ const sheetTitle = (s: Record<string, string | null>) => [s.species, s.duration,
 const labelOf = (f: string) => SHEET_LABELS[f as SheetField] ?? f;
 
 /** 받은 요청을 코드가 짧은 줄로 묶는다(AI 요약 전 원문). */
-function SheetCard({ sheet }: { sheet: Record<string, string | null> }) {
+function SheetCard({ sheet, message }: { sheet: Record<string, string | null>; message?: string | null }) {
   const join = (...v: (string | null)[]) => v.filter(Boolean).join(' ');
   const lines = [
     join(sheet.species, sheet.route, sheet.duration),
@@ -248,6 +264,11 @@ function SheetCard({ sheet }: { sheet: Record<string, string | null> }) {
           {l}
         </Txt>
       ))}
+      {message ? (
+        <Txt variant="small" style={styles.msg}>
+          {message}
+        </Txt>
+      ) : null}
     </View>
   );
 }
@@ -268,5 +289,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
   act: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  msg: { marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border },
   to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: 44 },
 });

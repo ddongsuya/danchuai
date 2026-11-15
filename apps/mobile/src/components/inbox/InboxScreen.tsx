@@ -30,6 +30,7 @@ const statusChip: Record<InboxStatus, { label: string; kind: ChipTone }> = {
 const icons = { flask: Flask, dna: Dna, drop: Drop };
 
 interface Props {
+  title?: string;
   items: InboxItem[];
   filters: { label: string; match: InboxStatus[] | null }[];
   /** 서버에서 읽는 중이면 loading, 실패면 error. 없으면 ready */
@@ -44,7 +45,7 @@ interface Props {
   newHref?: Href;
 }
 
-export function InboxScreen({ items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
+export function InboxScreen({ title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
   const { status, org } = useAuth();
   const [active, setActive] = useState(0);
   const shown = useMemo(() => {
@@ -72,7 +73,7 @@ export function InboxScreen({ items, filters, load = 'ready', errorLabel, onRetr
         </IconButton>
       </View>
       <Txt variant="title" accessibilityRole="header" style={styles.title}>
-        요청함
+        {title}
       </Txt>
       <View style={styles.filters} accessibilityRole="tablist">
         {filters.map((f, i) => (
