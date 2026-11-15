@@ -1,9 +1,8 @@
-// 의뢰자 요청함. 서버가 연결돼 있으면 실제 목록, 아니면 시연 자료.
+// 의뢰자 요청함(서버 목록, 최근 순).
 import { Redirect, type Href } from 'expo-router';
 import { useMemo } from 'react';
 
 import { InboxScreen } from '@/components/inbox/InboxScreen';
-import { requesterRequests } from '@/data/demo';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { agentConfigured } from '@/lib/agentClient';
 import { requesterItem } from '@/lib/inbox';
@@ -23,7 +22,6 @@ const hrefOf = (id: string): Href =>
 
 export default function RequesterInbox() {
   const { status, org } = useAuth();
-  // 서버가 연결돼 있으면 실제 목록만 쓴다(읽는 동안 뼈대). 서버가 없을 때만 시연 자료.
   const live = agentConfigured();
   const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
@@ -34,12 +32,12 @@ export default function RequesterInbox() {
   if (org?.kind === 'cro') return <Redirect href="/lab" />;
   return (
     <InboxScreen
-      items={live ? items : requesterRequests}
-      load={live ? (state.kind === 'ready' ? 'ready' : state.kind) : 'ready'}
-      errorLabel={state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
+      items={items}
+      load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
+      errorLabel={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
       onRetry={() => void reload()}
       filters={FILTERS}
-      hrefOf={live ? hrefOf : (id) => ({ pathname: '/requester/[id]', params: { id } })}
+      hrefOf={hrefOf}
       switchTo="/lab"
       switchLabel="기관 화면으로 바꾸기"
       newLabel="새 요청"

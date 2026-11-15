@@ -1,6 +1,6 @@
 // 요청함(Manus 작업 목록 방식). 의뢰자와 기관이 같은 틀을 쓰고 항목과 상태 이름만 다르다.
 import { router, type Href } from 'expo-router';
-import { ArrowClockwise, ChatCircle, Dna, Drop, Flask, MagnifyingGlass, Tray, UserPlus, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ArrowClockwise, ChatCircle, Dna, Drop, Flask, MagnifyingGlass, Tray, User, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,7 +46,7 @@ interface Props {
 }
 
 export function InboxScreen({ title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
-  const { status, org } = useAuth();
+  const { status } = useAuth();
   const [active, setActive] = useState(0);
   const shown = useMemo(() => {
     const m = filters[active]?.match;
@@ -61,12 +61,10 @@ export function InboxScreen({ title = '요청함', items, filters, load = 'ready
           <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
             <UserSwitch size={20} color={tokens.text} />
           </IconButton>
-        ) : org?.memberRole === 'owner' ? (
-          <IconButton label="구성원 초대" onPress={() => router.push('/invite')}>
-            <UserPlus size={20} color={tokens.text} />
-          </IconButton>
         ) : (
-          <View />
+          <IconButton label="계정" onPress={() => router.push('/account')}>
+            <User size={20} color={tokens.text} />
+          </IconButton>
         )}
         <IconButton label="검색">
           <MagnifyingGlass size={20} color={tokens.text} />

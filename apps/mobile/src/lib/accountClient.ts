@@ -42,3 +42,11 @@ export const fetchMe = () => call<{ userId: string; email: string | null; org: A
 export const createOrg = (body: { kind: 'requester' | 'cro'; name: string; displayName: string }) => call<{ org: AccountOrg }>('/org', body);
 export const joinOrg = (body: { code: string; displayName: string }) => call<{ org: AccountOrg }>('/join', body);
 export const createInvite = () => call<{ code: string; expiresAt: string }>('/invites', {});
+
+export interface AccountMember {
+  name: string | null;
+  role: 'owner' | 'member';
+  me: boolean;
+}
+export const fetchMembers = () => call<{ members: AccountMember[] }>('/members').then((r) => r.members);
+export const renameMe = (displayName: string) => call<{ displayName: string }>('/me', { displayName });

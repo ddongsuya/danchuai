@@ -12,3 +12,6 @@ export function dayLabel(iso: string, now = new Date()): string {
 
 /** 기관 이름 첫 글자(아바타) */
 export const initialOf = (name: string) => Array.from(name.trim())[0] ?? '?';
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isUuid = (v: string | undefined): v is string => typeof v === 'string' && UUID.test(v);

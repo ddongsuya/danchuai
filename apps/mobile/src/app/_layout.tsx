@@ -66,6 +66,7 @@ function Gate() {
       <Stack.Protected guard={inApp}>
         <Stack.Screen name="lab" />
         <Stack.Screen name="requester" />
+        <Stack.Screen name="account" />
         <Stack.Screen name="invite" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5], sheetGrabberVisible: true, sheetCornerRadius: 36 }} />
       </Stack.Protected>
       <Stack.Screen name="auth/callback" />
