@@ -1,9 +1,17 @@
 import type { ApprovalDecision, OutboundDraft } from "@danchuai/core";
 
+export interface DraftSource {
+  conversationId: string;
+  version: number;
+}
+
 export interface OutboundRepo {
   get(id: string): Promise<OutboundDraft | null>;
-  /** 새 초안. 같은 id가 있으면 실패한다. */
-  insert(d: OutboundDraft): Promise<void>;
+  /**
+   * 새 초안 여러 개를 한꺼번에 넣는다. source가 있으면 같은 대화·같은 판·같은 상대에는 한 번만 들어간다.
+   * 이미 있으면 아무것도 넣지 않고 false.
+   */
+  insertBatch(drafts: OutboundDraft[], source?: DraftSource): Promise<boolean>;
   /** 기대한 판(epoch)과 상태일 때만 저장한다. 동시에 두 요청이 와도 하나만 이긴다. */
   saveIf(next: OutboundDraft, expect: { epoch: number; status: OutboundDraft["status"] }): Promise<boolean>;
   saveDecision(d: ApprovalDecision): Promise<void>;
@@ -18,9 +26,13 @@ export class MemoryOutboundRepo implements OutboundRepo {
   seed(d: OutboundDraft) {
     this.drafts.set(d.id, { ...d });
   }
-  async insert(d: OutboundDraft) {
-    if (this.drafts.has(d.id)) throw new Error("duplicate_draft");
-    this.drafts.set(d.id, { ...d });
+  private sources = new Set<string>();
+  async insertBatch(drafts: OutboundDraft[], source?: DraftSource) {
+    const keys = source ? drafts.map((d) => `${source.conversationId}:${source.version}:${d.counterpartyOrgId}`) : [];
+    if (keys.some((k) => this.sources.has(k)) || drafts.some((d) => this.drafts.has(d.id))) return false;
+    keys.forEach((k) => this.sources.add(k));
+    drafts.forEach((d) => this.drafts.set(d.id, { ...d }));
+    return true;
   }
   async get(id: string) {
     const d = this.drafts.get(id);

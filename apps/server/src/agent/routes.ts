@@ -74,7 +74,6 @@ function windowed(messages: AgentMessage[]): AgentMessage[] {
 
 export function agentRoutes(deps: AgentDeps) {
   const app = new Hono<Env>();
-  const busy = new Set<string>();
 
   const load = async (id: string, s: Session) => {
     const c = await deps.conversations.get(id);
@@ -98,6 +97,7 @@ export function agentRoutes(deps: AgentDeps) {
     const conv: Conversation = {
       id: randomUUID(),
       orgId: s.orgId,
+      createdBy: s.userId,
       role: s.role,
       requestId,
       sheet,
@@ -120,15 +120,20 @@ export function agentRoutes(deps: AgentDeps) {
 
   app.post("/conversations/:id/turn", async (c) => {
     const s = c.get("session");
-    const conv = await load(c.req.param("id"), s);
-    if (!conv) return c.json({ error: "not_found" }, 404);
+    const found = await load(c.req.param("id"), s);
+    if (!found) return c.json({ error: "not_found" }, 404);
     const parsed = TurnBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
     const provider = deps.provider;
     if (!provider) return c.json({ error: "agent_unavailable" }, 503);
-    if (conv.turns >= LIMITS.turns) return c.json({ error: "turn_limit" }, 429);
-    if (busy.has(conv.id)) return c.json({ error: "turn_in_progress" }, 409);
-    busy.add(conv.id);
+    if (found.turns >= LIMITS.turns) return c.json({ error: "turn_limit" }, 429);
+    if (!(await deps.conversations.lockTurn(found.id, s.orgId))) return c.json({ error: "turn_in_progress" }, 409);
+    // 잠근 뒤 다시 읽는다. 바로 앞 턴이 막 저장했을 수 있다.
+    const conv = await load(found.id, s);
+    if (!conv || conv.turns >= LIMITS.turns) {
+      await deps.conversations.unlockTurn(found.id);
+      return conv ? c.json({ error: "turn_limit" }, 429) : c.json({ error: "not_found" }, 404);
+    }
 
     // 선정 전 신원 보호: 모델에 가기 전에 연락처를 지운다.
     const userText = redactContacts(parsed.data.text);
@@ -183,7 +188,7 @@ export function agentRoutes(deps: AgentDeps) {
         await writes.catch(() => undefined);
         await send("error", { code: "provider_error" });
       } finally {
-        busy.delete(conv.id);
+        await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
       }
     });
   });
@@ -229,7 +234,10 @@ export function agentRoutes(deps: AgentDeps) {
       epoch: 1,
       status: "drafted",
     }));
-    for (const od of drafts) await deps.outbound.insert(od);
+    // 같은 판을 두 요청이 동시에 만들어도 저장소가 하나만 받는다.
+    if (!(await deps.outbound.insertBatch(drafts, { conversationId: conv.id, version: d.version }))) {
+      return c.json({ error: "already_created" }, 409);
+    }
     await deps.conversations.save({ ...conv, draft: { ...d, outboundCreated: true } });
     return c.json(
       { outbound: drafts.map((od) => ({ id: od.id, counterpartyOrgId: od.counterpartyOrgId, text: od.text, epoch: od.epoch, textHash: od.textHash })) },
