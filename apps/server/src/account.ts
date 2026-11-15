@@ -24,6 +24,16 @@ export interface AccountRepo {
   /** 조직 소유자만 만든다. 아니면 false. */
   createInvite(userId: string, codeHash: string, expiresAt: Date): Promise<boolean>;
   acceptInvite(userId: string, codeHash: string, displayName: string): Promise<AccountOrg | JoinFailure>;
+  /** 내 조직 구성원(이름·역할). 소속이 정확히 하나일 때만, 아니면 null. */
+  members(userId: string): Promise<AccountMember[] | null>;
+  /** 내 이름 바꾸기. 소속이 정확히 하나일 때만. */
+  rename(userId: string, displayName: string): Promise<boolean>;
+}
+
+export interface AccountMember {
+  name: string | null;
+  role: "owner" | "member";
+  me: boolean;
 }
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -47,6 +57,7 @@ export const inviteHash = (normalized: string) => sha256(`invite:${normalized}`)
 const Name = z.string().trim().min(1).max(40);
 const CreateOrgBody = z.object({ kind: z.enum(["requester", "cro"]), name: z.string().trim().min(1).max(60), displayName: Name }).strict();
 const JoinBody = z.object({ code: z.string().max(32), displayName: Name }).strict();
+const RenameBody = z.object({ displayName: Name }).strict();
 
 /** 초대 코드 맞히기 막기: 사용자당 10분에 10번. 서버가 여러 대면 DB나 공용 저장소로 옮긴다. */
 export class AttemptLimiter {
@@ -86,6 +97,19 @@ export function accountRoutes(deps: { identity: IdentityResolver; repo: AccountR
     return c.json({ userId: who.userId, email: who.email, org });
   });
 
+  app.post("/me", async (c) => {
+    const parsed = RenameBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    if (!(await deps.repo.rename(c.get("who").userId, parsed.data.displayName))) return c.json({ error: "not_found" }, 404);
+    return c.json({ displayName: parsed.data.displayName });
+  });
+
+  app.get("/members", async (c) => {
+    const list = await deps.repo.members(c.get("who").userId);
+    if (!list) return c.json({ error: "not_found" }, 404);
+    return c.json({ members: list });
+  });
+
   app.post("/org", async (c) => {
     const parsed = CreateOrgBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
@@ -120,12 +144,12 @@ export function accountRoutes(deps: { identity: IdentityResolver; repo: AccountR
 /** 메모리 구현(테스트·로컬). */
 export class MemoryAccountRepo implements AccountRepo {
   orgs = new Map<string, { kind: "requester" | "cro"; name: string }>();
-  members: Array<{ userId: string; orgId: string; role: "owner" | "member"; displayName: string | null }> = [];
+  rows: Array<{ userId: string; orgId: string; role: "owner" | "member"; displayName: string | null }> = [];
   invites = new Map<string, { orgId: string; expiresAt: Date; usedBy: string | null }>();
   constructor(private readonly now = () => new Date()) {}
 
   private view(userId: string): AccountOrg[] {
-    return this.members
+    return this.rows
       .filter((m) => m.userId === userId)
       .map((m) => ({ orgId: m.orgId, ...this.orgs.get(m.orgId)!, memberRole: m.role, displayName: m.displayName }));
   }
@@ -137,11 +161,11 @@ export class MemoryAccountRepo implements AccountRepo {
     if (this.view(userId).length) return "already_member" as const;
     const orgId = crypto.randomUUID();
     this.orgs.set(orgId, { kind: input.kind, name: input.name });
-    this.members.push({ userId, orgId, role: "owner", displayName: input.displayName });
+    this.rows.push({ userId, orgId, role: "owner", displayName: input.displayName });
     return this.view(userId)[0]!;
   }
   async createInvite(userId: string, codeHash: string, expiresAt: Date) {
-    const own = this.members.find((m) => m.userId === userId && m.role === "owner");
+    const own = this.rows.find((m) => m.userId === userId && m.role === "owner");
     if (!own || this.view(userId).length !== 1) return false;
     this.invites.set(codeHash, { orgId: own.orgId, expiresAt, usedBy: null });
     return true;
@@ -153,7 +177,20 @@ export class MemoryAccountRepo implements AccountRepo {
     if (inv.usedBy) return "used" as const;
     if (inv.expiresAt <= this.now()) return "expired" as const;
     inv.usedBy = userId;
-    this.members.push({ userId, orgId: inv.orgId, role: "member", displayName });
+    this.rows.push({ userId, orgId: inv.orgId, role: "member", displayName });
     return this.view(userId)[0]!;
+  }
+  async members(userId: string) {
+    const v = this.view(userId);
+    if (v.length !== 1) return null;
+    return this.rows
+      .filter((m) => m.orgId === v[0]!.orgId)
+      .map((m) => ({ name: m.displayName, role: m.role, me: m.userId === userId }));
+  }
+  async rename(userId: string, displayName: string) {
+    const mine = this.rows.filter((m) => m.userId === userId);
+    if (mine.length !== 1) return false;
+    mine[0]!.displayName = displayName;
+    return true;
   }
 }

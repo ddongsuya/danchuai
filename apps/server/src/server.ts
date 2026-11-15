@@ -10,6 +10,7 @@ import { PgOutboundRepo } from "./db/outbound";
 import { createPool } from "./db/pool";
 import { supabaseAuthFromEnv, supabaseIdentity, supabaseKeyFromEnv } from "./supabaseAuth";
 import { PgAccountRepo } from "./db/account";
+import { InAppTransport, PgMarketRepo } from "./db/market";
 import { providerFromEnv } from "./providers";
 import { MemoryOutboundRepo } from "./repo";
 
@@ -47,12 +48,14 @@ export function buildServer(env: Env): Hono {
   const api = createApp({
     auth,
     outbound: pool ? new PgOutboundRepo(pool) : new MemoryOutboundRepo(),
-    transport: { deliver: async () => "unknown" },
+    // 운영: 앱 안 전달(받은 요청함·회신 목록). 메모리 모드는 전달할 곳이 없어 unknown.
+    transport: pool ? new InAppTransport(pool) : { deliver: async () => "unknown" },
     provider,
     conversations: pool ? new PgConversationRepo(pool) : new MemoryConversationRepo(),
     requests: pool ? new PgRequestDirectory(pool) : memoryRequests,
     identity: supaKey ? supabaseIdentity(supaKey) : undefined,
     accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
+    market: pool ? new PgMarketRepo(pool) : undefined,
   });
 
   const origins = (env.CORS_ORIGINS ?? "http://localhost:8081").split(",");

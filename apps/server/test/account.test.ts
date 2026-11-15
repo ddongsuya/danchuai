@@ -77,3 +77,26 @@ describe("가입·초대", () => {
     expect(repo.invites.has(inviteHash(normalizeInviteCode(inv.code)!))).toBe(true); // 원문이 아니라 해시로 저장
   });
 });
+
+describe("계정: 구성원·이름", () => {
+  it("같은 조직 구성원만 보이고, 내 이름만 바꾼다", async () => {
+    const { call } = setup();
+    expect((await call("GET", "/members", "a")).status).toBe(404); // 조직 없음
+    await call("POST", "/org", "owner", { kind: "requester", name: "의뢰", displayName: "주" });
+    await call("POST", "/org", "other", { kind: "cro", name: "기관", displayName: "남" });
+    const inv = (await (await call("POST", "/invites", "owner")).json()) as { code: string };
+    await call("POST", "/join", "b", { code: inv.code, displayName: "비" });
+
+    const list = (await (await call("GET", "/members", "b")).json()) as { members: Array<{ name: string; role: string; me: boolean }> };
+    expect(list.members).toEqual([
+      { name: "주", role: "owner", me: false },
+      { name: "비", role: "member", me: true },
+    ]);
+
+    expect((await call("POST", "/me", "b", { displayName: "  " })).status).toBe(400);
+    expect((await call("POST", "/me", "b", { displayName: "비비", userId: "owner" })).status).toBe(400);
+    expect(await (await call("POST", "/me", "b", { displayName: "비비" })).json()).toEqual({ displayName: "비비" });
+    const after = (await (await call("GET", "/members", "owner")).json()) as { members: Array<{ name: string }> };
+    expect(after.members.map((m) => m.name)).toEqual(["주", "비비"]);
+  });
+});

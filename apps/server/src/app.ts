@@ -14,6 +14,8 @@ import { agentRoutes } from "./agent/routes";
 import { accountRoutes, type AccountRepo } from "./account";
 import type { IdentityResolver } from "./supabaseAuth";
 import { MemoryConversationRepo, MemoryRequestDirectory, type ConversationRepo, type RequestDirectory } from "./agent/store";
+import type { MarketRepo } from "./db/market";
+import { marketRoutes } from "./market";
 
 export interface Deps {
   auth: AuthResolver;
@@ -26,6 +28,8 @@ export interface Deps {
   /** 둘 다 있어야 /account(가입·초대)를 연다. 조직이 없어도 들어오는 경로라 /v1과 분리한다. */
   identity?: IdentityResolver;
   accounts?: AccountRepo;
+  /** 요청·회신·선정. 없으면 /v1/labs·/v1/requests·/v1/lab은 503 */
+  market?: MarketRepo;
 }
 
 type Env = { Variables: { session: Session } };
@@ -117,8 +121,15 @@ export function createApp(deps: Deps) {
       conversations: deps.conversations ?? new MemoryConversationRepo(),
       requests: deps.requests ?? new MemoryRequestDirectory(),
       outbound: deps.outbound,
+      market: deps.market,
     }),
   );
+
+  if (deps.market) {
+    app.route("/v1", marketRoutes(deps.market));
+  } else {
+    for (const p of ["/v1/labs", "/v1/requests", "/v1/requests/*", "/v1/lab/*"]) app.all(p, (c) => c.json({ error: "not_configured" }, 503));
+  }
 
   return app;
 }

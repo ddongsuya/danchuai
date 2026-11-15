@@ -62,4 +62,22 @@ export class PgAccountRepo implements AccountRepo {
       return toOrg((await c.query<Row>(MINE, [userId])).rows[0]!);
     });
   }
+
+  async members(userId: string) {
+    const mine = await this.pool.query<{ org_id: string }>(`select org_id from members where user_id = $1`, [userId]);
+    if (mine.rowCount !== 1) return null;
+    const { rows } = await this.pool.query<{ display_name: string | null; role: "owner" | "member"; user_id: string }>(
+      `select display_name, role, user_id from members where org_id = $1 order by role = 'owner' desc, created_at`,
+      [mine.rows[0]!.org_id],
+    );
+    return rows.map((r) => ({ name: r.display_name, role: r.role, me: r.user_id === userId }));
+  }
+
+  async rename(userId: string, displayName: string) {
+    const r = await this.pool.query(
+      `update members set display_name = $2 where user_id = $1 and (select count(*) from members x where x.user_id = $1) = 1`,
+      [userId, displayName],
+    );
+    return r.rowCount === 1;
+  }
 }

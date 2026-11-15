@@ -41,9 +41,13 @@ export class PgOutboundRepo implements OutboundRepo {
       await tx(this.pool, async (db) => {
         for (const d of drafts) {
           await db.query(
-            `insert into outbound_drafts (id, org_id, counterparty_org_id, kind, body, body_sha256, epoch, status, conversation_id, draft_version)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-            [d.id, d.orgId, d.counterpartyOrgId, d.kind, d.text, d.textHash, d.epoch, d.status, source?.conversationId ?? null, source?.version ?? null],
+            `insert into outbound_drafts (id, org_id, counterparty_org_id, kind, body, body_sha256, epoch, status, conversation_id, draft_version, quote_lines, duration_weeks)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            [
+              d.id, d.orgId, d.counterpartyOrgId, d.kind, d.text, d.textHash, d.epoch, d.status,
+              source?.conversationId ?? null, source?.version ?? null,
+              source?.quoteLines ? JSON.stringify(source.quoteLines) : null, source?.durationWeeks ?? null,
+            ],
           );
         }
       });

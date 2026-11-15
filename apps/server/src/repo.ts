@@ -3,6 +3,9 @@ import type { ApprovalDecision, OutboundDraft } from "@danchuai/core";
 export interface DraftSource {
   conversationId: string;
   version: number;
+  /** 기관 회신: 사람이 넣은 견적 줄. 발송 때 서버가 합계를 계산해 quotes로 옮긴다. */
+  quoteLines?: Array<{ label: string; amountWon: number }>;
+  durationWeeks?: number;
 }
 
 export interface OutboundRepo {

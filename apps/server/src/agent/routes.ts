@@ -14,6 +14,7 @@ import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import type { Session } from "../auth";
 import { sha256 } from "../hash";
+import type { MarketRepo } from "../db/market";
 import type { OutboundRepo } from "../repo";
 import { interpret } from "./interpret";
 import { SYSTEM } from "./prompts";
@@ -33,6 +34,8 @@ export interface AgentDeps {
   conversations: ConversationRepo;
   requests: RequestDirectory;
   outbound: OutboundRepo;
+  /** 있으면 받는 곳이 가입 기관인지 확인하고, 의뢰자 요청 행을 만든다 */
+  market?: MarketRepo;
 }
 
 type Env = { Variables: { session: Session } };
@@ -48,6 +51,8 @@ const OutboundBody = z
       .array(z.object({ label: z.string().min(1).max(60), amountWon: z.number().int().nonnegative().max(1e12) }).strict())
       .max(30)
       .optional(),
+    // 기관 회신: 사람이 넣은 소요 기간(주)
+    durationWeeks: z.number().int().min(1).max(520).optional(),
   })
   .strict();
 
@@ -217,13 +222,20 @@ export function agentRoutes(deps: AgentDeps) {
     let kind: OutboundDraft["kind"];
     if (conv.role === "requester") {
       if (!parsed.data.recipientOrgIds || parsed.data.quoteLines) return c.json({ error: "bad_request" }, 400);
+      if (parsed.data.durationWeeks !== undefined) return c.json({ error: "bad_request" }, 400);
       if (parsed.data.recipientOrgIds.includes(s.orgId)) return c.json({ error: "bad_request" }, 400);
       recipients = [...new Set(parsed.data.recipientOrgIds)];
       kind = "request";
+      if (deps.market) {
+        if (!(await deps.market.areLabs(recipients))) return c.json({ error: "unknown_recipient" }, 400);
+        const r = await deps.market.ensureRequest({ conversationId: conv.id, orgId: s.orgId, sheet: conv.sheet });
+        if (r === "closed") return c.json({ error: "request_closed" }, 409);
+      }
     } else {
       if (parsed.data.recipientOrgIds) return c.json({ error: "bad_request" }, 400);
       const r = conv.requestId ? await deps.requests.forCro(conv.requestId, s.orgId) : null;
       if (!r) return c.json({ error: "not_found" }, 404);
+      if (deps.market && !(await deps.market.canReply(conv.requestId!, s.orgId))) return c.json({ error: "request_closed" }, 409);
       recipients = [r.requesterOrgId];
       kind = "reply";
       // 금액 줄은 코드가 계산해 붙인다.
@@ -241,7 +253,13 @@ export function agentRoutes(deps: AgentDeps) {
       status: "drafted",
     }));
     // 같은 판을 두 요청이 동시에 만들어도 저장소가 하나만 받는다.
-    if (!(await deps.outbound.insertBatch(drafts, { conversationId: conv.id, version: d.version }))) {
+    const source = {
+      conversationId: conv.id,
+      version: d.version,
+      quoteLines: kind === "reply" ? parsed.data.quoteLines ?? [] : undefined,
+      durationWeeks: kind === "reply" ? parsed.data.durationWeeks : undefined,
+    };
+    if (!(await deps.outbound.insertBatch(drafts, source))) {
       return c.json({ error: "already_created" }, 409);
     }
     await deps.conversations.save({ ...conv, draft: { ...d, outboundCreated: true } });

@@ -1,6 +1,6 @@
 -- 테스트용: Supabase가 원래 갖고 있는 auth 스키마·역할의 최소 흉내. 운영 DB에는 적용하지 않는다.
 create schema if not exists auth;
-create table if not exists auth.users (id uuid primary key);
+create table if not exists auth.users (id uuid primary key, email text);
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;

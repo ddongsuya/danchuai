@@ -129,7 +129,7 @@ export class PgRequestDirectory implements RequestDirectory {
     const { rows } = await this.pool.query<{ sheet: Partial<RequestSheet>; org_id: string }>(
       `select r.sheet, r.org_id from requests r
          join request_recipients rr on rr.request_id = r.id and rr.cro_org_id = $2
-        where r.id = $1 and r.status = 'sent'`,
+        where r.id = $1 and r.status in ('sent', 'selected') and rr.status <> 'not_selected'`,
       [requestId, croOrgId],
     );
     const r = rows[0];
