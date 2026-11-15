@@ -1,6 +1,6 @@
 // 요청함(Manus 작업 목록 방식). 의뢰자와 기관이 같은 틀을 쓰고 항목과 상태 이름만 다르다.
 import { router, type Href } from 'expo-router';
-import { ChatCircle, Dna, Drop, Flask, MagnifyingGlass, UserSwitch } from 'phosphor-react-native';
+import { ChatCircle, Dna, Drop, Flask, MagnifyingGlass, UserPlus, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import type { RequestStatus, RequestSummary } from '@/data/demo';
+import { useAuth } from '@/lib/session';
 
 const statusChip: Record<RequestStatus, { label: string; kind: ChipTone }> = {
   new: { label: '새 요청', kind: 'accent' },
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export function InboxScreen({ items, filters, hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
+  const { status, org } = useAuth();
   const [active, setActive] = useState(0);
   const shown = useMemo(() => {
     const m = filters[active]?.match;
@@ -42,9 +44,18 @@ export function InboxScreen({ items, filters, hrefOf, switchTo, switchLabel, new
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.nav}>
-        <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
-          <UserSwitch size={20} color={tokens.text} />
-        </IconButton>
+        {status === 'disabled' ? (
+          // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
+          <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
+            <UserSwitch size={20} color={tokens.text} />
+          </IconButton>
+        ) : org?.memberRole === 'owner' ? (
+          <IconButton label="구성원 초대" onPress={() => router.push('/invite')}>
+            <UserPlus size={20} color={tokens.text} />
+          </IconButton>
+        ) : (
+          <View />
+        )}
         <IconButton label="검색">
           <MagnifyingGlass size={20} color={tokens.text} />
         </IconButton>

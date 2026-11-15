@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { fonts, radius, space, tokens } from '@/constants/theme';
 
@@ -16,14 +16,16 @@ interface Props {
   tall?: boolean;
   flex?: number;
   disabled?: boolean;
+  /** 처리 중: 누를 수 없고 글자 앞에 작은 표시 */
+  loading?: boolean;
 }
 
-export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled }: Props) {
+export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading }: Props) {
   const color = kind === 'ink' ? tokens.onInk : kind === 'ghost' ? tokens.muted : tokens.text;
   return (
-    <Press label={title} onPress={onPress} disabled={disabled} style={[styles.base, styles[kind], tall && styles.tall, flex != null && { flex }]}>
+    <Press label={title} onPress={onPress} disabled={disabled || loading} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={[styles.base, styles[kind], tall && styles.tall, flex != null && { flex }]}>
       <View style={styles.row}>
-        {icon}
+        {loading ? <ActivityIndicator size="small" color={color} /> : icon}
         <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
           {title}
         </Txt>

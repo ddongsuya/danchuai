@@ -1,8 +1,13 @@
 // 기관 요청함
+import { Redirect } from 'expo-router';
+
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { labRequests } from '@/data/demo';
+import { useAuth } from '@/lib/session';
 
 export default function LabInbox() {
+  const { org } = useAuth();
+  if (org?.kind === 'requester') return <Redirect href="/" />;
   return (
     <InboxScreen
       items={labRequests}

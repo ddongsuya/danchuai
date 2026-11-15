@@ -5,9 +5,10 @@ import { fetch } from 'expo/fetch';
 
 import type { ChatErrorCode } from './chat';
 import { createSseParser, type SseEvent } from './sse';
+import { accessToken, authEnabled } from './supabase';
 
 const BASE = process.env.EXPO_PUBLIC_AGENT_URL?.replace(/\/$/, '');
-// 개발용 토큰. 실제 로그인(Supabase 세션)이 붙으면 그 토큰으로 바꾼다.
+// 로그인(Supabase)이 켜져 있으면 그 세션 토큰을 쓰고, 아니면 개발용 토큰(로컬 실행)을 쓴다.
 const TOKEN = process.env.EXPO_PUBLIC_AGENT_TOKEN;
 const LAB_TOKEN = process.env.EXPO_PUBLIC_AGENT_LAB_TOKEN;
 
@@ -35,7 +36,7 @@ async function call<T>(role: AgentRole, path: string, body?: unknown): Promise<T
   try {
     res = (await fetch(`${BASE}${path}`, {
       method: body === undefined ? 'GET' : 'POST',
-      headers: headers(role),
+      headers: await headers(role),
       body: body === undefined ? undefined : JSON.stringify(body),
     })) as unknown as Response;
   } catch {
@@ -46,8 +47,8 @@ async function call<T>(role: AgentRole, path: string, body?: unknown): Promise<T
   return json as T;
 }
 
-function headers(role: AgentRole): Record<string, string> {
-  const token = role === 'cro' ? LAB_TOKEN : TOKEN;
+async function headers(role: AgentRole): Promise<Record<string, string>> {
+  const token = authEnabled() ? await accessToken() : role === 'cro' ? LAB_TOKEN : TOKEN;
   return token ? { 'content-type': 'application/json', authorization: `Bearer ${token}` } : { 'content-type': 'application/json' };
 }
 
@@ -69,7 +70,7 @@ export async function sendTurn(role: AgentRole, id: string, text: string, onEven
   try {
     res = await fetch(`${BASE}/v1/agent/conversations/${encodeURIComponent(id)}/turn`, {
       method: 'POST',
-      headers: { ...headers(role), accept: 'text/event-stream' },
+      headers: { ...(await headers(role)), accept: 'text/event-stream' },
       body: JSON.stringify({ text }),
       signal,
     });

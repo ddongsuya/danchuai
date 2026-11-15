@@ -11,6 +11,8 @@ import type { AuthResolver, Session } from "./auth";
 import type { OutboundRepo } from "./repo";
 import type { Transport } from "./transport";
 import { agentRoutes } from "./agent/routes";
+import { accountRoutes, type AccountRepo } from "./account";
+import type { IdentityResolver } from "./supabaseAuth";
 import { MemoryConversationRepo, MemoryRequestDirectory, type ConversationRepo, type RequestDirectory } from "./agent/store";
 
 export interface Deps {
@@ -21,6 +23,9 @@ export interface Deps {
   provider?: LlmProvider;
   conversations?: ConversationRepo;
   requests?: RequestDirectory;
+  /** 둘 다 있어야 /account(가입·초대)를 연다. 조직이 없어도 들어오는 경로라 /v1과 분리한다. */
+  identity?: IdentityResolver;
+  accounts?: AccountRepo;
 }
 
 type Env = { Variables: { session: Session } };
@@ -43,6 +48,12 @@ export function createApp(deps: Deps) {
   const app = new Hono<Env>();
 
   app.get("/health", (c) => c.json({ ok: true }));
+
+  if (deps.identity && deps.accounts) {
+    app.route("/account", accountRoutes({ identity: deps.identity, repo: deps.accounts }));
+  } else {
+    app.all("/account/*", (c) => c.json({ error: "not_configured" }, 503));
+  }
 
   app.use("/v1/*", async (c, next) => {
     const session = await deps.auth.resolve(c.req.header("authorization"));

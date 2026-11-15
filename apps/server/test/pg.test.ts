@@ -11,7 +11,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import { PgConversationRepo, PgRequestDirectory } from "../src/db/conversations";
 import { PgOutboundRepo } from "../src/db/outbound";
-import { supabaseAuth, pgMemberships } from "../src/supabaseAuth";
+import { supabaseAuth, supabaseIdentity, pgMemberships } from "../src/supabaseAuth";
+import { PgAccountRepo } from "../src/db/account";
 
 const BASE = process.env.TEST_DATABASE_URL;
 if (!BASE && process.env.REQUIRE_DB_TESTS === "1") throw new Error("TEST_DATABASE_URL이 없어요");
@@ -28,6 +29,9 @@ const ids = {
   croBUser: randomUUID(),
   twoOrgUser: randomUUID(),
   request: randomUUID(),
+  founder: randomUUID(),
+  joinA: randomUUID(),
+  joinB: randomUUID(),
 };
 
 class Fake implements LlmProvider {
@@ -62,7 +66,7 @@ describe.skipIf(!BASE)("Postgres 저장소와 Supabase 로그인", () => {
     for (const f of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
       await setup.query(readFileSync(join(MIGRATIONS, f), "utf8"));
     }
-    await setup.query(`insert into auth.users (id) values ($1),($2),($3),($4)`, [ids.reqUser, ids.croUser, ids.croBUser, ids.twoOrgUser]);
+    await setup.query(`insert into auth.users (id) values ($1),($2),($3),($4),($5),($6),($7)`, [ids.reqUser, ids.croUser, ids.croBUser, ids.twoOrgUser, ids.founder, ids.joinA, ids.joinB]);
     await setup.query(`insert into orgs (id, kind, name) values ($1,'requester','의뢰 조직'),($2,'cro','가 기관'),($3,'cro','나 기관')`, [ids.reqOrg, ids.croA, ids.croB]);
     await setup.query(
       `insert into members (user_id, org_id) values ($1,$2),($3,$4),($5,$6),($7,$2),($7,$4)`,
@@ -98,6 +102,8 @@ describe.skipIf(!BASE)("Postgres 저장소와 Supabase 로그인", () => {
       provider: fake,
       conversations: new PgConversationRepo(pool),
       requests: new PgRequestDirectory(pool),
+      identity: supabaseIdentity({ key: jwks, issuer: ISSUER }),
+      accounts: new PgAccountRepo(pool),
     });
   });
 
@@ -260,6 +266,54 @@ describe.skipIf(!BASE)("Postgres 저장소와 Supabase 로그인", () => {
     } finally {
       await anon.query("rollback");
       anon.release();
+    }
+  });
+  it("가입: 동시에 조직을 두 번 만들어도 하나, 초대 코드는 동시에 써도 한 명만", async () => {
+    const tf = await sign(ids.founder);
+    expect(await (await call("GET", "/account/me", tf)).json()).toMatchObject({ org: null });
+    const body = { kind: "requester", name: "새 의뢰 조직", displayName: "대표" };
+    const [a, b] = await Promise.all([call("POST", "/account/org", tf, body), call("POST", "/account/org", tf, body)]);
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+    const { rows } = await pool.query(`select role, display_name from members where user_id = $1`, [ids.founder]);
+    expect(rows).toEqual([{ role: "owner", display_name: "대표" }]);
+    // 조직이 생기면 /v1도 열린다
+    expect((await call("POST", "/v1/agent/conversations", tf, {})).status).toBe(201);
+
+    expect((await call("POST", "/account/invites", await sign(ids.joinA))).status).toBe(403);
+    const inv = (await (await call("POST", "/account/invites", tf)).json()) as { code: string };
+    const stored = await pool.query(`select code_hash from invites`);
+    expect(JSON.stringify(stored.rows)).not.toContain(inv.code.replace("-", ""));
+    const [ja, jb] = await Promise.all([
+      call("POST", "/account/join", await sign(ids.joinA), { code: inv.code, displayName: "에이" }),
+      call("POST", "/account/join", await sign(ids.joinB), { code: inv.code, displayName: "비" }),
+    ]);
+    expect([ja.status, jb.status].sort()).toEqual([200, 410]);
+    const n = await pool.query(`select count(*)::int as n from members m join orgs o on o.id = m.org_id where o.name = '새 의뢰 조직'`);
+    expect(n.rows[0].n).toBe(2);
+    await pool.query(`update invites set expires_at = now() - interval '1 second' where used_at is null`);
+  });
+
+  it("가입: 만료 코드 410, 초대 표는 앱에서 쓰지 못하고 로그인 전엔 읽지도 못한다", async () => {
+    const tf = await sign(ids.founder);
+    const inv = (await (await call("POST", "/account/invites", tf)).json()) as { code: string };
+    await pool.query(`update invites set expires_at = now() - interval '1 second' where used_at is null`);
+    const late = randomUUID();
+    await pool.query(`insert into auth.users (id) values ($1)`, [late]);
+    expect(await (await call("POST", "/account/join", await sign(late), { code: inv.code, displayName: "늦" })).json()).toEqual({ error: "expired" });
+    const c = await pool.connect();
+    try {
+      await c.query("begin");
+      await c.query("set local role authenticated");
+      await c.query(`select set_config('request.jwt.claim.sub', $1, true)`, [ids.reqUser]);
+      expect((await c.query(`select id from invites`)).rowCount).toBe(0); // 다른 조직의 초대는 안 보인다
+      await expect(c.query(`update invites set used_at = now()`)).rejects.toThrow(/permission denied/);
+      await c.query("rollback");
+      await c.query("begin");
+      await c.query("set local role anon");
+      await expect(c.query(`select id from invites`)).rejects.toThrow(/permission denied/);
+    } finally {
+      await c.query("rollback");
+      c.release();
     }
   });
 });

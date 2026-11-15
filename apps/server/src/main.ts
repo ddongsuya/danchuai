@@ -8,7 +8,8 @@ import { MemoryConversationRepo, MemoryRequestDirectory } from "./agent/store";
 import { PgConversationRepo, PgRequestDirectory } from "./db/conversations";
 import { PgOutboundRepo } from "./db/outbound";
 import { createPool } from "./db/pool";
-import { supabaseAuthFromEnv } from "./supabaseAuth";
+import { supabaseAuthFromEnv, supabaseIdentity, supabaseKeyFromEnv } from "./supabaseAuth";
+import { PgAccountRepo } from "./db/account";
 import { providerFromEnv } from "./providers";
 import { MemoryOutboundRepo } from "./repo";
 
@@ -18,6 +19,8 @@ const pool = process.env.DATABASE_URL ? createPool(process.env.DATABASE_URL) : n
 if (process.env.NODE_ENV === "production" && !pool) throw new Error("운영에서는 DATABASE_URL이 필요해요");
 const auth =
   (pool && supabaseAuthFromEnv(process.env, pool)) ?? devAuthFromEnv(process.env) ?? { resolve: async () => null };
+
+const supaKey = pool ? supabaseKeyFromEnv(process.env) : null;
 
 // 메모리 모드에서는 기관 화면 확인용 견본 요청 하나를 둔다.
 const memoryRequests = new MemoryRequestDirectory({
@@ -44,6 +47,8 @@ const api = createApp({
   provider,
   conversations: pool ? new PgConversationRepo(pool) : new MemoryConversationRepo(),
   requests: pool ? new PgRequestDirectory(pool) : memoryRequests,
+  identity: supaKey ? supabaseIdentity(supaKey) : undefined,
+  accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
 });
 
 const origins = (process.env.CORS_ORIGINS ?? "http://localhost:8081").split(",");

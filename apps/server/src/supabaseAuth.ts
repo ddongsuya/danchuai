@@ -17,12 +17,21 @@ export interface SupabaseAuthOptions {
   memberships: (userId: string) => Promise<Membership[]>;
 }
 
-export function supabaseAuth(opts: SupabaseAuthOptions): AuthResolver {
+export interface Identity {
+  userId: string;
+  email: string | null;
+}
+
+/** 토큰만 확인한다(조직 없음도 통과). 가입·초대 수락처럼 조직이 생기기 전 단계에 쓴다. */
+export interface IdentityResolver {
+  verify(authorization: string | undefined): Promise<Identity | null>;
+}
+
+export function supabaseIdentity(opts: Omit<SupabaseAuthOptions, "memberships">): IdentityResolver {
   return {
-    async resolve(authorization) {
+    async verify(authorization) {
       const m = /^Bearer ([A-Za-z0-9._-]{20,4096})$/.exec(authorization ?? "");
       if (!m) return null;
-      let sub: unknown;
       try {
         const { payload } = await jwtVerify(m[1]!, opts.key as JWTVerifyGetKey, {
           issuer: opts.issuer,
@@ -31,15 +40,27 @@ export function supabaseAuth(opts: SupabaseAuthOptions): AuthResolver {
           clockTolerance: 5,
         });
         if (payload.role !== "authenticated") return null;
-        sub = payload.sub;
+        const sub = payload.sub;
+        if (typeof sub !== "string" || !UUID.test(sub)) return null;
+        const email = typeof payload.email === "string" ? payload.email : null;
+        return { userId: sub, email };
       } catch {
         return null; // 만료·서명 불일치·형식 오류. 이유는 밖으로 알리지 않는다.
       }
-      if (typeof sub !== "string" || !UUID.test(sub)) return null;
-      const ms = await opts.memberships(sub);
+    },
+  };
+}
+
+export function supabaseAuth(opts: SupabaseAuthOptions): AuthResolver {
+  const identity = supabaseIdentity(opts);
+  return {
+    async resolve(authorization) {
+      const who = await identity.verify(authorization);
+      if (!who) return null;
+      const ms = await opts.memberships(who.userId);
       // 한 사람이 여러 조직에 속하면 지금은 받지 않는다(조직 고르기 화면이 생기면 바꾼다).
       if (ms.length !== 1) return null;
-      const session: Session = { userId: sub, orgId: ms[0]!.orgId, role: ms[0]!.kind };
+      const session: Session = { userId: who.userId, orgId: ms[0]!.orgId, role: ms[0]!.kind };
       return session;
     },
   };
@@ -54,7 +75,7 @@ export const pgMemberships = (pool: Pool) => async (userId: string): Promise<Mem
 };
 
 /** 환경 변수로 만든다. SUPABASE_URL이 있으면 그 프로젝트의 JWKS, SUPABASE_JWT_SECRET이 있으면 옛 HS256 비밀키. */
-export function supabaseAuthFromEnv(env: Record<string, string | undefined>, pool: Pool): AuthResolver | null {
+export function supabaseKeyFromEnv(env: Record<string, string | undefined>): { key: JWTVerifyGetKey | Uint8Array; issuer: string } | null {
   const url = env.SUPABASE_URL?.replace(/\/$/, "");
   if (!url) return null;
   if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url) && env.NODE_ENV === "production") {
@@ -64,5 +85,10 @@ export function supabaseAuthFromEnv(env: Record<string, string | undefined>, poo
   const key = env.SUPABASE_JWT_SECRET
     ? new TextEncoder().encode(env.SUPABASE_JWT_SECRET)
     : createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
-  return supabaseAuth({ key, issuer, memberships: pgMemberships(pool) });
+  return { key, issuer };
+}
+
+export function supabaseAuthFromEnv(env: Record<string, string | undefined>, pool: Pool): AuthResolver | null {
+  const k = supabaseKeyFromEnv(env);
+  return k ? supabaseAuth({ ...k, memberships: pgMemberships(pool) }) : null;
 }
