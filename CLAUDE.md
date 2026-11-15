@@ -4,7 +4,7 @@
 
 - 기획서: https://claude.ai/artifact/SLCxhCUjM165S7oRXDWKZV
 - 기술 결정: docs/adr/0001-stack.md
-- 디자인: 방향 A "차분한 코발트". 색은 apps/mobile/src/constants/theme.ts 에서만 정한다.
+- 디자인: 시안 v3 (Manus·Codex·Perplexity 흐름 기반, 무채색 + 청록·호박 상태색, 원티드 산스). 색은 apps/mobile/src/constants/theme.ts 에서만 정한다. 단추 디자인은 쓰지 않는다.
 
 ## 구조
 
