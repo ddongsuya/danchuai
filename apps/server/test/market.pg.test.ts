@@ -148,10 +148,18 @@ describe.skipIf(!BASE)("요청 보내기·회신·선정", () => {
     await (await call("POST", `/v1/agent/conversations/${convId}/turn`, t, { text: "견적 받아 줘" })).text();
     const out = await call("POST", `/v1/agent/conversations/${convId}/outbound`, t, { version: 1, recipientOrgIds: to });
     expect(out.status).toBe(201);
-    const { outbound } = await json<{ outbound: Array<{ id: string; epoch: number; textHash: string }> }>(out);
+    const { outbound, requestId: madeId } = await json<{ requestId: string; outbound: Array<{ id: string; epoch: number; textHash: string }> }>(out);
     for (const d of outbound) expect(await approveAndSend(t, d)).toEqual({ status: "sent" });
     const { items } = await json<{ items: Array<{ conversationId: string; requestId: string }> }>(call("GET", "/v1/requests", t));
-    return { t, convId, requestId: items.find((i) => i.conversationId === convId)!.requestId };
+    const requestId = items.find((i) => i.conversationId === convId)!.requestId;
+    // 보내기 초안 응답이 만든 요청 id를 알려 준다(앱이 진행 화면으로 바로 간다)
+    expect(madeId).toBe(requestId);
+    // 이어 보기: 기록은 돌려주되 모델용 표시("(요청서 갱신)" 등)는 빼고, 초안은 보낸 것으로 표시
+    const view = await json<{ messages: Array<{ role: string; text: string }>; draft: { sent: boolean } }>(call("GET", `/v1/agent/conversations/${convId}`, t));
+    expect(view.messages[0]).toEqual({ role: "user", text: "견적 받아 줘" });
+    expect(view.messages.some((m) => /\(요청서 갱신\)|\(본문 초안\)/.test(m.text))).toBe(false);
+    expect(view.draft.sent).toBe(true);
+    return { t, convId, requestId };
   }
 
   /** 기관: 받은 요청으로 대화 → 회신 초안 → 견적 줄 → 보내기 */

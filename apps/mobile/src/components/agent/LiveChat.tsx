@@ -2,7 +2,8 @@
 // 보내기는 사람이 승인 카드에서 누를 때만 일어난다. 에이전트는 보내지 못한다.
 import { amountBlock, SHEET_LABELS, type QuoteLine, type SheetField } from '@danchuai/core';
 import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-native';
-import { useState } from 'react';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ApprovalCard, type Recipient } from '@/components/chat/ApprovalCard';
@@ -10,11 +11,12 @@ import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuestionCard } from '@/components/chat/QuestionCard';
+import { LabPicker } from '@/components/request/LabPicker';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import { approveAndSend, createOutbound, type AgentRole } from '@/lib/agentClient';
+import { approveAndSend, createOutbound, type AgentRole, type OutboundDraftView } from '@/lib/agentClient';
 import type { ChatErrorCode } from '@/lib/chat';
 
 const ERROR_LABEL: Record<ChatErrorCode, string> = {
@@ -34,18 +36,31 @@ interface Props {
   title: string;
   /** 기관: 받은 요청 */
   requestId?: string;
-  /** 의뢰자: 사람이 고른 받는 곳 */
+  /** 이어서 열 대화 */
+  conversationId?: string;
+  /** 의뢰자: 사람이 고른 받는 곳(없으면 보내기 전에 받는 기관 고르기를 연다) */
   recipients?: Recipient[];
   /** 기관: 담당자가 넣은 견적 항목(원 단위). 합계는 코드가 계산한다. */
   quoteLines?: QuoteLine[];
+  /** 기관: 담당자가 넣은 소요 기간(주) */
+  durationWeeks?: number;
+  /** 기관: 견적 줄이 비었으면 보내기 전에 넣게 한다 */
+  onNeedQuote?: () => void;
 }
 
 type SendState = { kind: 'idle' } | { kind: 'sending' } | { kind: 'done'; sent: number; unknown: number } | { kind: 'error' };
 
-export function LiveChat({ role, title, requestId, recipients = [], quoteLines = [] }: Props) {
-  const { state, send, retry } = useAgentChat(role, requestId);
+export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, onNeedQuote }: Props) {
+  const { state, send, retry } = useAgentChat(role, requestId, conversationId);
+  // 이어 쓰는 대화는 요청서에서 제목을 만든다(서버 목록과 같은 규칙).
+  const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
   const [reviewing, setReviewing] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [recipients, setRecipients] = useState<Recipient[]>(given);
   const [out, setOut] = useState<SendState>({ kind: 'idle' });
+  // 만든 보내기 초안. 보내기가 중간에 실패하면 같은 초안으로 다시 보낸다(새로 만들지 않는다).
+  const made = useRef<{ version: number; requestId: string | null; drafts: OutboundDraftView[]; sent: Set<string> } | null>(null);
+  const [sentRequestId, setSentRequestId] = useState<string | null>(null);
   const busy = state.status !== 'idle';
   const draft = state.draft;
   const outBody = draft && role === 'cro' && quoteLines.length ? `${draft.body}\n\n${amountBlock(quoteLines)}` : draft?.body ?? '';
@@ -54,24 +69,50 @@ export function LiveChat({ role, title, requestId, recipients = [], quoteLines =
     if (!state.conversationId || !draft) return;
     setOut({ kind: 'sending' });
     try {
-      const { outbound } = await createOutbound(role, state.conversationId, {
-        version: draft.version,
-        ...(role === 'requester' ? { recipientOrgIds: recipients.map((r) => r.id) } : { quoteLines }),
-      });
-      let sent = 0;
+      if (!made.current || made.current.version !== draft.version) {
+        const r = await createOutbound(role, state.conversationId, {
+          version: draft.version,
+          ...(role === 'requester' ? { recipientOrgIds: recipients.map((x) => x.id) } : { quoteLines, ...(durationWeeks ? { durationWeeks } : {}) }),
+        });
+        made.current = { version: draft.version, requestId: r.requestId, drafts: r.outbound, sent: new Set() };
+      }
+      const m = made.current;
       let unknown = 0;
-      for (const d of outbound) {
-        if ((await approveAndSend(role, d)) === 'sent') sent++;
+      for (const d of m.drafts) {
+        if (m.sent.has(d.id)) continue;
+        if ((await approveAndSend(role, d)) === 'sent') m.sent.add(d.id);
         else unknown++;
       }
-      setOut({ kind: 'done', sent, unknown });
+      setOut({ kind: 'done', sent: m.sent.size, unknown });
+      setSentRequestId(m.requestId);
       setReviewing(false);
     } catch {
       setOut({ kind: 'error' });
     }
   };
 
-  const canReview = Boolean(draft) && out.kind !== 'done' && !busy && (role === 'cro' || recipients.length > 0);
+  const canReview = Boolean(draft) && !state.draftSent && out.kind !== 'done' && !busy;
+  const needsQuote = role === 'cro' && !quoteLines.length;
+  const openReview = () => {
+    if (role === 'requester' && !recipients.length) return setPicking(true);
+    if (needsQuote) return onNeedQuote?.();
+    setReviewing(true);
+  };
+
+  if (picking) {
+    return (
+      <LabPicker
+        initial={recipients}
+        onClose={() => setPicking(false)}
+        onDone={(p) => {
+          setRecipients(p);
+          setPicking(false);
+          if (draft) setReviewing(true);
+        }}
+      />
+    );
+  }
+
   const bottom =
     reviewing && draft ? (
       <ApprovalCard
@@ -89,7 +130,7 @@ export function LiveChat({ role, title, requestId, recipients = [], quoteLines =
     );
 
   return (
-    <ChatShell title={title} bottom={bottom} dim={reviewing}>
+    <ChatShell title={heading} bottom={bottom} dim={reviewing}>
       {role === 'cro' && state.sheet && !state.messages.length && <SheetCard sheet={state.sheet} />}
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
         <AgentText>어떤 시험 견적이 필요해요?</AgentText>
@@ -133,13 +174,27 @@ export function LiveChat({ role, title, requestId, recipients = [], quoteLines =
             {role === 'cro' ? '회신 초안' : '요청 본문 초안'}
           </Txt>
           <Txt variant="small">{draft!.body}</Txt>
+          {role === 'requester' && (
+            <View style={styles.to}>
+              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
+                받는 기관
+              </Txt>
+              <Txt variant="small" style={{ flex: 1, fontFamily: fonts.semibold }} numberOfLines={2}>
+                {recipients.length ? recipients.map((r) => r.name).join(', ') : '선택 전'}
+              </Txt>
+              {recipients.length > 0 && <Button title="바꾸기" kind="ghost" onPress={() => setPicking(true)} />}
+            </View>
+          )}
           {draft!.dropped > 0 && (
             <Txt variant="caption" color={tokens.wait} style={{ marginTop: space.sm }}>
               {`점검에서 뺀 문장 ${draft!.dropped}개`}
             </Txt>
           )}
           <View style={styles.act}>
-            <Button title="확인하기" onPress={() => setReviewing(true)} />
+            <Button
+              title={role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
+              onPress={openReview}
+            />
           </View>
         </View>
       )}
@@ -147,8 +202,19 @@ export function LiveChat({ role, title, requestId, recipients = [], quoteLines =
       {out.kind === 'done' && (
         <View style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={16} weight="fill" color={out.unknown ? tokens.wait : tokens.accent} />
-          <Txt variant="caption" color={out.unknown ? tokens.wait : tokens.accent} style={{ fontFamily: fonts.semibold }}>
-            {out.unknown ? `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요` : `${out.sent}곳에 보냈어요`}
+          <Txt variant="caption" color={out.unknown ? tokens.wait : tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
+            {out.unknown ? `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요` : role === 'cro' ? '회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
+          </Txt>
+          {role === 'requester' && sentRequestId && (
+            <Button title="진행 보기" kind="line" onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
+          )}
+        </View>
+      )}
+      {state.draftSent && out.kind !== 'done' && (
+        <View style={styles.row}>
+          <CheckCircle size={16} weight="fill" color={tokens.accent} />
+          <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
+            보낸 본문
           </Txt>
         </View>
       )}
@@ -158,6 +224,8 @@ export function LiveChat({ role, title, requestId, recipients = [], quoteLines =
     </ChatShell>
   );
 }
+
+const sheetTitle = (s: Record<string, string | null>) => [s.species, s.duration, s.testType].filter(Boolean).join(' ') || null;
 
 const labelOf = (f: string) => SHEET_LABELS[f as SheetField] ?? f;
 
@@ -200,4 +268,5 @@ const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
   act: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: 44 },
 });

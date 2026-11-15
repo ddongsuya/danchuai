@@ -31,7 +31,7 @@ const codeOf = (status: number, body: unknown): ChatErrorCode => {
   return 'provider_error';
 };
 
-async function call<T>(role: AgentRole, path: string, body?: unknown): Promise<T> {
+export async function call<T>(role: AgentRole, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     res = (await fetch(`${BASE}${path}`, {
@@ -57,10 +57,16 @@ export interface ConversationView {
   role: AgentRole;
   sheet: RequestSheet;
   missing: string[];
+  question?: { field: string; question: string; options: string[] } | null;
+  summary?: string[] | null;
+  draft?: { body: string; dropped: number; version: number; sent: boolean } | null;
+  messages?: { role: 'user' | 'assistant'; text: string }[];
 }
 
 export const createConversation = (role: AgentRole, requestId?: string) =>
   call<ConversationView>(role, '/v1/agent/conversations', requestId ? { requestId } : {});
+
+export const getConversation = (role: AgentRole, id: string) => call<ConversationView>(role, `/v1/agent/conversations/${encodeURIComponent(id)}`);
 
 /**
  * 한 턴. 서버 이벤트를 오는 대로 넘긴다. done이 오면 정상 종료, 오기 전에 끊기면 network 오류.
@@ -109,8 +115,8 @@ export interface OutboundDraftView {
 }
 
 /** 보내기 초안. 본문은 서버가 가진 점검 통과 본문이고, 앱은 판 번호와 받는 곳(또는 견적 항목)만 보낸다. */
-export const createOutbound = (role: AgentRole, id: string, body: { version: number; recipientOrgIds?: string[]; quoteLines?: QuoteLine[] }) =>
-  call<{ outbound: OutboundDraftView[] }>(role, `/v1/agent/conversations/${encodeURIComponent(id)}/outbound`, body);
+export const createOutbound = (role: AgentRole, id: string, body: { version: number; recipientOrgIds?: string[]; quoteLines?: QuoteLine[]; durationWeeks?: number }) =>
+  call<{ requestId: string | null; outbound: OutboundDraftView[] }>(role, `/v1/agent/conversations/${encodeURIComponent(id)}/outbound`, body);
 
 /** 사람이 승인한 정확한 본문(판·해시)으로 승인을 남기고, 한 번만 보낸다. */
 export async function approveAndSend(role: AgentRole, d: OutboundDraftView): Promise<'sent' | 'unknown'> {

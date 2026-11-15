@@ -208,7 +208,8 @@ export class PgMarketRepo implements MarketRepo {
               (c.draft is not null and coalesce((c.draft->>'outboundCreated')::boolean, false) = false) as waiting,
               (select count(*)::int from request_recipients rr where rr.request_id = r.id) as recipients,
               (select count(*)::int from request_recipients rr where rr.request_id = r.id and rr.replied_at is not null) as replies,
-              greatest(c.updated_at, coalesce(r.sent_at, c.updated_at), coalesce(r.selected_at, c.updated_at)) as updated_at
+              greatest(c.updated_at, coalesce(r.sent_at, c.updated_at), coalesce(r.selected_at, c.updated_at),
+                       coalesce((select max(rr.replied_at) from request_recipients rr where rr.request_id = r.id), c.updated_at)) as updated_at
          from conversations c left join requests r on r.conversation_id = c.id
         where c.org_id = $1 and c.role = 'requester' and c.turns > 0
         order by updated_at desc limit 100`,

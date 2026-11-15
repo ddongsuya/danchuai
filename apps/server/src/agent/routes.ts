@@ -66,9 +66,19 @@ const view = (c: Conversation) => ({
   missing: missingFields(c.sheet),
   question: c.question,
   summary: c.summary,
-  draft: c.draft && { body: c.draft.body, dropped: c.draft.dropped, version: c.draft.version },
+  draft: c.draft && { body: c.draft.body, dropped: c.draft.dropped, version: c.draft.version, sent: c.draft.outboundCreated },
   turns: c.turns,
+  // 이어서 보기용. 같은 조직의 대화 기록만 돌려준다(load가 조직을 확인한다).
+  messages: c.messages.map((m) => ({ role: m.role, text: m.role === "assistant" ? stripNotes(m.content) : m.content })).filter((m) => m.text),
 });
+
+/** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
+const stripNotes = (t: string) =>
+  t
+    .split("\n")
+    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|응답 없음|질문: .*)\)$/.test(l.trim()))
+    .join("\n")
+    .trim();
 
 /** 최근 기록만 보내고, 첫 메시지는 사용자 글이 되도록 맞춘다. */
 function windowed(messages: AgentMessage[]): AgentMessage[] {
@@ -220,6 +230,7 @@ export function agentRoutes(deps: AgentDeps) {
     let recipients: string[];
     let text = d.body;
     let kind: OutboundDraft["kind"];
+    let requestId: string | null = conv.requestId;
     if (conv.role === "requester") {
       if (!parsed.data.recipientOrgIds || parsed.data.quoteLines) return c.json({ error: "bad_request" }, 400);
       if (parsed.data.durationWeeks !== undefined) return c.json({ error: "bad_request" }, 400);
@@ -230,6 +241,7 @@ export function agentRoutes(deps: AgentDeps) {
         if (!(await deps.market.areLabs(recipients))) return c.json({ error: "unknown_recipient" }, 400);
         const r = await deps.market.ensureRequest({ conversationId: conv.id, orgId: s.orgId, sheet: conv.sheet });
         if (r === "closed") return c.json({ error: "request_closed" }, 409);
+        requestId = r;
       }
     } else {
       if (parsed.data.recipientOrgIds) return c.json({ error: "bad_request" }, 400);
@@ -264,7 +276,10 @@ export function agentRoutes(deps: AgentDeps) {
     }
     await deps.conversations.save({ ...conv, draft: { ...d, outboundCreated: true } });
     return c.json(
-      { outbound: drafts.map((od) => ({ id: od.id, counterpartyOrgId: od.counterpartyOrgId, text: od.text, epoch: od.epoch, textHash: od.textHash })) },
+      {
+        requestId,
+        outbound: drafts.map((od) => ({ id: od.id, counterpartyOrgId: od.counterpartyOrgId, text: od.text, epoch: od.epoch, textHash: od.textHash })),
+      },
       201,
     );
   });

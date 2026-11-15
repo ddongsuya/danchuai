@@ -38,6 +38,8 @@ export interface ChatState {
   error: ChatErrorCode | null;
   /** 마지막으로 보낸 글. 오류가 나면 다시 보내기에 쓴다. */
   lastText: string | null;
+  /** 이 초안은 이미 보내기 장부에 올라갔다(다시 보내지 않는다) */
+  draftSent: boolean;
 }
 
 export const initialChat: ChatState = {
@@ -54,10 +56,22 @@ export const initialChat: ChatState = {
   draft: null,
   error: null,
   lastText: null,
+  draftSent: false,
 };
 
 export type ChatAction =
-  | { type: 'opened'; id: string; role: 'requester' | 'cro'; sheet: RequestSheet; missing: string[] }
+  | {
+      type: 'opened';
+      id: string;
+      role: 'requester' | 'cro';
+      sheet: RequestSheet;
+      missing: string[];
+      /** 이어서 열 때 서버가 돌려준 기록 */
+      messages?: { role: 'user' | 'assistant'; text: string }[];
+      question?: AgentQuestion | null;
+      summary?: string[] | null;
+      draft?: { body: string; dropped: number; version: number; sent?: boolean } | null;
+    }
   | { type: 'open_failed'; code: ChatErrorCode }
   | { type: 'send'; text: string; at: number }
   | { type: 'server'; event: string; data: any }
@@ -82,7 +96,20 @@ function settle(s: ChatState, at: number): ChatState {
 export function chatReducer(s: ChatState, a: ChatAction): ChatState {
   switch (a.type) {
     case 'opened':
-      return { ...s, conversationId: a.id, role: a.role, sheet: a.sheet, missing: a.missing, status: 'idle', error: null };
+      return {
+        ...s,
+        conversationId: a.id,
+        role: a.role,
+        sheet: a.sheet,
+        missing: a.missing,
+        status: 'idle',
+        error: null,
+        messages: (a.messages ?? []).map((m, i) => ({ id: `h${i}`, role: m.role === 'user' ? 'user' : 'agent', text: m.text })),
+        question: a.question ?? null,
+        summary: a.summary ?? null,
+        draft: a.draft ? { body: a.draft.body, dropped: a.draft.dropped, version: a.draft.version } : null,
+        draftSent: Boolean(a.draft?.sent),
+      };
     case 'open_failed':
       return { ...s, status: 'idle', error: a.code };
     case 'send':
@@ -109,7 +136,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
         case 'summary':
           return { ...s, summary: d.points ?? null };
         case 'draft':
-          return { ...s, draft: { body: d.body, dropped: d.dropped ?? 0, version: d.version } };
+          return { ...s, draft: { body: d.body, dropped: d.dropped ?? 0, version: d.version }, draftSent: false };
         case 'error':
           return { ...s, error: asCode(d.code) };
         default:

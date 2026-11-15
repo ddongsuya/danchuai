@@ -12,6 +12,7 @@ import { Composer } from '@/components/chat/Composer';
 import { AgentText, FoldedLog, StepLog, UserMessage, WaitingLine } from '@/components/chat/Messages';
 import { PendingRow } from '@/components/chat/PendingRow';
 import { QuestionCard } from '@/components/chat/QuestionCard';
+import { RequestProgress } from '@/components/request/RequestProgress';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, space, tokens } from '@/constants/theme';
 import { questionSet, recipients, replies, replyDue, requestBody, requesterAsk, requestTitle } from '@/data/demo';
@@ -21,10 +22,15 @@ import { bodyPasses } from '@/lib/guard';
 type Stage = 'ask' | 'approve' | 'compare';
 const stages: Stage[] = ['ask', 'approve', 'compare'];
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function RequesterRequest() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  // 서버가 연결돼 있으면 새 요청은 실제 대화로 연다. 그 밖에는 시연 화면.
-  if (id === 'new' && agentConfigured()) return <LiveChat role="requester" title="새 요청" recipients={recipients} />;
+  const { id, conv } = useLocalSearchParams<{ id: string; conv?: string }>();
+  // 서버가 연결돼 있으면 새 요청(또는 이어 쓰기)은 실제 대화, 보낸 요청은 진행 화면. 그 밖에는 시연 화면.
+  if (agentConfigured()) {
+    if (id === 'new') return <LiveChat key={conv ?? 'new'} role="requester" title={conv ? '요청' : '새 요청'} conversationId={conv && UUID.test(conv) ? conv : undefined} />;
+    if (UUID.test(id)) return <RequestProgress requestId={id} />;
+  }
   return <DemoRequest />;
 }
 
