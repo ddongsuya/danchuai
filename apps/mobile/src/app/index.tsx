@@ -16,6 +16,7 @@ export default function RequesterInbox() {
       switchTo="/lab"
       switchLabel="기관 화면으로 바꾸기"
       newLabel="새 요청"
+      newHref={{ pathname: '/requester/[id]', params: { id: 'new' } }}
     />
   );
 }

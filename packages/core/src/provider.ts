@@ -19,7 +19,14 @@ export interface CompletionRequest {
   messages: AgentMessage[];
   tools?: AgentToolSpec[];
   maxTokens?: number;
+  /** 답 글자가 오는 대로 부른다. 스트리밍을 못 하는 공급사는 끝에 한 번 부른다. */
+  onText?: (delta: string) => void;
+  /** 앱이 연결을 끊으면 공급사 호출도 멈춘다(서버의 AbortSignal). */
+  signal?: { readonly aborted: boolean };
 }
+
+/** 공급사마다 다른 끝난 이유를 셋으로 줄인다. */
+export type StopKind = "done" | "truncated" | "refused";
 
 export interface ToolCall {
   id: string;
@@ -30,9 +37,17 @@ export interface ToolCall {
 export interface CompletionResult {
   text: string;
   toolCalls: ToolCall[];
-  usage: { inputTokens: number; outputTokens: number };
+  usage: Usage;
+  stop: StopKind;
   provider: ProviderName;
   model: string;
+}
+
+export interface Usage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
 }
 
 export interface LlmProvider {

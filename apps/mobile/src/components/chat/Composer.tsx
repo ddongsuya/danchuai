@@ -4,11 +4,11 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, space, tokens } from '@/constants/theme';
 
-export function Composer({ onSend }: { onSend?: (text: string) => void }) {
+export function Composer({ onSend, disabled }: { onSend?: (text: string) => void; disabled?: boolean }) {
   const [text, setText] = useState('');
-  const ready = text.trim().length > 0;
+  const ready = text.trim().length > 0 && !disabled;
   return (
     <View style={styles.box}>
       <TextInput

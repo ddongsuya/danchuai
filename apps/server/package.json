@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@danchuai/core": "*",
     "@hono/node-server": "^2.1.8",
     "hono": "^4.13.18",

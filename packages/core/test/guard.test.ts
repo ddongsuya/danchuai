@@ -40,3 +40,12 @@ describe("문장 점검", () => {
     expect(r.kept).toEqual(["회복군은 필요 없어요.", "다음 단계로 가요."]);
   });
 });
+
+describe("한국식 금액 단위", () => {
+  it("천만·백만·KRW 표기도 금액으로 본다", () => {
+    for (const t of ["적정 단가는 8천만 원 정도", "5백만원 추가", "약 3천억", "KRW 1,000,000"]) {
+      expect(checkSentence(t).some((i) => i.kind === "money")).toBe(true);
+    }
+    expect(checkSentence("4주 반복투여, 회복 2주").some((i) => i.kind === "money")).toBe(false);
+  });
+});

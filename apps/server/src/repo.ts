@@ -2,6 +2,8 @@ import type { ApprovalDecision, OutboundDraft } from "@danchuai/core";
 
 export interface OutboundRepo {
   get(id: string): Promise<OutboundDraft | null>;
+  /** 새 초안. 같은 id가 있으면 실패한다. */
+  insert(d: OutboundDraft): Promise<void>;
   /** 기대한 판(epoch)과 상태일 때만 저장한다. 동시에 두 요청이 와도 하나만 이긴다. */
   saveIf(next: OutboundDraft, expect: { epoch: number; status: OutboundDraft["status"] }): Promise<boolean>;
   saveDecision(d: ApprovalDecision): Promise<void>;
@@ -14,6 +16,10 @@ export class MemoryOutboundRepo implements OutboundRepo {
   private decisions: ApprovalDecision[] = [];
 
   seed(d: OutboundDraft) {
+    this.drafts.set(d.id, { ...d });
+  }
+  async insert(d: OutboundDraft) {
+    if (this.drafts.has(d.id)) throw new Error("duplicate_draft");
     this.drafts.set(d.id, { ...d });
   }
   async get(id: string) {

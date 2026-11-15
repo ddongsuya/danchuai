@@ -86,8 +86,20 @@ describe("보내기 API", () => {
     expect((await post("/v1/outbound/d1/decision", "Bearer req", { decision: "yes" })).status).toBe(400);
   });
 
-  it("AI 공급사 설정이 없으면 에이전트 대화는 503", async () => {
-    const { post } = setup();
-    expect((await post("/v1/agent/turn", "Bearer req", {})).status).toBe(503);
+});
+
+describe("개발용 토큰 인증", async () => {
+  const { devAuthFromEnv } = await import("../src/auth");
+  it("운영에서는 켜지지 않는다", () => {
+    expect(devAuthFromEnv({ NODE_ENV: "production", AUTH_DEV_TOKENS: "aaaaaaaaaaaaaaaa:requester:o" })).toBeNull();
+  });
+  it("짧은 토큰·모르는 역할은 거부한다", () => {
+    expect(() => devAuthFromEnv({ AUTH_DEV_TOKENS: "short:requester:o" })).toThrow();
+    expect(() => devAuthFromEnv({ AUTH_DEV_TOKENS: "aaaaaaaaaaaaaaaa:admin:o" })).toThrow();
+  });
+  it("토큰으로 세션을 찾는다", async () => {
+    const a = devAuthFromEnv({ AUTH_DEV_TOKENS: "aaaaaaaaaaaaaaaa:cro:cro-a" })!;
+    expect(await a.resolve("Bearer aaaaaaaaaaaaaaaa")).toEqual({ userId: "dev-cro", orgId: "cro-a", role: "cro" });
+    expect(await a.resolve("Bearer nope")).toBeNull();
   });
 });

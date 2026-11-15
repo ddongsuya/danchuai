@@ -29,9 +29,10 @@ interface Props {
   switchTo: Href;
   switchLabel: string;
   newLabel: string;
+  newHref?: Href;
 }
 
-export function InboxScreen({ items, filters, hrefOf, switchTo, switchLabel, newLabel }: Props) {
+export function InboxScreen({ items, filters, hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
   const [active, setActive] = useState(0);
   const shown = useMemo(() => {
     const m = filters[active]?.match;
@@ -104,7 +105,7 @@ export function InboxScreen({ items, filters, hrefOf, switchTo, switchLabel, new
           );
         }}
       />
-      <Press label={newLabel} style={styles.fab}>
+      <Press label={newLabel} onPress={newHref ? () => router.push(newHref) : undefined} style={styles.fab}>
         <ChatCircle size={20} weight="bold" color={tokens.onInk} />
         <Txt variant="label" color={tokens.onInk} style={{ fontFamily: fonts.semibold }}>
           {newLabel}

@@ -4,17 +4,28 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { LiveChat } from '@/components/agent/LiveChat';
 import { ApprovalCard } from '@/components/chat/ApprovalCard';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, FoldedLog, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuoteDraftCard } from '@/components/chat/QuoteDraftCard';
 import { labAsk, labDurationWeeks, labQuoteLines, requestTitle } from '@/data/demo';
+import { agentConfigured } from '@/lib/agentClient';
 import { bodyPasses } from '@/lib/guard';
 
 type Stage = 'draft' | 'approve';
 
 export default function LabRequest() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // 서버가 연결돼 있으면 받은 요청을 실제 대화로 연다. 견적 항목 금액은 담당자 입력값, 합계는 코드 계산.
+  if (agentConfigured() && id === 'rat-4w') {
+    return <LiveChat role="cro" title={requestTitle[id] ?? '요청'} requestId={id} quoteLines={labQuoteLines} />;
+  }
+  return <DemoLab />;
+}
+
+function DemoLab() {
   const { id, stage: initial } = useLocalSearchParams<{ id: string; stage?: string }>();
   const [stage, setStage] = useState<Stage>(initial === 'approve' ? 'approve' : 'draft');
   const title = requestTitle[id] ?? '요청';

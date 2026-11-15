@@ -4,6 +4,7 @@ import { CheckCircle } from 'phosphor-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { LiveChat } from '@/components/agent/LiveChat';
 import { ApprovalCard } from '@/components/chat/ApprovalCard';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { CompareTable } from '@/components/chat/CompareTable';
@@ -14,12 +15,20 @@ import { QuestionCard } from '@/components/chat/QuestionCard';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, space, tokens } from '@/constants/theme';
 import { questionSet, recipients, replies, replyDue, requestBody, requesterAsk, requestTitle } from '@/data/demo';
+import { agentConfigured } from '@/lib/agentClient';
 import { bodyPasses } from '@/lib/guard';
 
 type Stage = 'ask' | 'approve' | 'compare';
 const stages: Stage[] = ['ask', 'approve', 'compare'];
 
 export default function RequesterRequest() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // 서버가 연결돼 있으면 새 요청은 실제 대화로 연다. 그 밖에는 시연 화면.
+  if (id === 'new' && agentConfigured()) return <LiveChat role="requester" title="새 요청" recipients={recipients} />;
+  return <DemoRequest />;
+}
+
+function DemoRequest() {
   const { id, stage: initial } = useLocalSearchParams<{ id: string; stage?: string }>();
   const [stage, setStage] = useState<Stage>(stages.includes(initial as Stage) ? (initial as Stage) : 'ask');
   const title = requestTitle[id] ?? '새 요청';

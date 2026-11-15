@@ -10,6 +10,8 @@ import { z } from "zod";
 import type { AuthResolver, Session } from "./auth";
 import type { OutboundRepo } from "./repo";
 import type { Transport } from "./transport";
+import { agentRoutes } from "./agent/routes";
+import { MemoryConversationRepo, MemoryRequestDirectory, type ConversationRepo, type RequestDirectory } from "./agent/store";
 
 export interface Deps {
   auth: AuthResolver;
@@ -17,6 +19,8 @@ export interface Deps {
   transport: Transport;
   /** 없으면 에이전트 대화는 503 */
   provider?: LlmProvider;
+  conversations?: ConversationRepo;
+  requests?: RequestDirectory;
 }
 
 type Env = { Variables: { session: Session } };
@@ -92,11 +96,15 @@ export function createApp(deps: Deps) {
     return c.json({ status: done.status });
   });
 
-  app.post("/v1/agent/turn", async (c) => {
-    if (!deps.provider) return c.json({ error: "agent_unavailable" }, 503);
-    // 4~5단계에서 대화 저장, 읽기 도구, 문장 점검을 붙인다.
-    return c.json({ error: "not_implemented" }, 501);
-  });
+  app.route(
+    "/v1/agent",
+    agentRoutes({
+      provider: deps.provider,
+      conversations: deps.conversations ?? new MemoryConversationRepo(),
+      requests: deps.requests ?? new MemoryRequestDirectory(),
+      outbound: deps.outbound,
+    }),
+  );
 
   return app;
 }
