@@ -1,6 +1,22 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { CompletionRequest, CompletionResult, LlmProvider, StopKind } from "@danchuai/core";
 
+// strict 도구 스키마가 받지 않는 제약(글자 수·개수·숫자 범위)은 API로 보내기 전에 뺀다.
+// 같은 제약은 서버의 zod 검사(agent/tools.ts)가 그대로 맡는다.
+const UNSUPPORTED = new Set(["minLength", "maxLength", "minItems", "maxItems", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "pattern"]);
+export function toStrictSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(toStrictSchema);
+  if (!node || typeof node !== "object") return node;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node)) {
+    if (UNSUPPORTED.has(k) && typeof v !== "object") continue;
+    out[k] = k === "properties" || k === "$defs" || k === "definitions"
+      ? Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([pk, pv]) => [pk, toStrictSchema(pv)]))
+      : toStrictSchema(v);
+  }
+  return out;
+}
+
 // Claude Messages API(공식 SDK). 한 턴에 한 번 부르고, 답 글자는 스트리밍으로 흘린다.
 // 도구 입력은 이 파일이 아니라 서버의 도구 해석(agent/tools.ts)에서 zod로 다시 검사한다.
 export class AnthropicProvider implements LlmProvider {
@@ -29,7 +45,7 @@ export class AnthropicProvider implements LlmProvider {
         tools: req.tools?.map((t) => ({
           name: t.name,
           description: t.description,
-          input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
+          input_schema: toStrictSchema(t.inputSchema) as Anthropic.Tool.InputSchema,
           strict: true,
           eager_input_streaming: true,
         })),

@@ -184,7 +184,13 @@ export function agentRoutes(deps: AgentDeps) {
         await send("done", { usage: result.usage, turns: saved.turns });
       } catch (err) {
         // 본문·프롬프트는 남기지 않는다. 오류 종류만.
-        console.error("agent_turn_failed", err instanceof Error ? err.name : "unknown");
+        const e = err as { status?: unknown; error?: { error?: { type?: unknown } } };
+        console.error(
+          "agent_turn_failed",
+          err instanceof Error ? err.name : "unknown",
+          typeof e.status === "number" ? e.status : "",
+          typeof e.error?.error?.type === "string" ? e.error.error.type : "",
+        );
         await writes.catch(() => undefined);
         await send("error", { code: "provider_error" });
       } finally {

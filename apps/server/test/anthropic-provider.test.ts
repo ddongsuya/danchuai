@@ -76,3 +76,18 @@ describe("AnthropicProvider (SDK)", () => {
     expect(r.toolCalls).toEqual([]);
   });
 });
+
+describe("toStrictSchema", () => {
+  it("strict 도구 스키마가 받지 않는 제약을 뺀다", async () => {
+    const { toStrictSchema } = await import("../src/providers/anthropic");
+    const { TOOLS } = await import("../src/agent/tools");
+    const all = JSON.stringify([...TOOLS.requester, ...TOOLS.cro].map((t) => toStrictSchema(t.inputSchema)));
+    for (const k of ["minLength", "maxLength", "minItems", "maxItems"]) expect(all).not.toContain(`"${k}"`);
+    expect(all).toContain('"additionalProperties":false');
+    // 속성 이름이 제약 이름과 같아도 지우지 않는다.
+    expect(toStrictSchema({ type: "object", properties: { pattern: { type: "string", maxLength: 3 } } })).toEqual({
+      type: "object",
+      properties: { pattern: { type: "string" } },
+    });
+  });
+});
