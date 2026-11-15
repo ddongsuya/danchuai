@@ -47,7 +47,7 @@ export function Composer({ onSend, disabled }: { onSend?: (text: string) => void
 
 const styles = StyleSheet.create({
   box: { marginHorizontal: space.md, marginTop: 10, backgroundColor: tokens.surface, borderRadius: 26, borderWidth: 1, borderColor: tokens.border, paddingTop: 12, paddingRight: 10, paddingBottom: 10, paddingLeft: space.lg },
-  input: { fontFamily: fonts.regular, fontSize: 15, color: tokens.text, minHeight: 24, maxHeight: 120, paddingVertical: 2, marginBottom: 6 },
+  input: { fontFamily: fonts.regular, fontSize: 16, color: tokens.text, minHeight: 24, maxHeight: 120, paddingVertical: 2, marginBottom: 6 },
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   send: { width: 40, height: 40, borderRadius: 20, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
 });
