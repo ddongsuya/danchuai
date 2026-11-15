@@ -13,3 +13,4 @@ coverage/
 graphify-out/
 replica/
 .vercel/
+!apps/mobile/.env.production
