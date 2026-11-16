@@ -33,6 +33,8 @@ export interface RequesterListItem {
   recipients: number;
   replies: number;
   updatedAt: string;
+  /** 단추 요청만: 비교표가 열렸는지(열리기 전에는 기관명·금액 없음) */
+  compareOpen?: boolean;
 }
 
 export interface RequesterDetail {

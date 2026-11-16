@@ -61,7 +61,7 @@ export function DanchuLab({ no }: { no: string }) {
         <Row k="다음 할 일" v={it.next} line />
         {it.due && <Row k="기한" v={it.due.slice(0, 10).replace(/-/g, '.')} line />}
         {it.money.map(([k, v]) => (
-          <Row key={k} k={k} v={v} line />
+          <Row key={k} k={k} v={v.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3')} line />
         ))}
       </View>
 

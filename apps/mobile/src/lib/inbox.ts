@@ -21,6 +21,17 @@ export function iconOf(title: string): InboxItem['icon'] {
 }
 
 export function requesterItem(r: RequesterListItem, now = new Date()): InboxItem {
+  // 단추 요청: 비교표가 열리기 전에는 제출 수만, 열린 뒤에 회신 도착
+  if (r.compareOpen !== undefined && r.status === 'sent') {
+    return {
+      id: r.requestId ?? `c:${r.conversationId}`,
+      title: r.title,
+      sub: r.compareOpen ? '비교표 열림' : `제출 ${r.replies}/${r.recipients}곳`,
+      status: r.compareOpen ? 'replied' : 'sent',
+      when: dayLabel(r.updatedAt, now),
+      icon: iconOf(r.title),
+    };
+  }
   const status: InboxItem['status'] =
     r.status === 'sent' ? (r.replies > 0 ? 'replied' : 'sent') : r.status === 'selected' ? 'selected' : r.status === 'closed' ? 'closed' : r.status;
   const sub =

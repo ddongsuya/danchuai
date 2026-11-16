@@ -43,3 +43,11 @@ describe('단추 받은 요청 한 줄', () => {
     expect(danchuLabItem({ ...{ no: 'DC-2026-0002', title: 't', categories: '', client: '회사', clientHint: '', stage: '계약 진행', next: '계약 결과 보고', due: null, steps: [], money: [] }, group: 'won' }).status).toBe('selected');
   });
 });
+
+describe('단추 보낸 요청 한 줄', () => {
+  it('비교표 열리기 전에는 제출 수만, 열린 뒤 회신 도착', () => {
+    const base = { conversationId: '', requestId: 'DC-2026-0001', title: '물질', status: 'sent' as const, recipients: 4, replies: 2, updatedAt: '2026-11-12T00:00:00Z' };
+    expect(requesterItem({ ...base, compareOpen: false })).toMatchObject({ id: 'DC-2026-0001', status: 'sent', sub: '제출 2/4곳' });
+    expect(requesterItem({ ...base, compareOpen: true })).toMatchObject({ status: 'replied', sub: '비교표 열림' });
+  });
+});

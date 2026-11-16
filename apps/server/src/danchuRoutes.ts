@@ -85,6 +85,7 @@ export function danchuMarketRoutes(deps: { api: DanchuApi; market?: MarketRepo }
       recipients: x.joined,
       replies: x.submitted,
       updatedAt: x.createdAt,
+      compareOpen: x.compareOpen,
     }));
     const items = [...drafts, ...sent].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     return c.json({ items });

@@ -27,6 +27,8 @@ export interface RequesterListItem {
   recipients: number;
   replies: number;
   updatedAt: string;
+  /** 단추 요청만: 비교표가 열렸는지 */
+  compareOpen?: boolean;
 }
 
 export interface RequesterRecipient {
