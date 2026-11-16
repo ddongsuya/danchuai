@@ -34,3 +34,12 @@ describe('표시 도우미', () => {
     expect(initialOf('')).toBe('?');
   });
 });
+
+describe('단추 받은 요청 한 줄', () => {
+  it('묶음으로 상태를 정하고 다음 할 일·기한을 그대로 쓴다', async () => {
+    const { danchuLabItem } = await import('./inbox');
+    const it1 = danchuLabItem({ no: 'DC-2026-0001', title: '독성 요청', categories: '독성', client: null, clientHint: '바이오텍', group: 'decide', stage: '참여 결정 전', next: '참여할지 정하기', due: '2026-11-20', steps: [], money: [] });
+    expect(it1).toMatchObject({ id: 'DC-2026-0001', status: 'new', sub: '참여할지 정하기, 11.20까지', when: '참여 결정 전' });
+    expect(danchuLabItem({ ...{ no: 'DC-2026-0002', title: 't', categories: '', client: '회사', clientHint: '', stage: '계약 진행', next: '계약 결과 보고', due: null, steps: [], money: [] }, group: 'won' }).status).toBe('selected');
+  });
+});

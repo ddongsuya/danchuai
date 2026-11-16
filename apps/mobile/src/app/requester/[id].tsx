@@ -3,14 +3,17 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { LiveChat } from '@/components/agent/LiveChat';
 import { NotFound } from '@/components/chat/NotFound';
+import { DanchuRequest } from '@/components/request/DanchuRequest';
 import { RequestProgress } from '@/components/request/RequestProgress';
 import { agentConfigured } from '@/lib/agentClient';
 import { isUuid } from '@/lib/format';
+import { RFQ_NO } from '@/lib/marketClient';
 
 export default function RequesterRequest() {
   const { id, conv, seed } = useLocalSearchParams<{ id: string; conv?: string; seed?: string }>();
   if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" />;
   if (id === 'new') return <LiveChat key={conv ?? 'new'} role="requester" title={conv ? '요청' : '새 요청'} conversationId={conv && isUuid(conv) ? conv : undefined} seed={!conv && seed ? seed.slice(0, 1000) : undefined} />;
+  if (RFQ_NO.test(id)) return <DanchuRequest no={id} />;
   if (isUuid(id)) return <RequestProgress requestId={id} />;
   return <NotFound label="요청을 찾을 수 없어요" />;
 }

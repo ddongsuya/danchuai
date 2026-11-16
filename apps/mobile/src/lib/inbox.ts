@@ -1,6 +1,6 @@
 // 요청함 한 줄. 의뢰자와 기관이 같은 틀을 쓰고 상태 이름만 다르다. 서버 목록 순서(최근 순)는 바꾸지 않는다.
 import { dayLabel } from './format';
-import type { LabInboxItem, RequesterListItem } from './marketClient';
+import type { DanchuLabItem, LabInboxItem, RequesterListItem } from './marketClient';
 
 export type InboxStatus = 'new' | 'viewed' | 'waiting' | 'drafting' | 'sent' | 'replied' | 'selected' | 'not_selected' | 'closed';
 
@@ -57,4 +57,19 @@ export function labItem(r: LabInboxItem, now = new Date()): InboxItem {
             ? `회신 기한 ${r.dueDate}`
             : '회신 기한 미정';
   return { id: r.requestId, title: r.title, sub, status: LAB_STATUS[r.status], when: dayLabel(r.receivedAt, now), icon: iconOf(r.title) };
+}
+
+const DANCHU_LAB: Record<DanchuLabItem['group'], InboxItem['status']> = {
+  todo: 'new',
+  decide: 'new',
+  work: 'viewed',
+  sent: 'sent',
+  won: 'selected',
+  done: 'closed',
+};
+
+/** 단추 받은 요청 한 줄. 상태 이름·다음 할 일은 단추 진행판 값 그대로 */
+export function danchuLabItem(r: DanchuLabItem): InboxItem {
+  const sub = r.due ? `${r.next}, ${r.due.slice(5).replace('-', '.')}까지` : r.next;
+  return { id: r.no, title: r.title, sub, status: DANCHU_LAB[r.group], when: r.stage, icon: iconOf(`${r.title} ${r.categories}`) };
 }

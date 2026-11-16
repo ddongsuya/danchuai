@@ -38,15 +38,15 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
   return json as T;
 }
 
-export const fetchMe = () => call<{ userId: string; email: string | null; org: AccountOrg | null }>('/me');
-export const createOrg = (body: { kind: 'requester' | 'cro'; name: string; displayName: string }) => call<{ org: AccountOrg }>('/org', body);
-export const joinOrg = (body: { code: string; displayName: string }) => call<{ org: AccountOrg }>('/join', body);
-export const createInvite = () => call<{ code: string; expiresAt: string }>('/invites', {});
-
-export interface AccountMember {
-  name: string | null;
-  role: 'owner' | 'member';
-  me: boolean;
+export interface Me {
+  /** danchu: 단추 계정으로 로그인(연동 2단계) */
+  source?: 'danchu';
+  userId: string;
+  email: string | null;
+  org: AccountOrg | null;
+  consent?: { version: string; agreedAt: string } | null;
+  consentVersion?: string;
 }
-export const fetchMembers = () => call<{ members: AccountMember[] }>('/members').then((r) => r.members);
-export const renameMe = (displayName: string) => call<{ displayName: string }>('/me', { displayName });
+export const fetchMe = () => call<Me>('/me');
+/** 국외 이전·AI 처리 동의. 서버가 판(version)을 확인한다 */
+export const agreeConsent = (version: string) => call<{ consent: { version: string; agreedAt: string } }>('/consent', { version });

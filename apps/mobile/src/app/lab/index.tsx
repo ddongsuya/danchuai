@@ -5,22 +5,22 @@ import { useMemo } from 'react';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { agentConfigured } from '@/lib/agentClient';
-import { labItem } from '@/lib/inbox';
-import { fetchLabInbox } from '@/lib/marketClient';
+import { danchuLabItem } from '@/lib/inbox';
+import { fetchDanchuLabInbox } from '@/lib/marketClient';
 import { useAuth } from '@/lib/session';
 
 const FILTERS = [
   { label: '전체', match: null },
-  { label: '새 요청', match: ['new' as const] },
-  { label: '회신 완료', match: ['sent' as const] },
+  { label: '할 일', match: ['new' as const, 'viewed' as const] },
+  { label: '제출', match: ['sent' as const] },
   { label: '선정', match: ['selected' as const] },
 ];
 
 export default function LabInbox() {
   const { status, org } = useAuth();
   const live = agentConfigured();
-  const { state, reload } = useRemote(fetchLabInbox, live && (status === 'ready' || status === 'disabled'));
-  const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => labItem(r)) : []), [state]);
+  const { state, reload } = useRemote(fetchDanchuLabInbox, live && (status === 'ready' || status === 'disabled'));
+  const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => danchuLabItem(r)) : []), [state]);
 
   if (org?.kind === 'requester') return <Redirect href="/" />;
   return (

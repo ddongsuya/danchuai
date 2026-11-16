@@ -75,6 +75,46 @@ export interface LabDetail {
 
 const id = (v: string) => encodeURIComponent(v);
 
+/* 단추 연동(연동 2단계): 보낸 요청과 받은 요청은 단추에서 읽는다. 공개 규칙은 단추가 적용해 보낸다. */
+export const RFQ_NO = /^DC-\d{4}-\d{4,6}$/;
+
+export interface DanchuRequest {
+  no: string;
+  title: string;
+  categories: string[];
+  status: string;
+  createdAt: string;
+  joinBy: string | null;
+  replyBy: string | null;
+  sent: number;
+  joined: number;
+  submitted: number;
+  compareOpen: boolean;
+  selected: boolean;
+}
+
+export type DanchuCompare =
+  | { open: false; joined: number; submitted: number; replyBy: string | null }
+  | { open: true; columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[] };
+
+export interface DanchuLabItem {
+  no: string;
+  title: string;
+  categories: string;
+  client: string | null;
+  clientHint: string;
+  group: 'todo' | 'decide' | 'work' | 'sent' | 'won' | 'done';
+  stage: string;
+  next: string;
+  due: string | null;
+  steps: { label: string; at: string; state: 'done' | 'now' | 'next' }[];
+  money: [string, string][];
+}
+
+export const fetchDanchuRequest = (no: string) => call<{ request: DanchuRequest; compare: DanchuCompare }>('requester', `/v1/requests/${id(no)}`);
+export const fetchDanchuLabInbox = () => call<{ items: DanchuLabItem[] }>('cro', '/v1/lab/requests').then((r) => r.items);
+export const fetchDanchuLabRequest = (no: string) => call<{ item: DanchuLabItem }>('cro', `/v1/lab/requests/${id(no)}`).then((r) => r.item);
+
 export const fetchLabs = () => call<{ labs: Lab[] }>('requester', '/v1/labs').then((r) => r.labs);
 export const fetchRequests = () => call<{ items: RequesterListItem[] }>('requester', '/v1/requests').then((r) => r.items);
 export const fetchRequest = (requestId: string) => call<RequesterDetail>('requester', `/v1/requests/${id(requestId)}`);

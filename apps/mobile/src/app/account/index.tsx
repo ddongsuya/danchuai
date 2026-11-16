@@ -1,9 +1,9 @@
-// 계정(시안 v4 B2): 프로필, 조직·구성원·초대, 내 정보, 로그아웃.
+// 계정: 단추 계정 정보(이름·메일·소속)와 로그아웃. 이름·비밀번호·담당자 관리는 단추에서 한다(연동 2단계).
 import Constants from 'expo-constants';
-import { router, type Href } from 'expo-router';
-import { Buildings, CaretRight, Key, User, UserPlus, Users, X } from 'phosphor-react-native';
-import { useCallback, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ArrowSquareOut, Buildings, ShieldCheck, X } from 'phosphor-react-native';
+import { useState, type ReactNode } from 'react';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
@@ -11,20 +11,17 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
-import { useRemote } from '@/hooks/useRemote';
-import { fetchMembers } from '@/lib/accountClient';
+import { DANCHU_URL } from '@/lib/danchuLinks';
 import { initialOf } from '@/lib/format';
 import { useAuth } from '@/lib/session';
 
 export default function Account() {
   const { status, session, org, signOut } = useAuth();
   const signedIn = status === 'ready';
-  const load = useCallback(() => fetchMembers(), []);
-  const members = useRemote(load, signedIn);
   const [leaving, setLeaving] = useState(false);
   const name = org?.displayName ?? '이름 없음';
   const email = session?.user.email ?? '';
-  const count = members.state.kind === 'ready' ? `${members.state.data.length}명` : '';
+  const manage = `${DANCHU_URL}/${org?.kind === 'cro' ? 'cro' : 'app'}/profile`;
 
   const logout = async () => {
     setLeaving(true);
@@ -59,20 +56,12 @@ export default function Account() {
         </View>
 
         <Txt variant="caption" color={tokens.muted} style={styles.gh}>
-          조직
+          단추 계정
         </Txt>
         <View style={styles.grp}>
-          <Item icon={<Buildings size={20} color={tokens.muted} />} label={org?.name ?? '조직 없음'} right={org ? (org.kind === 'cro' ? '기관' : '의뢰자') : undefined} />
-          <Item icon={<Users size={20} color={tokens.muted} />} label="구성원" right={count} href={signedIn ? '/account/members' : undefined} line />
-          {org?.memberRole === 'owner' && <Item icon={<UserPlus size={20} color={tokens.muted} />} label="초대 코드" href="/invite" line />}
-        </View>
-
-        <Txt variant="caption" color={tokens.muted} style={styles.gh}>
-          내 정보
-        </Txt>
-        <View style={styles.grp}>
-          <Item icon={<User size={20} color={tokens.muted} />} label="이름" href={signedIn ? '/account/name' : undefined} />
-          <Item icon={<Key size={20} color={tokens.muted} />} label="비밀번호" href={signedIn ? '/account/password' : undefined} line />
+          <Item icon={<Buildings size={20} color={tokens.muted} />} label={org?.kind === 'cro' ? org.name : '의뢰자'} right={org?.kind === 'cro' ? '기관' : undefined} />
+          <Item icon={<ShieldCheck size={20} color={tokens.muted} />} label="개인정보 국외 이전" right="동의함" line />
+          <Item icon={<ArrowSquareOut size={20} color={tokens.muted} />} label="단추에서 계정 관리" onPress={() => Linking.openURL(manage)} line />
         </View>
 
         {signedIn && (
@@ -88,7 +77,7 @@ export default function Account() {
   );
 }
 
-function Item({ icon, label, right, href, line }: { icon: ReactNode; label: string; right?: string; href?: Href; line?: boolean }) {
+function Item({ icon, label, right, onPress, line }: { icon: ReactNode; label: string; right?: string; onPress?: () => void; line?: boolean }) {
   const inner = (
     <>
       {icon}
@@ -100,11 +89,11 @@ function Item({ icon, label, right, href, line }: { icon: ReactNode; label: stri
           {right}
         </Txt>
       ) : null}
-      {href ? <CaretRight size={16} color={tokens.faint} /> : null}
+
     </>
   );
-  return href ? (
-    <Press label={right ? `${label} ${right}` : label} onPress={() => router.push(href)} style={[styles.gi, line && styles.line]}>
+  return onPress ? (
+    <Press label={label} accessibilityRole="link" onPress={onPress} style={[styles.gi, line && styles.line]}>
       {inner}
     </Press>
   ) : (

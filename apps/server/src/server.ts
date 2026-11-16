@@ -13,6 +13,8 @@ import { PgAccountRepo } from "./db/account";
 import { InAppTransport, PgMarketRepo } from "./db/market";
 import { providerFromEnv } from "./providers";
 import { MemoryOutboundRepo } from "./repo";
+import { danchuApi, danchuBaseFromEnv } from "./danchu";
+import { danchuIdentity, MemoryWorkspaceRepo, PgWorkspaceRepo } from "./danchuAuth";
 
 type Env = Record<string, string | undefined>;
 
@@ -22,8 +24,15 @@ export function buildServer(env: Env): Hono {
   const provider = providerFromEnv(env);
   const pool = env.DATABASE_URL ? createPool(env.DATABASE_URL) : null;
   if (env.NODE_ENV === "production" && !pool) throw new Error("운영에서는 DATABASE_URL이 필요해요");
+  // AUTH_SOURCE=danchu: 단추 계정으로 로그인(연동 2단계). 그 밖에는 이전 방식(에이전트 전용 Supabase 로그인).
+  const danchu = env.AUTH_SOURCE === "danchu" ? (() => {
+    const api = danchuApi(danchuBaseFromEnv(env));
+    const workspaces = pool ? new PgWorkspaceRepo(pool) : new MemoryWorkspaceRepo();
+    const id = danchuIdentity(api, workspaces);
+    return { api, workspaces, lookup: id.lookup, resolver: id.resolver };
+  })() : null;
   const auth =
-    (pool && supabaseAuthFromEnv(env, pool)) ?? devAuthFromEnv(env) ?? { resolve: async () => null };
+    danchu?.resolver ?? (pool && supabaseAuthFromEnv(env, pool)) ?? devAuthFromEnv(env) ?? { resolve: async () => null };
 
   const supaKey = pool ? supabaseKeyFromEnv(env) : null;
 
@@ -56,6 +65,7 @@ export function buildServer(env: Env): Hono {
     identity: supaKey ? supabaseIdentity(supaKey) : undefined,
     accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
     market: pool ? new PgMarketRepo(pool) : undefined,
+    danchu: danchu ?? undefined,
   });
 
   const origins = (env.CORS_ORIGINS ?? "http://localhost:8081").split(",");

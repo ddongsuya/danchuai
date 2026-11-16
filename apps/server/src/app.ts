@@ -16,6 +16,10 @@ import type { IdentityResolver } from "./supabaseAuth";
 import { MemoryConversationRepo, MemoryRequestDirectory, type ConversationRepo, type RequestDirectory } from "./agent/store";
 import type { MarketRepo } from "./db/market";
 import { marketRoutes } from "./market";
+import type { DanchuApi } from "./danchu";
+import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
+import type { DanchuError } from "./danchu";
+import { danchuAccountRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
 
 export interface Deps {
   auth: AuthResolver;
@@ -30,6 +34,12 @@ export interface Deps {
   accounts?: AccountRepo;
   /** 요청·회신·선정. 없으면 /v1/labs·/v1/requests·/v1/lab은 503 */
   market?: MarketRepo;
+  /** 단추 연동 모드(연동 2단계). 있으면 계정·역할·기관은 단추에서, 요청 읽기도 단추에서. auth는 이 신원으로 만든 것을 넘긴다. */
+  danchu?: {
+    api: DanchuApi;
+    lookup: (authorization: string | undefined) => Promise<DanchuIdentity | DanchuError>;
+    workspaces: WorkspaceRepo;
+  };
 }
 
 type Env = { Variables: { session: Session } };
@@ -53,7 +63,9 @@ export function createApp(deps: Deps) {
 
   app.get("/health", (c) => c.json({ ok: true }));
 
-  if (deps.identity && deps.accounts) {
+  if (deps.danchu) {
+    app.route("/account", danchuAccountRoutes({ lookup: deps.danchu.lookup, workspaces: deps.danchu.workspaces }));
+  } else if (deps.identity && deps.accounts) {
     app.route("/account", accountRoutes({ identity: deps.identity, repo: deps.accounts }));
   } else {
     app.all("/account/*", (c) => c.json({ error: "not_configured" }, 503));
@@ -65,6 +77,9 @@ export function createApp(deps: Deps) {
     c.set("session", session);
     await next();
   });
+
+  // 국외 이전·AI 처리 동의 전에는 AI 대화를 열지 않는다(단추 연동 모드)
+  if (deps.danchu) app.use("/v1/agent/*", requireConsent(deps.danchu.workspaces));
 
   app.onError((err, c) => {
     if (err instanceof ApprovalError) return c.json({ error: err.code, message: err.message }, STATUS_BY_CODE[err.code]);
@@ -127,7 +142,9 @@ export function createApp(deps: Deps) {
     }),
   );
 
-  if (deps.market) {
+  if (deps.danchu) {
+    app.route("/v1", danchuMarketRoutes({ api: deps.danchu.api, market: deps.market }));
+  } else if (deps.market) {
     app.route("/v1", marketRoutes(deps.market));
   } else {
     for (const p of ["/v1/labs", "/v1/requests", "/v1/requests/*", "/v1/lab/*"]) app.all(p, (c) => c.json({ error: "not_configured" }, 503));

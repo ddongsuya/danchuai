@@ -33,7 +33,7 @@ export default function RootLayout() {
 
 // 로그인 상태에 따라 열 수 있는 화면을 정한다. 로그인이 꺼져 있으면(시연) 앱 화면만 연다.
 function Gate() {
-  const { status, refresh, signOut } = useAuth();
+  const { status, blocked, refresh, signOut } = useAuth();
 
   useEffect(() => {
     if (status !== 'loading') SplashScreen.hideAsync();
@@ -49,17 +49,23 @@ function Gate() {
       </View>
     );
   }
+  if (status === 'blocked') {
+    return (
+      <View style={styles.error}>
+        <Txt variant="body">{blocked === 'org_not_ready' ? '단추에서 기관 승인이 끝나면 쓸 수 있어요.' : '이 계정은 에이전트를 쓰지 않아요.'}</Txt>
+        <Button title="다시 확인" onPress={refresh} />
+        <Button title="로그아웃" kind="ghost" onPress={signOut} />
+      </View>
+    );
+  }
   const inApp = status === 'ready' || status === 'disabled';
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tokens.bg } }}>
       <Stack.Protected guard={status === 'signedOut'}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
-      <Stack.Protected guard={status === 'recovery'}>
-        <Stack.Screen name="new-password" />
-      </Stack.Protected>
-      <Stack.Protected guard={status === 'needsOrg'}>
-        <Stack.Screen name="(onboard)" />
+      <Stack.Protected guard={status === 'needsConsent'}>
+        <Stack.Screen name="consent" />
       </Stack.Protected>
       {/* "/"는 항상 열고, 들어온 뒤 상태에 맞는 화면으로 보낸다(app/index.tsx). */}
       <Stack.Screen name="index" />
@@ -68,9 +74,7 @@ function Gate() {
         <Stack.Screen name="requester" />
         <Stack.Screen name="ask" />
         <Stack.Screen name="account" />
-        <Stack.Screen name="invite" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5], sheetGrabberVisible: true, sheetCornerRadius: 36 }} />
       </Stack.Protected>
-      <Stack.Screen name="auth/callback" />
     </Stack>
   );
 }

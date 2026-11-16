@@ -1,17 +1,20 @@
-// 로그인 상태. Supabase 세션과 서버의 내 조직(/account/me)을 함께 본다.
-// loading → signedOut(로그인 전) → needsOrg(조직 없음) → ready
+// 로그인 상태. 단추 계정(Supabase) 세션과 서버의 내 정보(/account/me, 단추에서 읽음)를 함께 본다.
+// loading → signedOut(로그인 전) → needsConsent(국외 이전·AI 처리 동의 전) → ready
+// blocked: 단추 계정이지만 에이전트를 쓸 수 없음(승인 전 기관, 운영자 계정)
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { fetchMe, type AccountOrg } from './accountClient';
+import { AccountError, fetchMe, type AccountOrg } from './accountClient';
 import { supabase } from './supabase';
 
-export type AuthStatus = 'disabled' | 'loading' | 'signedOut' | 'recovery' | 'needsOrg' | 'ready' | 'error';
+export type AuthStatus = 'disabled' | 'loading' | 'signedOut' | 'recovery' | 'needsOrg' | 'needsConsent' | 'blocked' | 'ready' | 'error';
+export type BlockedReason = 'org_not_ready' | 'forbidden';
 
 interface AuthState {
   status: AuthStatus;
   session: Session | null;
   org: AccountOrg | null;
+  blocked: BlockedReason | null;
   /** 조직을 만들거나 참여한 뒤 다시 읽는다. */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -23,6 +26,7 @@ const Ctx = createContext<AuthState>({
   status: 'disabled',
   session: null,
   org: null,
+  blocked: null,
   refresh: async () => undefined,
   signOut: async () => undefined,
   setRecovery: () => undefined,
@@ -33,6 +37,7 @@ export const useAuth = () => useContext(Ctx);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [org, setOrg] = useState<AccountOrg | null>(null);
+  const [blocked, setBlocked] = useState<BlockedReason | null>(null);
   const [base, setStatus] = useState<AuthStatus>(supabase ? 'loading' : 'disabled');
   const [recovery, setRecovery] = useState(false);
   const status: AuthStatus = recovery ? 'recovery' : base;
@@ -47,8 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const me = await fetchMe();
       setOrg(me.org);
-      setStatus(me.org ? 'ready' : 'needsOrg');
-    } catch {
+      setBlocked(null);
+      if (!me.org) return setStatus('needsOrg');
+      setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
+    } catch (e) {
+      if (e instanceof AccountError && (e.code === 'org_not_ready' || e.code === 'forbidden')) {
+        setBlocked(e.code);
+        return setStatus('blocked');
+      }
       setStatus('error');
     }
   }, []);
@@ -75,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       session,
       org,
+      blocked,
       refresh: async () => load((await supabase?.auth.getSession())?.data.session ?? null),
       // 서버 로그아웃이 실패해도(연결 끊김 등) 기기의 세션은 지우고 바로 첫 화면으로 간다.
       signOut: async () => {
@@ -86,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       setRecovery,
     }),
-    [status, session, org, load],
+    [status, session, org, blocked, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

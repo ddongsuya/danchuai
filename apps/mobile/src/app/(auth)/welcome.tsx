@@ -1,30 +1,18 @@
-// 시작: Google, 이메일 회원가입, 로그인
+// 시작: 단추 계정으로 로그인. 가입은 단추 웹에서 한다(연동 2단계, 에이전트 전용 가입·Google 로그인 없음).
 import { router } from 'expo-router';
-import { ChatTeardropDots, GoogleLogo } from 'phosphor-react-native';
-import { useState } from 'react';
+import { ChatTeardropDots } from 'phosphor-react-native';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { space, tokens } from '@/constants/theme';
-import { signInWithGoogle } from '@/lib/googleSignIn';
+import { DANCHU_URL } from '@/lib/danchuLinks';
 
-const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL;
-const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL;
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL ?? `${DANCHU_URL}/terms`;
+const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL ?? `${DANCHU_URL}/privacy`;
 
 export default function Welcome() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const google = async () => {
-    setBusy(true);
-    setError(null);
-    const r = await signInWithGoogle();
-    setBusy(false);
-    if (r === 'error') setError('Google 로그인을 마치지 못했어요. 다시 해 주세요.');
-  };
-
   return (
     <AuthScreen
       top={
@@ -34,14 +22,8 @@ export default function Welcome() {
       }
       footer={
         <>
-          {error && (
-            <Txt variant="small" color={tokens.danger} style={{ textAlign: 'center' }} accessibilityLiveRegion="polite">
-              {error}
-            </Txt>
-          )}
-          <Button title="Google로 계속" kind="line" tall loading={busy} icon={<GoogleLogo size={18} weight="bold" color={tokens.text} />} onPress={google} />
-          <Button title="이메일로 회원가입" tall onPress={() => router.push('/signup')} />
-          <Button title="이미 계정이 있어요" kind="ghost" onPress={() => router.push('/login')} />
+          <Button title="단추 계정으로 로그인" tall onPress={() => router.push('/login')} />
+          <Button title="단추에서 가입" kind="ghost" onPress={() => Linking.openURL(`${DANCHU_URL}/signup`)} />
           {(TERMS_URL || PRIVACY_URL) && (
             <View style={styles.legal}>
               {TERMS_URL && (

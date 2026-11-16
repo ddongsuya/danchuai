@@ -27,8 +27,7 @@ export default function RequesterInbox() {
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
 
   if (status === 'signedOut') return <Redirect href="/welcome" />;
-  if (status === 'needsOrg') return <Redirect href="/org" />;
-  if (status === 'recovery') return <Redirect href="/new-password" />;
+  if (status === 'needsConsent') return <Redirect href={'/consent' as Href} />;
   if (org?.kind === 'cro') return <Redirect href="/lab" />;
   return (
     <InboxScreen
