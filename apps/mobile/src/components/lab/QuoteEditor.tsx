@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   colLabel: { flex: 1.3, minWidth: 0 },
   colAmount: { flex: 1, minWidth: 0 },
   colDel: { width: 44, alignItems: 'center' },
-  input: { height: 44, borderRadius: radius.inner, backgroundColor: tokens.bg, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: 10, fontFamily: fonts.regular, fontSize: 15, color: tokens.text },
+  input: { height: 44, borderRadius: radius.inner, backgroundColor: tokens.bg, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: 10, fontFamily: fonts.regular, fontSize: 16, color: tokens.text },
   num: { textAlign: 'right', fontVariant: ['tabular-nums'] },
   bad: { borderColor: tokens.danger, borderWidth: 2, paddingHorizontal: 9 },
   add: { paddingVertical: 4, alignItems: 'flex-start' },

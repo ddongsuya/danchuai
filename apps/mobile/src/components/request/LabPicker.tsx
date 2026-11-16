@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
   title: { flex: 1, textAlign: 'center' },
   search: { marginHorizontal: space.xl, marginBottom: space.md, height: 46, borderRadius: 14, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: 15, color: tokens.text },
+  input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: 16, color: tokens.text },
   picked: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: space.xl, paddingBottom: space.md },
   who: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 32, paddingLeft: 4, paddingRight: 8, borderRadius: radius.pill, backgroundColor: tokens.sunken, maxWidth: '100%' },
   av: { width: 24, height: 24, borderRadius: 12, backgroundColor: tokens.surface, alignItems: 'center', justifyContent: 'center' },
