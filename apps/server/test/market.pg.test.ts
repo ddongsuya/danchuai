@@ -286,6 +286,9 @@ describe.skipIf(!BASE)("요청 보내기·회신·선정", () => {
     await (await call("POST", `/v1/agent/conversations/${id}/turn`, t, { text: "반복투여 기간" })).text();
     const { items } = await json<{ items: Array<{ conversationId: string }> }>(call("GET", "/v1/requests", t));
     expect(items.some((i) => i.conversationId === id)).toBe(false);
+    // 지난 질문: 내 질문 대화만, 첫 질문이 제목
+    const asks = await json<{ items: Array<{ id: string; title: string }> }>(call("GET", "/v1/agent/asks", t));
+    expect(asks.items.map((a) => a.title)).toEqual(["반복투여 기간"]);
   });
 
   it("회신 전에는 선정할 수 없다(409 not_replied)", async () => {

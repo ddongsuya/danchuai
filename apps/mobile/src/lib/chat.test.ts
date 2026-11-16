@@ -106,3 +106,23 @@ describe('근거 출처', () => {
     expect(s.messages.at(-1)!.sources).toBeUndefined();
   });
 });
+
+describe('지난 질문 다시 열기', () => {
+  it('저장된 답의 근거를 다시 붙인다', () => {
+    const s = run([
+      {
+        type: 'opened',
+        id: 'c1',
+        role: 'requester',
+        sheet: EMPTY_SHEET,
+        missing: [],
+        messages: [
+          { role: 'user', text: '질문' },
+          { role: 'assistant', text: '답(근거: ICH M3 5)', sources: [{ doc: 'ICH M3', name: 'ICH M3(R2)', section: '5', url: 'https://database.ich.org/m3.pdf', version: '2009' }] },
+        ],
+      },
+    ]);
+    expect(s.messages[1]!.sources?.[0]?.doc).toBe('ICH M3');
+    expect(s.messages[0]!.sources).toBeUndefined();
+  });
+});

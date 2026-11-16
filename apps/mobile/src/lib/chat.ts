@@ -81,7 +81,7 @@ export type ChatAction =
       sheet: RequestSheet;
       missing: string[];
       /** 이어서 열 때 서버가 돌려준 기록 */
-      messages?: { role: 'user' | 'assistant'; text: string }[];
+      messages?: { role: 'user' | 'assistant'; text: string; sources?: unknown }[];
       question?: AgentQuestion | null;
       summary?: string[] | null;
       draft?: { body: string; dropped: number; version: number; sent?: boolean } | null;
@@ -136,7 +136,10 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
         missing: a.missing,
         status: 'idle',
         error: null,
-        messages: (a.messages ?? []).map((m, i) => ({ id: `h${i}`, role: m.role === 'user' ? 'user' : 'agent', text: m.text })),
+        messages: (a.messages ?? []).map((m, i) => {
+          const sources = m.role === 'user' ? [] : asSources(m.sources);
+          return { id: `h${i}`, role: m.role === 'user' ? 'user' : 'agent', text: m.text, ...(sources.length ? { sources } : {}) };
+        }),
         question: a.question ?? null,
         summary: a.summary ?? null,
         draft: a.draft ? { body: a.draft.body, dropped: a.draft.dropped, version: a.draft.version } : null,

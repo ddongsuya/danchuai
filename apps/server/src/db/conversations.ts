@@ -1,6 +1,6 @@
 import { EMPTY_SHEET, type RequestSheet } from "@danchuai/core";
 import type { Conversation, ConversationRepo, RequestDirectory } from "../agent/store";
-import { TURN_LOCK_MS } from "../agent/store";
+import { askTitle, TURN_LOCK_MS, type AskListItem, type SourceView } from "../agent/store";
 import { tx, UUID, type Pool } from "./pool";
 
 type Row = {
@@ -44,8 +44,8 @@ export class PgConversationRepo implements ConversationRepo {
     );
     const r = rows[0];
     if (!r) return null;
-    const msgs = await this.pool.query<{ role: "user" | "assistant"; body: string }>(
-      `select role, body from messages where conversation_id = $1 and org_id = $2 order by id`,
+    const msgs = await this.pool.query<{ role: "user" | "assistant"; body: string; sources: SourceView[] | null }>(
+      `select role, body, sources from messages where conversation_id = $1 and org_id = $2 order by id`,
       [id, r.org_id],
     );
     return {
@@ -56,7 +56,7 @@ export class PgConversationRepo implements ConversationRepo {
       mode: r.mode,
       requestId: r.request_id,
       sheet: toSheet(r.sheet),
-      messages: msgs.rows.map((m) => ({ role: m.role, content: m.body })),
+      messages: msgs.rows.map((m) => ({ role: m.role, content: m.body, ...(m.sources?.length ? { sources: m.sources } : {}) })),
       question: r.question,
       summary: r.summary,
       draft: r.draft,
@@ -98,14 +98,27 @@ export class PgConversationRepo implements ConversationRepo {
       );
       const fresh = c.messages.slice(Number(rows[0]!.n));
       for (const m of fresh) {
-        await db.query(`insert into messages (conversation_id, org_id, role, body) values ($1, $2, $3, $4)`, [
+        await db.query(`insert into messages (conversation_id, org_id, role, body, sources) values ($1, $2, $3, $4, $5)`, [
           c.id,
           c.orgId,
           m.role,
           m.content,
+          m.sources?.length ? JSON.stringify(m.sources) : null,
         ]);
       }
     });
+  }
+
+  async listAsks(orgId: string, userId: string, limit: number): Promise<AskListItem[]> {
+    const { rows } = await this.pool.query<{ id: string; body: string | null; updated_at: Date }>(
+      `select c.id, c.updated_at,
+              (select m.body from messages m where m.conversation_id = c.id and m.org_id = c.org_id and m.role = 'user' order by m.id limit 1) as body
+         from conversations c
+        where c.org_id = $1 and c.created_by = $2 and c.mode = 'ask' and c.turns > 0
+        order by c.updated_at desc limit $3`,
+      [orgId, userId, limit],
+    );
+    return rows.map((r) => ({ id: r.id, title: askTitle([{ role: "user", content: r.body ?? "" }]), updatedAt: r.updated_at.toISOString() }));
   }
 
   async lockTurn(id: string, orgId: string) {

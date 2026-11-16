@@ -20,7 +20,7 @@ import type { OutboundRepo } from "../repo";
 import { interpret } from "./interpret";
 import { ASK_SYSTEM, SYSTEM } from "./prompts";
 import { TOOLS } from "./tools";
-import type { Conversation, ConversationRepo, RequestDirectory } from "./store";
+import type { Conversation, ConversationRepo, RequestDirectory, StoredMessage } from "./store";
 
 export const LIMITS = {
   textChars: 2000,
@@ -74,7 +74,9 @@ const view = (c: Conversation) => ({
   draft: c.draft && { body: c.draft.body, dropped: c.draft.dropped, version: c.draft.version, sent: c.draft.outboundCreated },
   turns: c.turns,
   // 이어서 보기용. 같은 조직의 대화 기록만 돌려준다(load가 조직을 확인한다).
-  messages: c.messages.map((m) => ({ role: m.role, text: m.role === "assistant" ? stripNotes(m.content) : m.content })).filter((m) => m.text),
+  messages: c.messages
+    .map((m) => ({ role: m.role, text: m.role === "assistant" ? stripNotes(m.content) : m.content, ...(m.sources?.length ? { sources: m.sources } : {}) }))
+    .filter((m) => m.text),
 });
 
 /** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
@@ -86,10 +88,11 @@ const stripNotes = (t: string) =>
     .trim();
 
 /** 최근 기록만 보내고, 첫 메시지는 사용자 글이 되도록 맞춘다. */
-function windowed(messages: AgentMessage[]): AgentMessage[] {
+function windowed(messages: StoredMessage[]): AgentMessage[] {
   let w = messages.slice(-LIMITS.historyMessages);
   while (w.length && w[0]!.role !== "user") w = w.slice(1);
-  return w;
+  // 저장용 칸(출처)은 모델에 보내지 않는다
+  return w.map(({ role, content }) => ({ role, content }));
 }
 
 export function agentRoutes(deps: AgentDeps) {
@@ -134,6 +137,12 @@ export function agentRoutes(deps: AgentDeps) {
     };
     await deps.conversations.create(conv);
     return c.json(view(conv), 201);
+  });
+
+  // 지난 질문(이 사용자가 연 질문 대화, 최근 순)
+  app.get("/asks", async (c) => {
+    const s = c.get("session");
+    return c.json({ items: await deps.conversations.listAsks(s.orgId, s.userId, 30) });
   });
 
   app.get("/conversations/:id", async (c) => {
@@ -197,13 +206,13 @@ export function agentRoutes(deps: AgentDeps) {
         const { conv: next, events, notes } = ask ? { conv, events: [], notes: [] } : interpret(conv, result.toolCalls);
         for (const e of events) await send(e.event, e.data);
         // 답이 인용한 원문만 출처로 보낸다(앱이 원문 링크로 보여 준다).
-        const sources = citedSources(result.text, evidence.sources);
-        if (sources.length) await send("sources", { items: sources.map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version })) });
+        const sources = citedSources(result.text, evidence.sources).map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version }));
+        if (sources.length) await send("sources", { items: sources });
 
         const reply = [result.text.trim(), ...notes].filter(Boolean).join("\n") || "(응답 없음)";
         const saved: Conversation = {
           ...next,
-          messages: [...conv.messages, { role: "user", content: userText }, { role: "assistant", content: reply }],
+          messages: [...conv.messages, { role: "user", content: userText }, { role: "assistant", content: reply, ...(sources.length ? { sources } : {}) }],
           turns: conv.turns + 1,
           usage: {
             inputTokens: conv.usage.inputTokens + result.usage.inputTokens,

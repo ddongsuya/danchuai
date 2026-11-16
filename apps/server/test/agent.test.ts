@@ -460,6 +460,26 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
     expect(res.status).toBe(409);
   });
 
+  it("답의 근거를 저장해 다시 열 때 보여 주고, 모델에는 보내지 않는다. 지난 질문은 내 것만", async () => {
+    const p = new FakeProvider([{ text: "두 가지예요(근거: ICH S2 2.2)." }, { text: "네." }]);
+    const { create, turn, call } = setup(p);
+    const { conv } = await create("Bearer req", { mode: "ask" });
+    await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?");
+    const view = (await (await call("GET", `/v1/agent/conversations/${conv.id}`, "Bearer req")).json()) as {
+      messages: { role: string; text: string; sources?: { doc: string }[] }[];
+    };
+    expect(view.messages[1]!.sources?.map((x) => x.doc)).toEqual(["ICH S2"]);
+    await turn(conv.id, "고마워요");
+    expect(p.calls[1]!.messages.every((m) => Object.keys(m).sort().join() === "content,role")).toBe(true);
+
+    // 요청 대화·글 없는 질문 대화·다른 사람 질문은 목록에 없다
+    await create("Bearer req", { mode: "ask" });
+    const other = await create("Bearer req2", { mode: "ask" });
+    await turn(other.conv.id, "남의 질문", "Bearer req2");
+    const list = (await (await call("GET", "/v1/agent/asks", "Bearer req")).json()) as { items: { id: string; title: string }[] };
+    expect(list.items).toEqual([expect.objectContaining({ id: conv.id, title: "유전독성 표준 시험 조합이 뭐예요?" })]);
+  });
+
   it("질문용 시스템 프롬프트는 고정 글이고 기준 자료를 담는다", () => {
     expect(ASK_SYSTEM).toContain("<시험 묶음>");
     expect(ASK_SYSTEM).toContain("여덟 문장");

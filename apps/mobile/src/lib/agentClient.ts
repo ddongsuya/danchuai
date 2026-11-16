@@ -60,8 +60,17 @@ export interface ConversationView {
   question?: { field: string; question: string; options: string[] } | null;
   summary?: string[] | null;
   draft?: { body: string; dropped: number; version: number; sent: boolean } | null;
-  messages?: { role: 'user' | 'assistant'; text: string }[];
+  messages?: { role: 'user' | 'assistant'; text: string; sources?: unknown }[];
 }
+
+export interface AskListItem {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+/** 지난 질문(내가 연 질문 대화, 최근 순) */
+export const listAsks = (role: AgentRole) => call<{ items: AskListItem[] }>(role, '/v1/agent/asks').then((r) => r.items);
 
 export type ConversationMode = 'request' | 'ask';
 

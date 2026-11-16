@@ -2,8 +2,8 @@
 // 의뢰자는 답을 본 뒤 같은 질문으로 견적 요청 대화를 바로 열 수 있다. 보내기는 여기서 일어나지 않는다.
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowSquareOut, BookOpenText, CaretRight, ChatCircle } from 'phosphor-react-native';
-import { useState } from 'react';
+import { ArrowSquareOut, BookOpenText, CaretRight, ChatCircle, ClockCounterClockwise } from 'phosphor-react-native';
+import { useCallback, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,7 +15,9 @@ import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import type { AgentRole } from '@/lib/agentClient';
+import { useRemote } from '@/hooks/useRemote';
+import { listAsks, type AgentRole } from '@/lib/agentClient';
+import { dayLabel } from '@/lib/format';
 import type { SourceRef } from '@/lib/chat';
 
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from './LiveChat';
@@ -36,8 +38,10 @@ const SUGGESTIONS: Record<AgentRole, string[]> = {
   ],
 };
 
-export function AskChat({ role }: { role: AgentRole }) {
-  const { state, send, retry } = useAgentChat(role, undefined, undefined, 'ask');
+export function AskChat({ role, conversationId }: { role: AgentRole; conversationId?: string }) {
+  const { state, send, retry } = useAgentChat(role, undefined, conversationId, 'ask');
+  // 새 질문 화면에서만 지난 질문을 읽는다
+  const { state: past } = useRemote(useCallback(() => listAsks(role), [role]), !conversationId);
   const [open, setOpen] = useState<SourceRef[] | null>(null);
   const busy = state.status !== 'idle';
   const lastAgent = [...state.messages].reverse().find((m) => m.role === 'agent');
@@ -60,6 +64,31 @@ export function AskChat({ role }: { role: AgentRole }) {
               </Press>
             ))}
           </View>
+          {past.kind === 'ready' && past.data.length > 0 && (
+            <>
+              <Txt variant="label" accessibilityRole="header" style={styles.pastHead}>
+                지난 질문
+              </Txt>
+              <View>
+                {past.data.slice(0, 10).map((a, i) => (
+                  <Press
+                    key={a.id}
+                    label={a.title}
+                    onPress={() => router.push({ pathname: '/ask', params: { role, conv: a.id } })}
+                    style={[styles.past, i > 0 && styles.line]}
+                  >
+                    <ClockCounterClockwise size={18} color={tokens.muted} />
+                    <Txt variant="small" numberOfLines={1} style={{ flex: 1 }}>
+                      {a.title}
+                    </Txt>
+                    <Txt variant="caption" color={tokens.faint} tabular>
+                      {dayLabel(a.updatedAt)}
+                    </Txt>
+                  </Press>
+                ))}
+              </View>
+            </>
+          )}
         </View>
       )}
       {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
@@ -180,6 +209,8 @@ const styles = StyleSheet.create({
   sugs: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border },
   sug: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.lg, paddingVertical: space.md },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
+  pastHead: { marginTop: space.xxl, marginBottom: space.xs, color: tokens.muted },
+  past: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48, paddingVertical: space.sm },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
