@@ -14,15 +14,16 @@ const ME: Record<string, DanchuMe> = {
   [T_CRO]: { id: "22222222-2222-4222-8222-222222222222", role: "cro", name: "나", email: "b@example.test", org: { id: "33333333-3333-4333-8333-333333333333", name: "나기관", plan: "plus" } },
 };
 
-function fakeApi(): DanchuApi & { calls: string[] } {
+function fakeApi(): DanchuApi & { calls: string[]; consentDown: boolean } {
   const calls: string[] = [];
   const me = async (t: string) => {
     calls.push(`me:${t}`);
     if (t === T_PENDING) return { ok: false as const, error: "org_not_ready" as const };
     return ME[t] ? { ok: true as const, data: ME[t]! } : { ok: false as const, error: "unauthorized" as const };
   };
-  return {
+  const api: DanchuApi & { calls: string[]; consentDown: boolean } = {
     calls,
+    consentDown: false,
     me,
     requesterList: async () => ({
       ok: true,
@@ -33,8 +34,13 @@ function fakeApi(): DanchuApi & { calls: string[] } {
         ? { ok: true, data: { request: { no, title: "물질 A", categories: [], status: "open", createdAt: "2026-11-10", joinBy: null, replyBy: null, sent: 5, joined: 3, submitted: 1, compareOpen: false, selected: false }, compare: { open: false, joined: 3, submitted: 1, replyBy: null } } }
         : { ok: false, error: "not_found" },
     croList: async () => ({ ok: true, data: [] }),
-    croDetail: async () => ({ ok: false, error: "not_found" }),
+    croDetail: async () => ({ ok: false as const, error: "not_found" as const }),
+    recordConsent: async (t: string, version: string) => {
+      calls.push(`consent:${t}:${version}`);
+      return api.consentDown ? { ok: false as const, error: "unavailable" as const } : { ok: true as const, data: { version } };
+    },
   };
+  return api;
 }
 
 function setup() {
@@ -96,6 +102,16 @@ describe("동의", () => {
     expect(me.consent?.version).toBe(CONSENT_VERSION);
   });
 
+  it("동의는 단추에도 남기고, 단추 기록이 안 되면 503·에이전트 쪽도 남기지 않음", async () => {
+    const { call, api } = setup();
+    api.consentDown = true;
+    expect((await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION })).status).toBe(503);
+    expect((await call("POST", "/v1/agent/conversations", T_REQ, {})).status).toBe(403);
+    api.consentDown = false;
+    expect((await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION })).status).toBe(200);
+    expect(api.calls).toContain(`consent:${T_REQ}:${CONSENT_VERSION}`);
+  });
+
   it("동의는 계정별: 같은 기관 다른 담당자는 따로 동의", async () => {
     const { call } = setup();
     await call("POST", "/account/consent", T_CRO, { version: CONSENT_VERSION });
@@ -143,5 +159,16 @@ describe("단추 호출", () => {
       throw new Error("down");
     }) as unknown as typeof fetch);
     expect(await api.requesterList("abc")).toEqual({ ok: false, error: "unavailable" });
+  });
+
+  it("동의 기록은 POST 본문으로 보낸다", async () => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe("https://danchu.example/api/agent/consent");
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({ version: "2026-11-17" });
+      return new Response(JSON.stringify({ consent: { version: "2026-11-17" } }), { status: 200 });
+    });
+    const api = danchuApi("https://danchu.example", fetchImpl as unknown as typeof fetch);
+    expect(await api.recordConsent("abc", "2026-11-17")).toEqual({ ok: true, data: { version: "2026-11-17" } });
   });
 });

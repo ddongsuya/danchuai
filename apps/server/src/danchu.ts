@@ -56,6 +56,8 @@ export interface DanchuApi {
   requesterDetail(token: string, no: string): Promise<DanchuResult<{ request: DanchuRequesterItem; compare: DanchuCompare }>>;
   croList(token: string): Promise<DanchuResult<DanchuCroItem[]>>;
   croDetail(token: string, no: string): Promise<DanchuResult<DanchuCroItem>>;
+  /** 단추에도 동의 기록을 남긴다(연동 3단계, 단추 /api/agent/consent) */
+  recordConsent(token: string, version: string): Promise<DanchuResult<{ version: string }>>;
 }
 
 const ERRORS: DanchuError[] = ["unauthorized", "forbidden", "org_not_ready", "not_found", "rate_limited", "unavailable"];
@@ -69,11 +71,13 @@ export function danchuBaseFromEnv(env: Record<string, string | undefined>): stri
 }
 
 export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeoutMs = 8000): DanchuApi {
-  async function get<T>(token: string, path: string): Promise<DanchuResult<T>> {
+  async function get<T>(token: string, path: string, send?: unknown): Promise<DanchuResult<T>> {
     let res: Response;
     try {
       res = await fetchImpl(`${base}${path}`, {
-        headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+        method: send === undefined ? "GET" : "POST",
+        headers: { authorization: `Bearer ${token}`, accept: "application/json", ...(send === undefined ? {} : { "content-type": "application/json" }) },
+        body: send === undefined ? undefined : JSON.stringify(send),
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {
@@ -94,5 +98,6 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     requesterDetail: (t, no) => get(t, `/api/agent/requests/${encodeURIComponent(no)}`),
     croList: async (t) => pick(await get<{ requests: DanchuCroItem[] }>(t, "/api/agent/requests"), "requests"),
     croDetail: async (t, no) => pick(await get<{ request: DanchuCroItem }>(t, `/api/agent/requests/${encodeURIComponent(no)}`), "request"),
+    recordConsent: async (t, version) => pick(await get<{ consent: { version: string } }>(t, "/api/agent/consent", { version }), "consent"),
   };
 }

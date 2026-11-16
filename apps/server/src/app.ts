@@ -64,7 +64,7 @@ export function createApp(deps: Deps) {
   app.get("/health", (c) => c.json({ ok: true }));
 
   if (deps.danchu) {
-    app.route("/account", danchuAccountRoutes({ lookup: deps.danchu.lookup, workspaces: deps.danchu.workspaces }));
+    app.route("/account", danchuAccountRoutes({ lookup: deps.danchu.lookup, workspaces: deps.danchu.workspaces, api: deps.danchu.api }));
   } else if (deps.identity && deps.accounts) {
     app.route("/account", accountRoutes({ identity: deps.identity, repo: deps.accounts }));
   } else {

@@ -22,7 +22,7 @@ type Lookup = (authorization: string | undefined) => Promise<DanchuIdentity | Da
 
 const ConsentBody = z.object({ version: z.literal(CONSENT_VERSION) }).strict();
 
-export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo }) {
+export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo; api: DanchuApi }) {
   const app = new Hono<{ Variables: { id: DanchuIdentity } }>();
   app.use("*", async (c, next) => {
     const r = await deps.lookup(c.req.header("authorization"));
@@ -48,6 +48,10 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
   app.post("/consent", async (c) => {
     const parsed = ConsentBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    // 단추에 먼저 남긴다. 단추 기록이 안 되면 에이전트 쪽도 남기지 않는다(양쪽 기록이 같아야 한다)
+    const token = BEARER.exec(c.req.header("authorization") ?? "")![1]!;
+    const r = await deps.api.recordConsent(token, parsed.data.version);
+    if (!r.ok) return c.json({ error: r.error }, STATUS[r.error]);
     await deps.workspaces.agree(c.get("id").me.id, parsed.data.version);
     return c.json({ consent: await deps.workspaces.consent(c.get("id").me.id) });
   });
