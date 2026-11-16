@@ -7,14 +7,17 @@ export type OutboundStatus =
   | "rejected"
   | "dispatching"
   | "sent"
-  | "unknown";
+  | "unknown"
+  /** 상대(단추)가 확실히 거절했다. 다시 보내려면 새 초안을 만든다 */
+  | "failed";
 
 export interface OutboundDraft {
   id: string;
   orgId: string;
   /** 받는 쪽 조직 */
   counterpartyOrgId: string;
-  kind: "request" | "reply" | "question";
+  /** danchu: 단추에서 실행할 동작 하나(연동 4단계). 본문은 단추로 보낼 JSON 그대로이고, 상대 조직은 자기 조직이다 */
+  kind: "request" | "reply" | "question" | "danchu";
   text: string;
   /** 본문 sha256 (서버가 계산) */
   textHash: string;
@@ -51,9 +54,10 @@ const NEXT: Record<OutboundStatus, readonly OutboundStatus[]> = {
   drafted: ["approved", "rejected", "drafted"],
   approved: ["dispatching", "drafted"],
   rejected: ["drafted"],
-  dispatching: ["sent", "unknown"],
+  dispatching: ["sent", "unknown", "failed"],
   unknown: ["sent"],
   sent: [],
+  failed: [],
 };
 
 export function canTransition(from: OutboundStatus, to: OutboundStatus): boolean {
@@ -90,7 +94,7 @@ export function beginDispatch(draft: OutboundDraft, approval: ApprovalDecision):
 }
 
 /** 발송 결과를 적는다. 결과를 모르면 unknown이며 자동으로 다시 보내지 않는다. */
-export function finishDispatch(draft: OutboundDraft, outcome: "sent" | "unknown"): OutboundDraft {
+export function finishDispatch(draft: OutboundDraft, outcome: "sent" | "unknown" | "failed"): OutboundDraft {
   if (draft.status !== "dispatching") {
     throw new ApprovalError("wrong_status", `${draft.status} 상태에서는 결과를 적을 수 없어요`);
   }

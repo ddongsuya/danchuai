@@ -19,12 +19,22 @@ export interface OutboundRepo {
   saveIf(next: OutboundDraft, expect: { epoch: number; status: OutboundDraft["status"] }): Promise<boolean>;
   saveDecision(d: ApprovalDecision): Promise<void>;
   latestApproval(draftId: string): Promise<ApprovalDecision | null>;
+  /** 단추 동작(kind danchu)의 단추 응답. 다른 종류는 쓰지 않는다 */
+  saveResult(draftId: string, result: unknown): Promise<void>;
+  getResult(draftId: string): Promise<unknown>;
 }
 
 /** 테스트·로컬용. 운영은 Postgres(supabase/migrations) 구현으로 바꾼다. */
 export class MemoryOutboundRepo implements OutboundRepo {
   private drafts = new Map<string, OutboundDraft>();
   private decisions: ApprovalDecision[] = [];
+  private results = new Map<string, unknown>();
+  async saveResult(id: string, result: unknown) {
+    this.results.set(id, result);
+  }
+  async getResult(id: string) {
+    return this.results.get(id) ?? null;
+  }
 
   seed(d: OutboundDraft) {
     this.drafts.set(d.id, { ...d });

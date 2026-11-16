@@ -58,6 +58,8 @@ export interface DanchuApi {
   croDetail(token: string, no: string): Promise<DanchuResult<DanchuCroItem>>;
   /** 단추에도 동의 기록을 남긴다(연동 3단계, 단추 /api/agent/consent) */
   recordConsent(token: string, version: string): Promise<DanchuResult<{ version: string }>>;
+  /** 승인된 동작 실행(연동 4·5단계). 응답 상태와 본문을 그대로. 연결 실패·시간 초과는 status 0 */
+  act(token: string, a: { action: string; rfqNo: string | null; body: Record<string, unknown> }): Promise<{ status: number; body: unknown }>;
 }
 
 const ERRORS: DanchuError[] = ["unauthorized", "forbidden", "org_not_ready", "not_found", "rate_limited", "unavailable"];
@@ -70,7 +72,7 @@ export function danchuBaseFromEnv(env: Record<string, string | undefined>): stri
   return base;
 }
 
-export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeoutMs = 8000): DanchuApi {
+export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeoutMs = 8000, actTimeoutMs = 60_000): DanchuApi {
   async function get<T>(token: string, path: string, send?: unknown): Promise<DanchuResult<T>> {
     let res: Response;
     try {
@@ -98,6 +100,21 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     requesterDetail: (t, no) => get(t, `/api/agent/requests/${encodeURIComponent(no)}`),
     croList: async (t) => pick(await get<{ requests: DanchuCroItem[] }>(t, "/api/agent/requests"), "requests"),
     croDetail: async (t, no) => pick(await get<{ request: DanchuCroItem }>(t, `/api/agent/requests/${encodeURIComponent(no)}`), "request"),
+    act: async (t, a) => {
+      const path = a.action === "create" ? "/api/agent/requests" : `/api/agent/requests/${encodeURIComponent(a.rfqNo ?? "")}/act`;
+      const payload = a.action === "create" ? { payload: a.body } : { ...a.body, action: a.action };
+      try {
+        const res = await fetchImpl(`${base}${path}`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${t}`, accept: "application/json", "content-type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(actTimeoutMs),
+        });
+        return { status: res.status, body: await res.json().catch(() => null) };
+      } catch {
+        return { status: 0, body: null };
+      }
+    },
     recordConsent: async (t, version) => pick(await get<{ consent: { version: string } }>(t, "/api/agent/consent", { version }), "consent"),
   };
 }

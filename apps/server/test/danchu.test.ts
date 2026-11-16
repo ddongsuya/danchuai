@@ -3,6 +3,7 @@ import { createApp } from "../src/app";
 import { danchuApi, type DanchuApi, type DanchuMe } from "../src/danchu";
 import { CONSENT_VERSION, danchuIdentity, MemoryWorkspaceRepo, workspaceKey } from "../src/danchuAuth";
 import { MemoryOutboundRepo } from "../src/repo";
+import { canonical, checkAction, outcomeOf, parseActionText } from "../src/danchuActions";
 
 /* 단추 계정 연동(연동 2단계): 신원은 단추에서만, 동의 전 AI 금지, 읽기는 단추에서 */
 const T_REQ = "tok-requester-aaaaaaaaaaaa";
@@ -14,16 +15,23 @@ const ME: Record<string, DanchuMe> = {
   [T_CRO]: { id: "22222222-2222-4222-8222-222222222222", role: "cro", name: "나", email: "b@example.test", org: { id: "33333333-3333-4333-8333-333333333333", name: "나기관", plan: "plus" } },
 };
 
-function fakeApi(): DanchuApi & { calls: string[]; consentDown: boolean } {
+type Fake = DanchuApi & { calls: string[]; consentDown: boolean; actReply: { status: number; body: unknown }; acted: Array<{ token: string; a: unknown }> };
+function fakeApi(): Fake {
   const calls: string[] = [];
   const me = async (t: string) => {
     calls.push(`me:${t}`);
     if (t === T_PENDING) return { ok: false as const, error: "org_not_ready" as const };
     return ME[t] ? { ok: true as const, data: ME[t]! } : { ok: false as const, error: "unauthorized" as const };
   };
-  const api: DanchuApi & { calls: string[]; consentDown: boolean } = {
+  const api: Fake = {
     calls,
     consentDown: false,
+    actReply: { status: 200, body: { rfqNo: "DC-2026-0011", started: true } },
+    acted: [],
+    act: async (token, a) => {
+      api.acted.push({ token, a });
+      return api.actReply;
+    },
     me,
     requesterList: async () => ({
       ok: true,
@@ -161,6 +169,21 @@ describe("단추 호출", () => {
     expect(await api.requesterList("abc")).toEqual({ ok: false, error: "unavailable" });
   });
 
+  it("동작: 요청 접수는 /api/agent/requests {payload}, 나머지는 /act {action,...}", async () => {
+    const seen: Array<{ url: string; body: unknown }> = [];
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      seen.push({ url: String(url), body: JSON.parse(String(init?.body)) });
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    const api = danchuApi("https://danchu.example", fetchImpl as unknown as typeof fetch);
+    await api.act("abc", { action: "create", rfqNo: null, body: { substance: "A" } });
+    await api.act("abc", { action: "ask", rfqNo: "DC-2026-0001", body: { topic: "x" } });
+    expect(seen).toEqual([
+      { url: "https://danchu.example/api/agent/requests", body: { payload: { substance: "A" } } },
+      { url: "https://danchu.example/api/agent/requests/DC-2026-0001/act", body: { topic: "x", action: "ask" } },
+    ]);
+  });
+
   it("동의 기록은 POST 본문으로 보낸다", async () => {
     const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
       expect(String(url)).toBe("https://danchu.example/api/agent/consent");
@@ -170,5 +193,59 @@ describe("단추 호출", () => {
     });
     const api = danchuApi("https://danchu.example", fetchImpl as unknown as typeof fetch);
     expect(await api.recordConsent("abc", "2026-11-17")).toEqual({ ok: true, data: { version: "2026-11-17" } });
+  });
+});
+
+describe("단추 동작 승인 (연동 4단계)", () => {
+  const consent = async (call: ReturnType<typeof setup>["call"], t: string) => call("POST", "/account/consent", t, { version: CONSENT_VERSION });
+  const json = async (r: Response) => (await r.json()) as Record<string, unknown>;
+
+  it("본문은 키 정렬 JSON, 회사명·연락처 칸은 빼고, 역할에 없는 동작은 막는다", () => {
+    expect(canonical({ b: 1, a: [{ d: 2, c: 3 }] })).toBe('{"a":[{"c":3,"d":2}],"b":1}');
+    const r = checkAction("requester", { action: "create", body: { substance: "A", company: "가회사", phone: "010", email: "x@y.z" } });
+    expect(r.ok && r.text).toBe('{"action":"create","body":{"substance":"A"},"rfqNo":null}');
+    expect(checkAction("cro", { action: "create", body: {} })).toEqual({ ok: false, error: "forbidden" });
+    expect(checkAction("requester", { action: "ask", body: {} })).toEqual({ ok: false, error: "bad_request" });
+    expect(checkAction("requester", { action: "create", rfqNo: "DC-2026-0001", body: {} })).toEqual({ ok: false, error: "bad_request" });
+    expect(checkAction("cro", { action: "join", rfqNo: "DC-2026-0001", body: { action: "x" } })).toEqual({ ok: false, error: "bad_request" });
+    expect(parseActionText("{not json")).toBeNull();
+    expect([outcomeOf(200), outcomeOf(409), outcomeOf(429), outcomeOf(503)]).toEqual(["sent", "failed", "unknown", "unknown"]);
+  });
+
+  it("승인 전에는 보내지 않고, 승인한 본문 그대로 사용자 토큰으로 단추에 보낸다", async () => {
+    const { call, api } = setup();
+    await consent(call, T_REQ);
+    const made = await json(await call("POST", "/v1/danchu/actions", T_REQ, { action: "create", body: { substance: "물질 B", company: "가회사" } }));
+    expect(made.status).toBe("drafted");
+    const id = made.id as string;
+    expect((await call("POST", `/v1/outbound/${id}/dispatch`, T_REQ)).status).toBe(409);
+    expect(api.acted).toHaveLength(0);
+    // 다른 해시로는 승인이 안 된다
+    expect((await call("POST", `/v1/outbound/${id}/decision`, T_REQ, { decision: "approve", epoch: 1, textHash: "0".repeat(64) })).status).toBe(409);
+    expect((await call("POST", `/v1/outbound/${id}/decision`, T_REQ, { decision: "approve", epoch: 1, textHash: made.textHash })).status).toBe(200);
+    const sent = await json(await call("POST", `/v1/outbound/${id}/dispatch`, T_REQ));
+    expect(sent).toEqual({ status: "sent", result: { rfqNo: "DC-2026-0011", started: true } });
+    expect(api.acted).toEqual([{ token: T_REQ, a: { action: "create", rfqNo: null, body: { substance: "물질 B" } } }]);
+    // 한 승인에 한 번만
+    expect((await call("POST", `/v1/outbound/${id}/dispatch`, T_REQ)).status).toBe(409);
+    expect(api.acted).toHaveLength(1);
+    const got = await json(await call("GET", `/v1/danchu/actions/${id}`, T_REQ));
+    expect(got).toMatchObject({ status: "sent", result: { rfqNo: "DC-2026-0011" } });
+  });
+
+  it("단추가 거절하면 failed, 연결 실패면 unknown. 다른 조직은 못 본다", async () => {
+    const { call, api } = setup();
+    await consent(call, T_CRO);
+    const go = async () => {
+      const m = await json(await call("POST", "/v1/danchu/actions", T_CRO, { action: "join", rfqNo: "DC-2026-0010", body: {} }));
+      await call("POST", `/v1/outbound/${m.id}/decision`, T_CRO, { decision: "approve", epoch: 1, textHash: m.textHash });
+      return { id: m.id as string, r: await json(await call("POST", `/v1/outbound/${m.id}/dispatch`, T_CRO)) };
+    };
+    api.actReply = { status: 409, body: { error: "참여 결정 기한이 지났어요." } };
+    const a = await go();
+    expect(a.r).toEqual({ status: "failed", result: { error: "참여 결정 기한이 지났어요." } });
+    api.actReply = { status: 0, body: null };
+    expect((await go()).r.status).toBe("unknown");
+    expect((await call("GET", `/v1/danchu/actions/${a.id}`, T_REQ)).status).toBe(404);
   });
 });

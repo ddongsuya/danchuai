@@ -8,6 +8,10 @@ import type { Session } from "./auth";
 import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from "./danchuAuth";
 import { RFQ_NO, type DanchuApi, type DanchuError } from "./danchu";
 import type { MarketRepo, RequesterListItem } from "./db/market";
+import { randomUUID } from "node:crypto";
+import { checkAction } from "./danchuActions";
+import { sha256 } from "./hash";
+import type { OutboundRepo } from "./repo";
 
 const STATUS: Record<DanchuError, 401 | 403 | 404 | 429 | 503> = {
   unauthorized: 401,
@@ -127,5 +131,30 @@ export function danchuMarketRoutes(deps: { api: DanchuApi; market?: MarketRepo }
   app.all("/labs", (c) => c.json({ error: "gone" }, 410));
   app.all("/lab/requests/:id/viewed", (c) => c.body(null, 204));
   app.all("/requests/:no/select", (c) => c.json({ error: "not_yet" }, 501));
+  return app;
+}
+
+/**
+ * 단추에서 실행할 동작의 확인 카드 (연동 4·5단계).
+ * POST /danchu/actions { action, rfqNo?, body } → 초안(drafted). 보내기는 기존 장부 흐름(decision → dispatch)을 그대로 쓴다.
+ * GET /danchu/actions/:id → 상태와 단추 응답
+ */
+export function danchuActionRoutes(deps: { outbound: OutboundRepo }) {
+  const app = new Hono<{ Variables: { session: Session } }>();
+  app.post("/actions", async (c) => {
+    const s = c.get("session");
+    if (s.role !== "requester" && s.role !== "cro") return c.json({ error: "forbidden" }, 403);
+    const r = checkAction(s.role, await c.req.json().catch(() => null));
+    if (!r.ok) return c.json({ error: r.error }, r.error === "forbidden" ? 403 : r.error === "too_long" ? 413 : 400);
+    const draft = { id: randomUUID(), orgId: s.orgId, counterpartyOrgId: s.orgId, kind: "danchu" as const, text: r.text, textHash: sha256(r.text), epoch: 1, status: "drafted" as const };
+    await deps.outbound.insertBatch([draft]);
+    return c.json({ id: draft.id, action: r.action, text: draft.text, textHash: draft.textHash, epoch: draft.epoch, status: draft.status }, 201);
+  });
+  app.get("/actions/:id", async (c) => {
+    const s = c.get("session");
+    const d = await deps.outbound.get(c.req.param("id"));
+    if (!d || d.orgId !== s.orgId || d.kind !== "danchu") return c.json({ error: "not_found" }, 404);
+    return c.json({ id: d.id, text: d.text, textHash: d.textHash, epoch: d.epoch, status: d.status, result: await deps.outbound.getResult(d.id) });
+  });
   return app;
 }

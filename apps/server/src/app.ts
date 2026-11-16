@@ -19,7 +19,8 @@ import { marketRoutes } from "./market";
 import type { DanchuApi } from "./danchu";
 import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
 import type { DanchuError } from "./danchu";
-import { danchuAccountRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
+import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
+import { outcomeOf, parseActionText } from "./danchuActions";
 
 export interface Deps {
   auth: AuthResolver;
@@ -116,19 +117,31 @@ export function createApp(deps: Deps) {
     if (!draft || draft.orgId !== s.orgId) return c.json({ error: "not_found" }, 404);
     const approval = await deps.outbound.latestApproval(draft.id);
     if (!approval) return c.json({ error: "not_approved" }, 409);
+    // 단추 동작은 단추 연동 모드에서만, 사용자의 단추 토큰으로 보낸다
+    const action = draft.kind === "danchu" ? parseActionText(draft.text) : null;
+    if (draft.kind === "danchu" && (!deps.danchu || !action)) return c.json({ error: "not_configured" }, 409);
     const dispatching = beginDispatch(draft, approval);
     if (!(await deps.outbound.saveIf(dispatching, { epoch: draft.epoch, status: "approved" }))) {
       return c.json({ error: "conflict" }, 409);
     }
-    let outcome: "sent" | "unknown";
-    try {
-      outcome = await deps.transport.deliver(dispatching);
-    } catch {
-      outcome = "unknown";
+    let outcome: "sent" | "unknown" | "failed";
+    let result: unknown;
+    if (action && deps.danchu) {
+      const token = (c.req.header("authorization") ?? "").replace(/^Bearer /, "");
+      const r = await deps.danchu.api.act(token, action);
+      outcome = r.status === 0 ? "unknown" : outcomeOf(r.status);
+      result = r.body;
+      await deps.outbound.saveResult(draft.id, result ?? null).catch(() => undefined);
+    } else {
+      try {
+        outcome = await deps.transport.deliver(dispatching);
+      } catch {
+        outcome = "unknown";
+      }
     }
     const done = finishDispatch(dispatching, outcome);
     await deps.outbound.saveIf(done, { epoch: dispatching.epoch, status: "dispatching" });
-    return c.json({ status: done.status });
+    return c.json(action ? { status: done.status, result: result ?? null } : { status: done.status });
   });
 
   app.route(
@@ -143,6 +156,7 @@ export function createApp(deps: Deps) {
   );
 
   if (deps.danchu) {
+    app.route("/v1/danchu", danchuActionRoutes({ outbound: deps.outbound }));
     app.route("/v1", danchuMarketRoutes({ api: deps.danchu.api, market: deps.market }));
   } else if (deps.market) {
     app.route("/v1", marketRoutes(deps.market));
