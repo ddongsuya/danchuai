@@ -101,8 +101,9 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     croList: async (t) => pick(await get<{ requests: DanchuCroItem[] }>(t, "/api/agent/requests"), "requests"),
     croDetail: async (t, no) => pick(await get<{ request: DanchuCroItem }>(t, `/api/agent/requests/${encodeURIComponent(no)}`), "request"),
     act: async (t, a) => {
-      const path = a.action === "create" ? "/api/agent/requests" : `/api/agent/requests/${encodeURIComponent(a.rfqNo ?? "")}/act`;
-      const payload = a.action === "create" ? { payload: a.body } : { ...a.body, action: a.action };
+      const path =
+        a.action === "create" ? "/api/agent/requests" : a.action === "crm_activity" ? "/api/agent/crm" : `/api/agent/requests/${encodeURIComponent(a.rfqNo ?? "")}/act`;
+      const payload = a.action === "create" ? { payload: a.body } : a.action === "crm_activity" ? a.body : { ...a.body, action: a.action };
       try {
         const res = await fetchImpl(`${base}${path}`, {
           method: "POST",

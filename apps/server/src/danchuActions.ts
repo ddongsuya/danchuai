@@ -7,9 +7,13 @@ import { RFQ_NO } from "./danchu";
 import type { DanchuRole } from "./danchu";
 
 export const ACTIONS = {
-  requester: ["create", "ask", "answer"],
-  cro: ["join", "decline", "ask", "answer", "quote_submit"],
+  // 4단계: create·ask·answer / 5단계: select·detail(2차 요청)·contract_confirm·contract_result
+  requester: ["create", "ask", "answer", "select", "detail", "contract_confirm", "contract_result"],
+  // 4단계: join·decline·ask·answer·quote_submit / 5단계: detail_reply·contract_report·crm_activity
+  cro: ["join", "decline", "ask", "answer", "quote_submit", "detail_reply", "contract_report", "crm_activity"],
 } as const satisfies Record<DanchuRole, readonly string[]>;
+/** 요청 번호 없이 하는 동작 */
+const NO_RFQ: readonly string[] = ["create", "crm_activity"];
 export type DanchuActionName = (typeof ACTIONS)[DanchuRole][number];
 
 const ALL = [...new Set([...ACTIONS.requester, ...ACTIONS.cro])] as [DanchuActionName, ...DanchuActionName[]];
@@ -48,7 +52,7 @@ export function checkAction(role: DanchuRole, input: unknown): Checked {
   if (!p.success) return { ok: false, error: "bad_request" };
   const { action, rfqNo, body } = p.data;
   if (!(ACTIONS[role] as readonly string[]).includes(action)) return { ok: false, error: "forbidden" };
-  if ((action === "create") === !!rfqNo) return { ok: false, error: "bad_request" };
+  if (NO_RFQ.includes(action) === !!rfqNo) return { ok: false, error: "bad_request" };
   if ("action" in body) return { ok: false, error: "bad_request" };
   const clean = action === "create" ? Object.fromEntries(Object.entries(body).filter(([k]) => !CONTACT_KEYS.includes(k))) : body;
   const a: DanchuAction = { action, rfqNo: rfqNo ?? null, body: clean };

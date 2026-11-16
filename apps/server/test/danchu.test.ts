@@ -178,9 +178,11 @@ describe("단추 호출", () => {
     const api = danchuApi("https://danchu.example", fetchImpl as unknown as typeof fetch);
     await api.act("abc", { action: "create", rfqNo: null, body: { substance: "A" } });
     await api.act("abc", { action: "ask", rfqNo: "DC-2026-0001", body: { topic: "x" } });
+    await api.act("abc", { action: "crm_activity", rfqNo: null, body: { kind: "call" } });
     expect(seen).toEqual([
       { url: "https://danchu.example/api/agent/requests", body: { payload: { substance: "A" } } },
       { url: "https://danchu.example/api/agent/requests/DC-2026-0001/act", body: { topic: "x", action: "ask" } },
+      { url: "https://danchu.example/api/agent/crm", body: { kind: "call" } },
     ]);
   });
 
@@ -205,6 +207,10 @@ describe("단추 동작 승인 (연동 4단계)", () => {
     const r = checkAction("requester", { action: "create", body: { substance: "A", company: "가회사", phone: "010", email: "x@y.z" } });
     expect(r.ok && r.text).toBe('{"action":"create","body":{"substance":"A"},"rfqNo":null}');
     expect(checkAction("cro", { action: "create", body: {} })).toEqual({ ok: false, error: "forbidden" });
+    expect(checkAction("cro", { action: "select", rfqNo: "DC-2026-0001", body: {} })).toEqual({ ok: false, error: "forbidden" });
+    expect(checkAction("requester", { action: "crm_activity", body: {} })).toEqual({ ok: false, error: "forbidden" });
+    expect(checkAction("cro", { action: "crm_activity", body: { note: "통화" } }).ok).toBe(true);
+    expect(checkAction("requester", { action: "select", rfqNo: "DC-2026-0001", body: { quoteId: "q", revision: 1 } }).ok).toBe(true);
     expect(checkAction("requester", { action: "ask", body: {} })).toEqual({ ok: false, error: "bad_request" });
     expect(checkAction("requester", { action: "create", rfqNo: "DC-2026-0001", body: {} })).toEqual({ ok: false, error: "bad_request" });
     expect(checkAction("cro", { action: "join", rfqNo: "DC-2026-0001", body: { action: "x" } })).toEqual({ ok: false, error: "bad_request" });
