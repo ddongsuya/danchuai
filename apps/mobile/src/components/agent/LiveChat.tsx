@@ -140,6 +140,9 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
         <AgentText>어떤 시험 견적이 필요해요?</AgentText>
       )}
+      {role === 'cro' && !state.messages.length && !draft && !quoteLines.length && state.status === 'idle' && !state.error && (
+        <AgentText>견적 금액부터 넣을까요?</AgentText>
+      )}
       {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
 
       {state.messages.map((m) => (m.role === 'user' ? <UserMessage key={m.id} text={m.text} /> : <AgentText key={m.id}>{m.text}</AgentText>))}
@@ -171,6 +174,27 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           onSubmit={(a) => void send(`${labelOf(state.question!.field)}: ${a[state.question!.field]}`)}
           onSkip={() => void send(`${labelOf(state.question!.field)}: 미정`)}
         />
+      )}
+
+      {/* 기관: 초안 전에도 다음 할 일이 보이게. 금액은 사람이 넣고, 본문은 AI가 쓴다. */}
+      {role === 'cro' && !draft && !state.draftSent && state.status === 'idle' && state.conversationId && out.kind === 'idle' && (
+        <View style={styles.card}>
+          {quoteLines.length > 0 && (
+            <View style={[styles.to, { marginTop: 0, paddingTop: 0, borderTopWidth: 0, marginBottom: space.md }]}>
+              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
+                견적 총액
+              </Txt>
+              <Txt variant="small" tabular style={{ flex: 1, fontFamily: fonts.bold }}>
+                {`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
+              </Txt>
+              <Button title="고치기" kind="ghost" onPress={onEditQuote} />
+            </View>
+          )}
+          <View style={styles.next}>
+            {!quoteLines.length && <Button title="견적 금액 넣기" flex={1} onPress={onEditQuote} />}
+            <Button title="회신 초안 만들기" kind={quoteLines.length ? 'ink' : 'line'} flex={1} onPress={() => void send('회신 초안을 써 주세요.')} />
+          </View>
+        </View>
       )}
 
       {canReview && !reviewing && (
@@ -286,6 +310,7 @@ function ErrorLine({ label, onRetry }: { label: string; onRetry?: () => void }) 
 }
 
 const styles = StyleSheet.create({
+  next: { flexDirection: 'row', gap: space.sm },
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
   act: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
