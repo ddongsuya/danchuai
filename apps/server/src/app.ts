@@ -69,6 +69,8 @@ export function createApp(deps: Deps) {
   app.onError((err, c) => {
     if (err instanceof ApprovalError) return c.json({ error: err.code, message: err.message }, STATUS_BY_CODE[err.code]);
     if (err instanceof Error && err.message === "unknown_recipient") return c.json({ error: "unknown_recipient" }, 400);
+    // 주소의 id가 uuid 모양이 아니면 DB가 22P02로 거절한다. 없는 자료로 본다.
+    if ((err as { code?: unknown }).code === "22P02") return c.json({ error: "not_found" }, 404);
     // 본문·프롬프트·접속 문자열은 남기지 않는다. 원인을 좁힐 수 있게 오류 이름과 코드(예: 28P01, ECONNREFUSED)만 남긴다.
     const code = (err as { code?: unknown }).code;
     console.error("unhandled", err instanceof Error ? err.name : "unknown", typeof code === "string" ? code : "");

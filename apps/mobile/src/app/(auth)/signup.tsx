@@ -7,7 +7,7 @@ import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { space } from '@/constants/theme';
-import { authErrorText, isEmail, PASSWORD_MIN, passwordOk } from '@/lib/authRules';
+import { alreadySignedUp, authErrorText, isEmail, PASSWORD_MIN, passwordOk } from '@/lib/authRules';
 import { supabase } from '@/lib/supabase';
 
 type InputRef = React.ComponentRef<typeof TextInput>;
@@ -27,6 +27,8 @@ export default function Signup() {
     const { data, error: e } = await supabase.auth.signUp({ email: email.trim(), password });
     setBusy(false);
     if (e) return setError(authErrorText(e));
+    // 이미 있는 메일이면 Supabase는 오류 없이 빈 사용자를 돌려주고 코드를 보내지 않는다.
+    if (alreadySignedUp(data.user)) return setError(authErrorText({ code: 'user_already_exists' }));
     // 인증을 끈 프로젝트면 바로 세션이 생긴다(로그인 상태가 화면을 넘긴다).
     if (!data.session) router.push({ pathname: '/verify', params: { email: email.trim(), mode: 'signup' } });
   };

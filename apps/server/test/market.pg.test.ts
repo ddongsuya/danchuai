@@ -247,6 +247,7 @@ describe.skipIf(!BASE)("요청 보내기·회신·선정", () => {
 
     // 다른 의뢰 조직·기관 역할은 볼 수 없다
     expect((await call("GET", `/v1/requests/${requestId}`, await sign(ids.otherReqUser))).status).toBe(404);
+    expect((await call("GET", "/v1/requests/a", t)).status).toBe(404);
     expect((await call("GET", `/v1/requests/${requestId}`, ta)).status).toBe(403);
     expect((await call("POST", `/v1/requests/${requestId}/select`, await sign(ids.otherReqUser), { labOrgId: ids.croA })).status).toBe(404);
 

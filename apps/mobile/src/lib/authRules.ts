@@ -14,6 +14,11 @@ export function formatInviteInput(s: string): string {
   return raw.length > 4 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw;
 }
 
+/** 가입 요청에 이미 있는 메일이 들어왔는지. Supabase는 이때 identities가 빈 사용자를 돌려준다. */
+export function alreadySignedUp(user: { identities?: unknown[] } | null | undefined): boolean {
+  return !!user && Array.isArray(user.identities) && user.identities.length === 0;
+}
+
 /** Supabase 로그인 오류를 화면 문구로. 어느 쪽이 틀렸는지(계정 유무)는 밝히지 않는다. */
 export function authErrorText(e: { code?: string; status?: number; message?: string } | null | undefined): string {
   const code = e?.code ?? '';

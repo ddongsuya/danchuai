@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { AccountBar } from '@/components/auth/AccountBar';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -33,7 +34,7 @@ export default function Join() {
   };
 
   return (
-    <AuthScreen title="초대 코드" back footer={<Button title="참여하기" tall disabled={!ready} loading={busy} onPress={submit} />}>
+    <AuthScreen title="초대 코드" back top={<AccountBar />} footer={<Button title="참여하기" tall disabled={!ready} loading={busy} onPress={submit} />}>
       <View style={{ gap: space.xl }}>
         <Field
           label="코드"

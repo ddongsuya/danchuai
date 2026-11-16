@@ -1,6 +1,7 @@
 // 비밀번호 재설정 코드를 확인한 뒤 새 비밀번호를 정한다.
 import { useState } from 'react';
 
+import { AccountBar } from '@/components/auth/AccountBar';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -26,7 +27,7 @@ export default function NewPassword() {
   };
 
   return (
-    <AuthScreen title="새 비밀번호" footer={<Button title="저장" tall disabled={!passwordOk(password)} loading={busy} onPress={save} />}>
+    <AuthScreen title="새 비밀번호" top={<AccountBar action="취소" />} footer={<Button title="저장" tall disabled={!passwordOk(password)} loading={busy} onPress={save} />}>
       <Field
         label="비밀번호"
         value={password}

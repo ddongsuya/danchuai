@@ -4,6 +4,7 @@ import { Flask, Microscope } from 'phosphor-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AccountBar } from '@/components/auth/AccountBar';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -45,6 +46,7 @@ export default function CreateOrg() {
   return (
     <AuthScreen
       title="조직 만들기"
+      top={<AccountBar />}
       footer={
         <>
           <Button title="만들기" tall disabled={!ready} loading={busy} onPress={submit} />

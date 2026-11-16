@@ -76,8 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       org,
       refresh: async () => load((await supabase?.auth.getSession())?.data.session ?? null),
+      // 서버 로그아웃이 실패해도(연결 끊김 등) 기기의 세션은 지우고 바로 첫 화면으로 간다.
       signOut: async () => {
-        await supabase?.auth.signOut();
+        if (!supabase) return;
+        const { error } = await supabase.auth.signOut();
+        if (error) await supabase.auth.signOut({ scope: 'local' });
+        setRecovery(false);
+        await load(null);
       },
       setRecovery,
     }),
