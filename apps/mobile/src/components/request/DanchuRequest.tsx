@@ -1,10 +1,11 @@
-// 의뢰자: 단추에 보낸 요청의 진행과 비교표 (연동 2단계, 읽기만).
+// 의뢰자: 단추에 보낸 요청의 진행과 비교표 (연동 2단계 읽기 + 5단계 기관 선정).
 // 비교표가 열리기 전에는 숫자만, 열린 뒤에는 회신 도착 순 그대로(순위·추천 없음). 금액은 단추가 저장한 값 그대로.
 import { ArrowClockwise, ArrowSquareOut, WarningCircle } from 'phosphor-react-native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
+import { DanchuSelectSheet } from '@/components/request/DanchuSelectSheet';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
@@ -18,6 +19,7 @@ const ymd = (s: string | null) => (s ? s.slice(0, 10).replace(/-/g, '.') : '미�
 export function DanchuRequest({ no }: { no: string }) {
   const load = useCallback(() => fetchDanchuRequest(no), [no]);
   const { state, reload } = useRemote(load);
+  const [selecting, setSelecting] = useState(false);
 
   if (state.kind !== 'ready') {
     return (
@@ -42,15 +44,17 @@ export function DanchuRequest({ no }: { no: string }) {
   }
 
   const { request: r, compare } = state.data;
+  const canSelect = !r.selected && compare.open && compare.columns.some((c) => c.selectable && c.quoteId && c.revision);
   return (
     <ChatShell
       title={r.title}
       bottom={
-        <View style={styles.bar}>
+        <View style={[styles.bar, { gap: space.sm }]}>
+          {canSelect && <Button title="기관 선정" tall onPress={() => setSelecting(true)} />}
           <Button
             title="단추에서 열기"
-            kind="line"
-            tall
+            kind={canSelect ? 'ghost' : 'line'}
+            tall={!canSelect}
             icon={<ArrowSquareOut size={16} color={tokens.text} />}
             onPress={() => Linking.openURL(`${DANCHU_URL}/app/r/${encodeURIComponent(r.no)}`)}
           />
@@ -78,19 +82,55 @@ export function DanchuRequest({ no }: { no: string }) {
       </View>
 
       <CompareView compare={compare} />
+      {compare.open && (
+        <DanchuSelectSheet
+          no={r.no}
+          visible={selecting}
+          columns={compare.columns}
+          onClose={() => setSelecting(false)}
+          onDone={() => {
+            setSelecting(false);
+            void reload();
+          }}
+        />
+      )}
     </ChatShell>
   );
 }
 
 function CompareView({ compare }: { compare: DanchuCompare }) {
   if (!compare.open) {
+    const seats = Array.from({ length: compare.joined }, (_, i) => i < compare.submitted);
     return (
       <View style={styles.card}>
         <View style={[styles.tr, styles.head]}>
-          <Txt variant="label">비교표</Txt>
+          <Txt variant="label" style={{ flex: 1 }}>
+            비교표
+          </Txt>
+          <Txt variant="caption" color={tokens.muted} tabular>
+            {`${ymd(compare.replyBy)} 공개`}
+          </Txt>
         </View>
-        <Fact k="공개 예정" v={ymd(compare.replyBy)} line />
-        <Fact k="제출" v={`${compare.submitted}/${compare.joined}곳`} line />
+        {seats.length === 0 ? (
+          <View style={[styles.tr, styles.line]}>
+            <Txt variant="small" color={tokens.muted}>
+              참여 기관 없음
+            </Txt>
+          </View>
+        ) : (
+          <View style={[styles.line, styles.seats]} accessibilityLabel={`참여 ${compare.joined}곳 중 ${compare.submitted}곳 제출`}>
+            {seats.map((done, i) => (
+              <View key={i} style={[styles.seat, done && styles.seatDone]}>
+                <Txt variant="caption" color={tokens.muted} tabular>
+                  {`기관 ${i + 1}`}
+                </Txt>
+                <Txt variant="small" color={done ? tokens.text : tokens.wait} style={{ fontFamily: fonts.semibold }}>
+                  {done ? '제출' : '회신 대기'}
+                </Txt>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     );
   }
@@ -164,4 +204,7 @@ const styles = StyleSheet.create({
   k: { flex: 1, minWidth: 84 },
   v: { textAlign: 'right' },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm },
+  seats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, padding: 14 },
+  seat: { width: '31%', minWidth: 92, gap: 2, paddingVertical: 10, paddingHorizontal: 12, borderRadius: radius.inner, borderWidth: 1, borderColor: tokens.border, borderStyle: 'dashed' },
+  seatDone: { borderStyle: 'solid', backgroundColor: tokens.sunken },
 });
