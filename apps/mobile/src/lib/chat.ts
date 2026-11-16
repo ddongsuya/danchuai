@@ -17,10 +17,21 @@ export interface AgentQuestion {
   options: string[];
 }
 
+/** 답이 인용한 가이드라인 원문(서버 sources 이벤트) */
+export interface SourceRef {
+  doc: string;
+  name: string;
+  section: string;
+  url: string | null;
+  version: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'agent';
   text: string;
+  /** 답이 인용한 원문. 흐르는 동안 받은 것을 답이 끝날 때 붙인다. */
+  sources?: SourceRef[];
 }
 
 export interface ChatState {
@@ -40,6 +51,8 @@ export interface ChatState {
   lastText: string | null;
   /** 이 초안은 이미 보내기 장부에 올라갔다(다시 보내지 않는다) */
   draftSent: boolean;
+  /** 지금 흐르는 답의 출처 */
+  pendingSources: SourceRef[];
 }
 
 export const initialChat: ChatState = {
@@ -57,6 +70,7 @@ export const initialChat: ChatState = {
   error: null,
   lastText: null,
   draftSent: false,
+  pendingSources: [],
 };
 
 export type ChatAction =
@@ -81,6 +95,21 @@ export type ChatAction =
 const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized'];
 const asCode = (c: unknown): ChatErrorCode => (typeof c === 'string' && KNOWN.includes(c) ? (c as ChatErrorCode) : 'provider_error');
 
+/** 출처는 모양이 맞는 것만, 원문 주소는 https만 받는다. */
+function asSources(items: unknown): SourceRef[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object' && typeof x.doc === 'string')
+    .slice(0, 8)
+    .map((x) => ({
+      doc: String(x.doc),
+      name: typeof x.name === 'string' ? x.name : String(x.doc),
+      section: typeof x.section === 'string' ? x.section : '',
+      url: typeof x.url === 'string' && x.url.startsWith('https://') ? x.url : null,
+      version: typeof x.version === 'string' ? x.version : '',
+    }));
+}
+
 /** 흐르던 답을 대화에 내려놓는다. */
 function settle(s: ChatState, at: number): ChatState {
   const text = s.streaming.trim();
@@ -89,7 +118,10 @@ function settle(s: ChatState, at: number): ChatState {
     status: 'idle',
     step: null,
     streaming: '',
-    messages: text ? [...s.messages, { id: `a${at}`, role: 'agent', text }] : s.messages,
+    pendingSources: [],
+    messages: text
+      ? [...s.messages, { id: `a${at}`, role: 'agent', text, ...(s.pendingSources.length ? { sources: s.pendingSources } : {}) }]
+      : s.messages,
   };
 }
 
@@ -119,6 +151,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
         error: null,
         question: null,
         streaming: '',
+        pendingSources: [],
         lastText: a.text,
         messages: [...s.messages, { id: `u${a.at}`, role: 'user', text: a.text }],
       };
@@ -137,6 +170,8 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           return { ...s, summary: d.points ?? null };
         case 'draft':
           return { ...s, draft: { body: d.body, dropped: d.dropped ?? 0, version: d.version }, draftSent: false };
+        case 'sources':
+          return { ...s, pendingSources: asSources(d.items) };
         case 'error':
           return { ...s, error: asCode(d.code) };
         default:

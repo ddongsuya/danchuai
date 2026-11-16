@@ -272,6 +272,22 @@ describe.skipIf(!BASE)("요청 보내기·회신·선정", () => {
     expect(items.find((i) => i.requestId === requestId)!.status).toBe("selected");
   });
 
+  it("질문 대화: 기관도 요청 없이 열고(Postgres), 의뢰자 요청함에는 나오지 않는다", async () => {
+    const tl = await sign(ids.aUser);
+    const lab = await call("POST", "/v1/agent/conversations", tl, { mode: "ask" });
+    expect(lab.status).toBe(201);
+    const labConv = await json<{ id: string; mode: string }>(lab);
+    expect(labConv.mode).toBe("ask");
+    await (await call("POST", `/v1/agent/conversations/${labConv.id}/turn`, tl, { text: "유전독성 표준 조합" })).text();
+    expect((await json<{ mode: string; messages: unknown[] }>(call("GET", `/v1/agent/conversations/${labConv.id}`, tl))).messages).toHaveLength(2);
+
+    const t = await sign(ids.reqUser);
+    const { id } = await json<{ id: string }>(call("POST", "/v1/agent/conversations", t, { mode: "ask" }));
+    await (await call("POST", `/v1/agent/conversations/${id}/turn`, t, { text: "반복투여 기간" })).text();
+    const { items } = await json<{ items: Array<{ conversationId: string }> }>(call("GET", "/v1/requests", t));
+    expect(items.some((i) => i.conversationId === id)).toBe(false);
+  });
+
   it("회신 전에는 선정할 수 없다(409 not_replied)", async () => {
     const { t, requestId } = await sendRequest([ids.croC]);
     const r = await call("POST", `/v1/requests/${requestId}/select`, t, { labOrgId: ids.croC });

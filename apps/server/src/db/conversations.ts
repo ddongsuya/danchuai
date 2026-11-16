@@ -8,6 +8,7 @@ type Row = {
   org_id: string;
   created_by: string;
   role: "requester" | "cro";
+  mode: "request" | "ask";
   request_id: string | null;
   sheet: Partial<RequestSheet>;
   question: Conversation["question"];
@@ -27,16 +28,16 @@ export class PgConversationRepo implements ConversationRepo {
 
   async create(c: Conversation) {
     await this.pool.query(
-      `insert into conversations (id, org_id, created_by, role, request_id, sheet)
-       values ($1, $2, $3, $4, $5, $6)`,
-      [c.id, c.orgId, c.createdBy, c.role, c.requestId, JSON.stringify(c.sheet)],
+      `insert into conversations (id, org_id, created_by, role, mode, request_id, sheet)
+       values ($1, $2, $3, $4, $5, $6, $7)`,
+      [c.id, c.orgId, c.createdBy, c.role, c.mode, c.requestId, JSON.stringify(c.sheet)],
     );
   }
 
   async get(id: string): Promise<Conversation | null> {
     if (!UUID.test(id)) return null;
     const { rows } = await this.pool.query<Row>(
-      `select id, org_id, created_by, role, request_id, sheet, question, summary, draft, turns,
+      `select id, org_id, created_by, role, mode, request_id, sheet, question, summary, draft, turns,
               input_tokens, output_tokens, cache_read_tokens, cache_write_tokens
          from conversations where id = $1`,
       [id],
@@ -52,6 +53,7 @@ export class PgConversationRepo implements ConversationRepo {
       orgId: r.org_id,
       createdBy: r.created_by,
       role: r.role,
+      mode: r.mode,
       requestId: r.request_id,
       sheet: toSheet(r.sheet),
       messages: msgs.rows.map((m) => ({ role: m.role, content: m.body })),

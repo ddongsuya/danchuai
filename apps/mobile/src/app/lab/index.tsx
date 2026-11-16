@@ -35,6 +35,7 @@ export default function LabInbox() {
       hrefOf={(id) => ({ pathname: '/lab/[id]', params: { id } })}
       switchTo="/"
       switchLabel="의뢰자 화면으로 바꾸기"
+      askHref={{ pathname: '/ask', params: { role: 'cro' } }}
       newLabel="새 대화"
     />
   );

@@ -1,6 +1,8 @@
 import type { AgentMessage, RequestSheet, Usage } from "@danchuai/core";
 import type { Role } from "./tools";
 
+export type ConversationMode = "request" | "ask";
+
 export interface Question {
   field: string;
   question: string;
@@ -13,6 +15,8 @@ export interface Conversation {
   /** 대화를 연 사용자(세션의 userId) */
   createdBy: string;
   role: Role;
+  /** request: 견적 요청·회신 대화, ask: 가이드라인 질문 대화(요청서·도구 없음) */
+  mode: ConversationMode;
   /** 기관 대화일 때 받은 요청 */
   requestId: string | null;
   sheet: RequestSheet;

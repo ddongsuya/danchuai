@@ -3,7 +3,7 @@
 import { amountBlock, computeTotals, formatWonShort, SHEET_LABELS, type QuoteLine, type SheetField } from '@danchuai/core';
 import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-native';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ApprovalCard, type Recipient } from '@/components/chat/ApprovalCard';
@@ -19,7 +19,7 @@ import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, createOutbound, type AgentRole, type OutboundDraftView } from '@/lib/agentClient';
 import type { ChatErrorCode } from '@/lib/chat';
 
-const ERROR_LABEL: Record<ChatErrorCode, string> = {
+export const ERROR_LABEL: Record<ChatErrorCode, string> = {
   agent_unavailable: '에이전트 연결 전이에요',
   turn_limit: '이 대화는 한도에 닿았어요',
   turn_in_progress: '앞 답을 기다리는 중이에요',
@@ -29,7 +29,7 @@ const ERROR_LABEL: Record<ChatErrorCode, string> = {
   network: '연결이 끊겼어요',
   unauthorized: '로그인이 필요해요',
 };
-const RETRYABLE: readonly ChatErrorCode[] = ['provider_error', 'network', 'truncated', 'turn_in_progress', 'agent_unavailable'];
+export const RETRYABLE: readonly ChatErrorCode[] = ['provider_error', 'network', 'truncated', 'turn_in_progress', 'agent_unavailable'];
 
 interface Props {
   role: AgentRole;
@@ -50,12 +50,21 @@ interface Props {
   onEditQuote?: () => void;
   /** 보내기가 끝났을 때(화면이 결과를 다시 읽는다) */
   onSent?: () => void;
+  /** 의뢰자: 질문하기에서 넘어올 때 대화를 열자마자 보낼 첫 글 */
+  seed?: string;
 }
 
 type SendState = { kind: 'idle' } | { kind: 'sending' } | { kind: 'done'; sent: number; unknown: number } | { kind: 'error' };
 
-export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, requestMessage, onEditQuote, onSent }: Props) {
+export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, requestMessage, onEditQuote, onSent, seed }: Props) {
   const { state, send, retry } = useAgentChat(role, requestId, conversationId);
+  // 첫 글은 새 대화가 열린 뒤 한 번만 보낸다.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seed || seeded.current || !state.conversationId || state.status !== 'idle' || state.messages.length) return;
+    seeded.current = true;
+    void send(seed);
+  }, [seed, send, state.conversationId, state.status, state.messages.length]);
   // 이어 쓰는 대화는 요청서에서 제목을 만든다(서버 목록과 같은 규칙).
   const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
   const [reviewing, setReviewing] = useState(false);
@@ -297,7 +306,7 @@ function SheetCard({ sheet, message }: { sheet: Record<string, string | null>; m
   );
 }
 
-function ErrorLine({ label, onRetry }: { label: string; onRetry?: () => void }) {
+export function ErrorLine({ label, onRetry }: { label: string; onRetry?: () => void }) {
   return (
     <View style={styles.row} accessibilityRole="alert">
       <WarningCircle size={16} weight="fill" color={tokens.danger} />

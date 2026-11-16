@@ -40,6 +40,7 @@ export default function RequesterInbox() {
       hrefOf={hrefOf}
       switchTo="/lab"
       switchLabel="기관 화면으로 바꾸기"
+      askHref={{ pathname: '/ask', params: { role: 'requester' } }}
       newLabel="새 요청"
       newHref={{ pathname: '/requester/[id]', params: { id: 'new' } }}
     />

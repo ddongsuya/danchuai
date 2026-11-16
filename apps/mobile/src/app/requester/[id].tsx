@@ -8,9 +8,9 @@ import { agentConfigured } from '@/lib/agentClient';
 import { isUuid } from '@/lib/format';
 
 export default function RequesterRequest() {
-  const { id, conv } = useLocalSearchParams<{ id: string; conv?: string }>();
+  const { id, conv, seed } = useLocalSearchParams<{ id: string; conv?: string; seed?: string }>();
   if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" />;
-  if (id === 'new') return <LiveChat key={conv ?? 'new'} role="requester" title={conv ? '요청' : '새 요청'} conversationId={conv && isUuid(conv) ? conv : undefined} />;
+  if (id === 'new') return <LiveChat key={conv ?? 'new'} role="requester" title={conv ? '요청' : '새 요청'} conversationId={conv && isUuid(conv) ? conv : undefined} seed={!conv && seed ? seed.slice(0, 1000) : undefined} />;
   if (isUuid(id)) return <RequestProgress requestId={id} />;
   return <NotFound label="요청을 찾을 수 없어요" />;
 }

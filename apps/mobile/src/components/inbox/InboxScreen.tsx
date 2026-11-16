@@ -1,6 +1,6 @@
 // 요청함(Manus 작업 목록 방식). 의뢰자와 기관이 같은 틀을 쓰고 항목과 상태 이름만 다르다.
 import { router, type Href } from 'expo-router';
-import { ArrowClockwise, ChatCircle, Dna, Drop, Flask, MagnifyingGlass, Tray, User, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ArrowClockwise, BookOpenText, ChatCircle, Dna, Drop, Flask, MagnifyingGlass, Tray, User, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,9 +43,11 @@ interface Props {
   switchLabel: string;
   newLabel: string;
   newHref?: Href;
+  /** 가이드라인 질문하기 */
+  askHref?: Href;
 }
 
-export function InboxScreen({ title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref }: Props) {
+export function InboxScreen({ title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref, askHref }: Props) {
   const { status } = useAuth();
   const [active, setActive] = useState(0);
   const shown = useMemo(() => {
@@ -66,9 +68,19 @@ export function InboxScreen({ title = '요청함', items, filters, load = 'ready
             <User size={20} color={tokens.text} />
           </IconButton>
         )}
-        <IconButton label="검색">
-          <MagnifyingGlass size={20} color={tokens.text} />
-        </IconButton>
+        <View style={styles.navRight}>
+          {askHref && (
+            <Press label="질문하기" onPress={() => router.push(askHref)} style={styles.ask}>
+              <BookOpenText size={18} color={tokens.text} />
+              <Txt variant="label" style={{ fontFamily: fonts.semibold }}>
+                질문하기
+              </Txt>
+            </Press>
+          )}
+          <IconButton label="검색">
+            <MagnifyingGlass size={20} color={tokens.text} />
+          </IconButton>
+        </View>
       </View>
       <Txt variant="title" accessibilityRole="header" style={styles.title}>
         {title}
@@ -176,6 +188,8 @@ function Skeleton() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
   nav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
+  navRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  ask: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border },
   title: { paddingHorizontal: space.xl, paddingTop: 4, paddingBottom: space.md },
   filters: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl, paddingBottom: 14 },
   filter: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border, justifyContent: 'center' },

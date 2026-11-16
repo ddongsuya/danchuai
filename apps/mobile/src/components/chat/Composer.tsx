@@ -6,7 +6,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { fonts, space, tokens } from '@/constants/theme';
 
-export function Composer({ onSend, disabled }: { onSend?: (text: string) => void; disabled?: boolean }) {
+export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSend?: (text: string) => void; disabled?: boolean; placeholder?: string }) {
   const [text, setText] = useState('');
   const ready = text.trim().length > 0 && !disabled;
   return (
@@ -14,9 +14,9 @@ export function Composer({ onSend, disabled }: { onSend?: (text: string) => void
       <TextInput
         value={text}
         onChangeText={setText}
-        placeholder="메시지"
+        placeholder={placeholder}
         placeholderTextColor={tokens.faint}
-        accessibilityLabel="메시지"
+        accessibilityLabel={placeholder}
         multiline
         style={styles.input}
         selectionColor={tokens.accent}

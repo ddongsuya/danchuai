@@ -18,7 +18,7 @@ import { sha256 } from "../hash";
 import type { MarketRepo } from "../db/market";
 import type { OutboundRepo } from "../repo";
 import { interpret } from "./interpret";
-import { SYSTEM } from "./prompts";
+import { ASK_SYSTEM, SYSTEM } from "./prompts";
 import { TOOLS } from "./tools";
 import type { Conversation, ConversationRepo, RequestDirectory } from "./store";
 
@@ -27,6 +27,7 @@ export const LIMITS = {
   turns: 40,
   historyMessages: 20,
   maxTokens: 1200,
+  askMaxTokens: 1600,
   recipients: 10,
 } as const;
 
@@ -41,7 +42,9 @@ export interface AgentDeps {
 
 type Env = { Variables: { session: Session } };
 
-const CreateBody = z.object({ requestId: z.string().min(1).max(64).optional() }).strict();
+const CreateBody = z
+  .object({ requestId: z.string().min(1).max(64).optional(), mode: z.enum(["request", "ask"]).optional() })
+  .strict();
 const TurnBody = z.object({ text: z.string().trim().min(1).max(LIMITS.textChars) }).strict();
 const OutboundBody = z
   .object({
@@ -63,6 +66,7 @@ const ZERO_USAGE = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheW
 const view = (c: Conversation) => ({
   id: c.id,
   role: c.role,
+  mode: c.mode,
   sheet: c.sheet,
   missing: missingFields(c.sheet),
   question: c.question,
@@ -101,9 +105,12 @@ export function agentRoutes(deps: AgentDeps) {
     const s = c.get("session");
     const parsed = CreateBody.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    const mode = parsed.data.mode ?? "request";
     let sheet = { ...EMPTY_SHEET };
     let requestId: string | null = null;
-    if (s.role === "cro") {
+    // 질문 대화는 요청과 묶이지 않는다(의뢰자·기관 모두 바로 연다).
+    if (mode === "ask" && parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
+    if (mode === "request" && s.role === "cro") {
       if (!parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
       const r = await deps.requests.forCro(parsed.data.requestId, s.orgId);
       if (!r) return c.json({ error: "not_found" }, 404);
@@ -115,6 +122,7 @@ export function agentRoutes(deps: AgentDeps) {
       orgId: s.orgId,
       createdBy: s.userId,
       role: s.role,
+      mode,
       requestId,
       sheet,
       messages: [],
@@ -156,10 +164,14 @@ export function agentRoutes(deps: AgentDeps) {
     const history = windowed(conv.messages);
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
     const evidence = retrieve(userText);
+    const ask = conv.mode === "ask";
     const messages: AgentMessage[] = [
       ...history,
-      // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다.
-      { role: "user", content: `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}` },
+      // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.
+      {
+        role: "user",
+        content: ask ? `${userText}\n\n${contextBlock(evidence)}` : `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}`,
+      },
     ];
 
     return streamSSE(c, async (stream) => {
@@ -168,12 +180,13 @@ export function agentRoutes(deps: AgentDeps) {
       const abort = new AbortController();
       stream.onAbort(() => abort.abort());
       try {
-        await send("step", { label: conv.role === "cro" ? "요청 확인" : "요청서 확인" });
+        await send("step", { label: ask ? "원문 찾기" : conv.role === "cro" ? "요청 확인" : "요청서 확인" });
         const result = await provider.complete({
-          system: SYSTEM[conv.role],
+          system: ask ? ASK_SYSTEM : SYSTEM[conv.role],
           messages,
-          tools: TOOLS[conv.role],
-          maxTokens: LIMITS.maxTokens,
+          // 질문 대화에는 도구가 없다(요청서·본문을 만들지 않는다).
+          tools: ask ? undefined : TOOLS[conv.role],
+          maxTokens: ask ? LIMITS.askMaxTokens : LIMITS.maxTokens,
           signal: abort.signal,
           onText: (delta) => {
             writes = writes.then(() => send("text", { delta }));
@@ -181,7 +194,7 @@ export function agentRoutes(deps: AgentDeps) {
         });
         await writes;
 
-        const { conv: next, events, notes } = interpret(conv, result.toolCalls);
+        const { conv: next, events, notes } = ask ? { conv, events: [], notes: [] } : interpret(conv, result.toolCalls);
         for (const e of events) await send(e.event, e.data);
         // 답이 인용한 원문만 출처로 보낸다(앱이 원문 링크로 보여 준다).
         const sources = citedSources(result.text, evidence.sources);
@@ -227,6 +240,7 @@ export function agentRoutes(deps: AgentDeps) {
     if (!conv) return c.json({ error: "not_found" }, 404);
     const parsed = OutboundBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    if (conv.mode === "ask") return c.json({ error: "no_draft" }, 409);
     const d = conv.draft;
     if (!d) return c.json({ error: "no_draft" }, 409);
     // 사람이 본 판이 지금 판과 같아야 하고, 한 판에서 한 번만 만든다.

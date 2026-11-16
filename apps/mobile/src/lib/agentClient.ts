@@ -63,8 +63,10 @@ export interface ConversationView {
   messages?: { role: 'user' | 'assistant'; text: string }[];
 }
 
-export const createConversation = (role: AgentRole, requestId?: string) =>
-  call<ConversationView>(role, '/v1/agent/conversations', requestId ? { requestId } : {});
+export type ConversationMode = 'request' | 'ask';
+
+export const createConversation = (role: AgentRole, requestId?: string, mode: ConversationMode = 'request') =>
+  call<ConversationView>(role, '/v1/agent/conversations', mode === 'ask' ? { mode } : requestId ? { requestId } : {});
 
 export const getConversation = (role: AgentRole, id: string) => call<ConversationView>(role, `/v1/agent/conversations/${encodeURIComponent(id)}`);
 

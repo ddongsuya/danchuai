@@ -74,3 +74,35 @@ describe('대화 상태', () => {
     expect(s.summary).toEqual(['랫드 4주']);
   });
 });
+
+describe('근거 출처', () => {
+  it('흐르는 동안 받은 출처를 답이 끝날 때 그 답에 붙인다', () => {
+    const s = run([
+      opened,
+      { type: 'send', text: '유전독성 표준 조합', at: 1 },
+      { type: 'server', event: 'text', data: { delta: '두 가지예요(근거: ICH S2 2.2).' } },
+      {
+        type: 'server',
+        event: 'sources',
+        data: { items: [{ doc: 'ICH S2', name: 'ICH S2(R1)', section: '2.2', url: 'https://database.ich.org/x.pdf', version: '2011' }, { doc: 'X', url: 'javascript:alert(1)' }] },
+      },
+      { type: 'ended', at: 2 },
+    ]);
+    const a = s.messages.at(-1)!;
+    expect(a.sources?.map((x) => x.doc)).toEqual(['ICH S2', 'X']);
+    expect(a.sources?.[1]?.url).toBeNull();
+    expect(s.pendingSources).toEqual([]);
+  });
+  it('출처가 없으면 답에 붙이지 않고, 다음 질문에 앞 출처가 남지 않는다', () => {
+    const s = run([
+      opened,
+      { type: 'send', text: 'a', at: 1 },
+      { type: 'server', event: 'sources', data: { items: [{ doc: 'ICH M3' }] } },
+      { type: 'failed', code: 'network', at: 2 },
+      { type: 'send', text: 'b', at: 3 },
+      { type: 'server', event: 'text', data: { delta: '답' } },
+      { type: 'ended', at: 4 },
+    ]);
+    expect(s.messages.at(-1)!.sources).toBeUndefined();
+  });
+});

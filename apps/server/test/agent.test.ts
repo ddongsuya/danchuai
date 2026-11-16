@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
 import { LIMITS } from "../src/agent/routes";
 import { MemoryConversationRepo, MemoryRequestDirectory } from "../src/agent/store";
-import { SYSTEM } from "../src/agent/prompts";
+import { ASK_SYSTEM, SYSTEM } from "../src/agent/prompts";
 import type { Session } from "../src/auth";
 import { MemoryOutboundRepo } from "../src/repo";
 
@@ -411,5 +411,59 @@ describe("에이전트 대화: 가이드라인 근거", () => {
       expect(s).toContain("<효력시험 질환 영역>");
       expect(s).not.toMatch(/\d{4}-\d{2}-\d{2}/); // 날짜 같은 바뀌는 값 없음(캐시)
     }
+  });
+});
+
+describe("에이전트 대화: 가이드라인 질문하기", () => {
+  it("의뢰자·기관 모두 요청 없이 질문 대화를 연다", async () => {
+    const { create } = setup();
+    for (const auth of ["Bearer req", "Bearer cro"]) {
+      const { res, conv } = await create(auth, { mode: "ask" });
+      expect(res.status).toBe(201);
+      expect((conv as unknown as { mode: string }).mode).toBe("ask");
+    }
+    // 질문 대화는 요청과 묶지 않는다
+    expect((await create("Bearer cro", { mode: "ask", requestId: "r1" })).res.status).toBe(400);
+    // 기관의 요청 대화는 여전히 받은 요청이 있어야 한다
+    expect((await create("Bearer cro", {})).res.status).toBe(400);
+  });
+
+  it("질문 대화는 도구·요청서 없이 원문 근거만 붙여 답하고, 출처를 보낸다", async () => {
+    const p = new FakeProvider([
+      {
+        text: "표준 조합은 두 가지예요(근거: ICH S2 2.2).",
+        // 모델이 도구를 불러도 질문 대화에서는 무시한다
+        toolCalls: [sheetCall({ testType: "독성" })],
+      },
+    ]);
+    const { create, turn } = setup(p);
+    const { conv } = await create("Bearer cro", { mode: "ask" });
+    const { events } = await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?", "Bearer cro");
+    const req = p.calls[0]!;
+    expect(req.system).toBe(ASK_SYSTEM);
+    expect(req.tools).toBeUndefined();
+    const last = req.messages.at(-1)!.content;
+    expect(last).toContain("<참고자료>");
+    expect(last).not.toContain("<요청서>");
+    expect(events.some((e) => e.event === "sheet")).toBe(false);
+    expect(events.find((e) => e.event === "sources")?.data.items[0].doc).toBe("ICH S2");
+    expect(events.find((e) => e.event === "step")?.data.label).toBe("원문 찾기");
+  });
+
+  it("질문 대화에서는 보내기 초안을 만들 수 없다", async () => {
+    const { create, call } = setup();
+    const { conv } = await create("Bearer req", { mode: "ask" });
+    const res = await call("POST", `/v1/agent/conversations/${conv.id}/outbound`, "Bearer req", {
+      version: 1,
+      recipientOrgIds: ["00000000-0000-4000-8000-0000000000c1"],
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it("질문용 시스템 프롬프트는 고정 글이고 기준 자료를 담는다", () => {
+    expect(ASK_SYSTEM).toContain("<시험 묶음>");
+    expect(ASK_SYSTEM).toContain("여덟 문장");
+    expect(ASK_SYSTEM).not.toContain("한두 문장");
+    expect(ASK_SYSTEM).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 });
