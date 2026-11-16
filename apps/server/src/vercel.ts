@@ -5,6 +5,9 @@ import { buildServer } from "./server";
 // 비밀이 아닌 기본 설정은 여기 두고, 비밀값(DATABASE_URL, 모델 API 키)은 Vercel 환경 변수로만 받는다.
 const defaults = {
   SUPABASE_URL: "https://wrqkvydefavmotsupwab.supabase.co",
+  // 단추 계정으로 로그인하고 단추에서 읽고 쓴다(연동 2~5단계). 이전 방식으로 되돌리려면 환경 변수 AUTH_SOURCE=supabase
+  AUTH_SOURCE: "danchu",
+  DANCHU_API_URL: "https://danchu.kr",
   CORS_ORIGINS: "https://danchuai-mobile.vercel.app,https://danchuai-web.vercel.app,http://localhost:8081",
 };
 const app = buildServer({ ...defaults, ...process.env });
