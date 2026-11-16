@@ -15,6 +15,8 @@ interface AuthState {
   session: Session | null;
   org: AccountOrg | null;
   blocked: BlockedReason | null;
+  /** 단추 계정 연동 모드. 보내기·선정 같은 일은 단추에서 실행한다(연동 4·5단계) */
+  danchu: boolean;
   /** 조직을 만들거나 참여한 뒤 다시 읽는다. */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -27,6 +29,7 @@ const Ctx = createContext<AuthState>({
   session: null,
   org: null,
   blocked: null,
+  danchu: false,
   refresh: async () => undefined,
   signOut: async () => undefined,
   setRecovery: () => undefined,
@@ -38,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [org, setOrg] = useState<AccountOrg | null>(null);
   const [blocked, setBlocked] = useState<BlockedReason | null>(null);
+  const [danchu, setDanchu] = useState(false);
   const [base, setStatus] = useState<AuthStatus>(supabase ? 'loading' : 'disabled');
   const [recovery, setRecovery] = useState(false);
   const status: AuthStatus = recovery ? 'recovery' : base;
@@ -52,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const me = await fetchMe();
       setOrg(me.org);
+      setDanchu(me.source === 'danchu');
       setBlocked(null);
       if (!me.org) return setStatus('needsOrg');
       setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
@@ -87,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       org,
       blocked,
+      danchu,
       refresh: async () => load((await supabase?.auth.getSession())?.data.session ?? null),
       // 서버 로그아웃이 실패해도(연결 끊김 등) 기기의 세션은 지우고 바로 첫 화면으로 간다.
       signOut: async () => {
@@ -98,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       setRecovery,
     }),
-    [status, session, org, blocked, load],
+    [status, session, org, blocked, danchu, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

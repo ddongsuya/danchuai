@@ -135,3 +135,38 @@ export async function approveAndSend(role: AgentRole, d: OutboundDraftView): Pro
   const r = await call<{ status: string }>(role, `/v1/outbound/${encodeURIComponent(d.id)}/dispatch`, {});
   return r.status === 'sent' ? 'sent' : 'unknown';
 }
+
+/** 단추에서 실행할 동작 하나(연동 4·5단계). 본문은 단추로 보낼 값 그대로이고 서버가 해시를 매긴다. */
+export interface DanchuActionDraft {
+  id: string;
+  text: string;
+  textHash: string;
+  epoch: number;
+}
+export type DanchuActionName =
+  | 'create'
+  | 'ask'
+  | 'answer'
+  | 'select'
+  | 'detail'
+  | 'contract_confirm'
+  | 'contract_result'
+  | 'join'
+  | 'decline'
+  | 'quote_submit'
+  | 'detail_reply'
+  | 'contract_report'
+  | 'crm_activity';
+
+export const draftDanchuAction = (role: AgentRole, action: DanchuActionName, body: Record<string, unknown>, rfqNo?: string) =>
+  call<DanchuActionDraft>(role, '/v1/danchu/actions', { action, body, ...(rfqNo ? { rfqNo } : {}) });
+
+export type DanchuActionResult = { status: 'sent' | 'failed' | 'unknown'; result: Record<string, unknown> | null };
+
+/** 사람이 승인 카드에서 누른 뒤에만 부른다. 승인 기록을 남기고 단추에서 한 번 실행한다. */
+export async function approveDanchuAction(role: AgentRole, d: DanchuActionDraft): Promise<DanchuActionResult> {
+  await call(role, `/v1/outbound/${encodeURIComponent(d.id)}/decision`, { decision: 'approve', epoch: d.epoch, textHash: d.textHash });
+  const r = await call<{ status: string; result?: unknown }>(role, `/v1/outbound/${encodeURIComponent(d.id)}/dispatch`, {});
+  const status = r.status === 'sent' || r.status === 'failed' ? r.status : 'unknown';
+  return { status, result: r.result && typeof r.result === 'object' ? (r.result as Record<string, unknown>) : null };
+}

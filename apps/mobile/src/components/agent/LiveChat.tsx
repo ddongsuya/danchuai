@@ -11,12 +11,15 @@ import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuestionCard } from '@/components/chat/QuestionCard';
+import { DanchuSendForm } from '@/components/request/DanchuSendForm';
 import { LabPicker } from '@/components/request/LabPicker';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import { approveAndSend, createOutbound, type AgentRole, type OutboundDraftView } from '@/lib/agentClient';
+import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
+import { buildPayload, EMPTY_CHOICES, guessCategories, summaryLines, type SendChoices } from '@/lib/danchuRequest';
+import { useAuth } from '@/lib/session';
 import type { ChatErrorCode } from '@/lib/chat';
 
 export const ERROR_LABEL: Record<ChatErrorCode, string> = {
@@ -54,7 +57,13 @@ interface Props {
   seed?: string;
 }
 
-type SendState = { kind: 'idle' } | { kind: 'sending' } | { kind: 'done'; sent: number; unknown: number } | { kind: 'error' };
+type SendState =
+  | { kind: 'idle' }
+  | { kind: 'sending' }
+  | { kind: 'done'; sent: number; unknown: number; rfqNo?: string }
+  | { kind: 'error' }
+  /** 단추가 거절했다(사유 문장은 단추가 준 그대로) */
+  | { kind: 'failed'; message: string };
 
 export function LiveChat({ role, title, requestId, conversationId, recipients: given = [], quoteLines = [], durationWeeks, requestMessage, onEditQuote, onSent, seed }: Props) {
   const { state, send, retry } = useAgentChat(role, requestId, conversationId);
@@ -75,10 +84,42 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const made = useRef<{ version: number; requestId: string | null; drafts: OutboundDraftView[]; sent: Set<string> } | null>(null);
   const [sentRequestId, setSentRequestId] = useState<string | null>(null);
   const busy = state.status !== 'idle';
+  // 단추 연동 모드의 의뢰자: 받는 기관을 고르지 않고 단추 요청서로 보낸다(연동 4단계)
+  const { danchu } = useAuth();
+  const viaDanchu = danchu && role === 'requester';
+  const [form, setForm] = useState(false);
+  const [choices, setChoices] = useState<SendChoices | null>(null);
+  const danchuMade = useRef<{ key: string; d: DanchuActionDraft } | null>(null);
   const draft = state.draft;
+  const payload = viaDanchu && draft && state.sheet && choices ? buildPayload(state.sheet, draft.body, choices) : null;
   const outBody = draft && role === 'cro' && quoteLines.length ? `${draft.body}\n\n${amountBlock(quoteLines)}` : draft?.body ?? '';
 
+  const approveDanchu = async () => {
+    if (!payload) return;
+    setOut({ kind: 'sending' });
+    try {
+      // 같은 본문이면 만든 초안을 다시 쓴다(승인 한 건에 실행 한 번은 서버가 지킨다)
+      const key = JSON.stringify(payload);
+      if (danchuMade.current?.key !== key) danchuMade.current = { key, d: await draftDanchuAction('requester', 'create', payload) };
+      const r = await approveDanchuAction('requester', danchuMade.current.d);
+      danchuMade.current = null;
+      if (r.status === 'failed') {
+        setOut({ kind: 'failed', message: typeof r.result?.error === 'string' ? r.result.error : '단추가 받지 않았어요' });
+        setReviewing(false);
+        return;
+      }
+      const rfqNo = typeof r.result?.rfqNo === 'string' ? r.result.rfqNo : undefined;
+      setOut({ kind: 'done', sent: r.status === 'sent' ? 1 : 0, unknown: r.status === 'sent' ? 0 : 1, rfqNo });
+      setSentRequestId(rfqNo ?? null);
+      setReviewing(false);
+      if (r.status === 'sent') onSent?.();
+    } catch {
+      setOut({ kind: 'error' });
+    }
+  };
+
   const approve = async () => {
+    if (viaDanchu) return approveDanchu();
     if (!state.conversationId || !draft) return;
     setOut({ kind: 'sending' });
     try {
@@ -108,10 +149,27 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const canReview = Boolean(draft) && !state.draftSent && out.kind !== 'done' && !busy;
   const needsQuote = role === 'cro' && !quoteLines.length;
   const openReview = () => {
+    if (viaDanchu) return choices ? setReviewing(true) : setForm(true);
     if (role === 'requester' && !recipients.length) return setPicking(true);
     if (needsQuote) return onEditQuote?.();
     setReviewing(true);
   };
+
+  if (form && state.sheet) {
+    return (
+      <DanchuSendForm
+        sheet={state.sheet}
+        initial={choices ?? { ...EMPTY_CHOICES, categories: guessCategories(state.sheet.testType) }}
+        onClose={() => setForm(false)}
+        onDone={(c) => {
+          setChoices(c);
+          setForm(false);
+          setOut({ kind: 'idle' });
+          setReviewing(true);
+        }}
+      />
+    );
+  }
 
   if (picking) {
     return (
@@ -128,7 +186,23 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   }
 
   const bottom =
-    reviewing && draft ? (
+    reviewing && draft && viaDanchu && payload ? (
+      <ApprovalCard
+        title="단추에 견적 요청"
+        recipients={[{ id: 'danchu', name: `분야가 맞는 기관 ${String(payload.croCount ?? '')}`.trim() }]}
+        body={`${summaryLines(payload)
+          .map(([k, v]) => `${k}  ${v}`)
+          .join('\n')}\n\n${String(payload.notes ?? '')}`}
+        attachment="첨부 없음"
+        hideRequester
+        guardPassed={out.kind !== 'sending'}
+        onEdit={() => {
+          setReviewing(false);
+          setForm(true);
+        }}
+        onApprove={approve}
+      />
+    ) : reviewing && draft ? (
       <ApprovalCard
         title={role === 'cro' ? '견적 회신 보내기' : '견적 요청 보내기'}
         recipients={role === 'cro' ? [{ id: 'requester', name: '의뢰자' }] : recipients}
@@ -212,7 +286,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
             {role === 'cro' ? '회신 초안' : '요청 본문 초안'}
           </Txt>
           <Txt variant="small">{draft!.body}</Txt>
-          {role === 'requester' && (
+          {role === 'requester' && !viaDanchu && (
             <View style={styles.to}>
               <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
                 받는 기관
@@ -241,7 +315,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           )}
           <View style={styles.act}>
             <Button
-              title={role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
+              title={viaDanchu ? '단추 요청서 확인' : role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
               onPress={openReview}
             />
           </View>
@@ -252,7 +326,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         <View style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={16} weight="fill" color={out.unknown ? tokens.wait : tokens.accent} />
           <Txt variant="caption" color={out.unknown ? tokens.wait : tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-            {out.unknown ? `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요` : role === 'cro' ? '회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
+            {viaDanchu
+              ? out.unknown
+                ? '접수 결과 확인 필요'
+                : `${out.rfqNo ?? ''} 접수했어요`.trim()
+              : out.unknown
+                ? `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요`
+                : role === 'cro'
+                  ? '회신을 보냈어요'
+                  : `${out.sent}곳에 보냈어요`}
           </Txt>
           {role === 'requester' && sentRequestId && (
             <Button title="진행 보기" kind="line" onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
@@ -268,6 +350,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         </View>
       )}
       {out.kind === 'error' && <ErrorLine label="보내지 못했어요" onRetry={() => void approve()} />}
+      {out.kind === 'failed' && <ErrorLine label={out.message} onRetry={() => setForm(true)} />}
 
       {state.error && <ErrorLine label={ERROR_LABEL[state.error]} onRetry={RETRYABLE.includes(state.error) ? retry : undefined} />}
     </ChatShell>
