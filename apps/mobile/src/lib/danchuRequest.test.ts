@@ -1,18 +1,10 @@
 import { EMPTY_SHEET } from '@danchuai/core';
 import { describe, expect, it } from 'vitest';
 
-import { buildPayload, EMPTY_CHOICES, guessCategories, missing, summaryLines, type SendChoices } from './danchuRequest';
+import { buildPayload, fillFromChat, guessCategories, nextMissing, type SendChoices } from './danchuRequest';
 
 const sheet = { ...EMPTY_SHEET, testType: '독성', substance: 'DC-101', species: '랫드', route: '경구', duration: '4주', glp: 'GLP', dueDate: '미정' };
-const full: SendChoices = {
-  ...EMPTY_CHOICES,
-  purpose: '허가자료 제출용',
-  intent: '비교 견적',
-  croCount: '5곳',
-  confid: '일반',
-  categories: ['일반독성'],
-  agreed: { agreePrivacy: true, agreeTerms: true, agreeShare: true },
-};
+const full: SendChoices = { purpose: '허가자료 제출용', intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: true };
 
 describe('단추 요청서로 옮기기', () => {
   it('시험 종류는 확실한 것만 고른다', () => {
@@ -21,19 +13,25 @@ describe('단추 요청서로 옮기기', () => {
     expect(guessCategories('기타')).toEqual([]);
   });
 
-  it('빠진 것을 순서대로 알려 주고, 동의 셋이 다 있어야 보낸다', () => {
-    expect(missing(sheet, EMPTY_CHOICES)).toBe('의뢰 목적');
-    expect(missing(sheet, { ...full, agreed: { ...full.agreed, agreeShare: false } })).toBe('동의');
-    expect(missing(sheet, { ...full, replyBy: '12월 1일' })).toBe('회신 희망일');
-    expect(missing(sheet, full)).toBeNull();
+  it('대화에 근거가 있는 값만 채우고, 동의는 채우지 않는다', () => {
+    const c = fillFromChat({ ...sheet, glp: null }, ['랫드 4주 독성 견적 여러 곳에서 받아 보고 싶어요. IND 제출용이에요.']);
+    expect(c).toMatchObject({ purpose: '허가자료 제출용', intent: '비교 견적', confid: '일반', categories: ['일반독성'], agreed: false });
+    expect(fillFromChat({ ...sheet, glp: null }, ['견적 주세요']).purpose).toBeNull();
+    expect(fillFromChat(sheet, ['CDA 먼저 맺고 싶어요']).confid).toBe('CDA 필요 (단추 표준 CDA)');
   });
 
-  it('본문에 회사명·연락처 칸이 없고, 대화의 시험 조건은 추가 내용으로 간다', () => {
+  it('빈 값을 하나씩 묻고, 동의가 마지막이다', () => {
+    expect(nextMissing(sheet, { ...full, purpose: null })).toBe('purpose');
+    expect(nextMissing(sheet, { ...full, agreed: false })).toBe('agreed');
+    expect(nextMissing(sheet, full)).toBeNull();
+  });
+
+  it('받을 견적 수는 묻지 않고 참여 기관 전체로 보낸다. 회사명·연락처는 없다', () => {
     const p = buildPayload(sheet, '4주 반복투여 견적 부탁해요.', full);
-    expect(Object.keys(p)).not.toEqual(expect.arrayContaining(['company']));
+    expect(p.croCount).toBe('전체');
+    expect(p).not.toHaveProperty('company');
     expect(p).not.toHaveProperty('email');
-    expect(p.notes).toBe('4주 반복투여 견적 부탁해요.\n\n시험 종류: 독성\n동물 종: 랫드\n투여 경로: 경구\n투여 기간: 4주\nGLP: GLP');
     expect(p).not.toHaveProperty('replyBy');
-    expect(summaryLines(p).find(([k]) => k === '회신 희망일')?.[1]).toBe('7영업일 뒤');
+    expect(p.notes).toBe('4주 반복투여 견적 부탁해요.\n\n시험 종류: 독성\n동물 종: 랫드\n투여 경로: 경구\n투여 기간: 4주\nGLP: GLP');
   });
 });

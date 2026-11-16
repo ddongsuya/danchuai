@@ -11,14 +11,14 @@ import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuestionCard } from '@/components/chat/QuestionCard';
-import { DanchuSendForm } from '@/components/request/DanchuSendForm';
+import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
 import { LabPicker } from '@/components/request/LabPicker';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
-import { buildPayload, EMPTY_CHOICES, guessCategories, summaryLines, type SendChoices } from '@/lib/danchuRequest';
+import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
 import { useAuth } from '@/lib/session';
 import type { ChatErrorCode } from '@/lib/chat';
 
@@ -87,15 +87,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   // 단추 연동 모드의 의뢰자: 받는 기관을 고르지 않고 단추 요청서로 보낸다(연동 4단계)
   const { danchu } = useAuth();
   const viaDanchu = danchu && role === 'requester';
-  const [form, setForm] = useState(false);
   const [choices, setChoices] = useState<SendChoices | null>(null);
   const danchuMade = useRef<{ key: string; d: DanchuActionDraft } | null>(null);
   const draft = state.draft;
-  const payload = viaDanchu && draft && state.sheet && choices ? buildPayload(state.sheet, draft.body, choices) : null;
   const outBody = draft && role === 'cro' && quoteLines.length ? `${draft.body}\n\n${amountBlock(quoteLines)}` : draft?.body ?? '';
 
-  const approveDanchu = async () => {
-    if (!payload) return;
+  const approveDanchu = async (c: SendChoices) => {
+    if (!draft || !state.sheet) return;
+    setChoices(c);
+    const payload = buildPayload(state.sheet, draft.body, c);
     setOut({ kind: 'sending' });
     try {
       // 같은 본문이면 만든 초안을 다시 쓴다(승인 한 건에 실행 한 번은 서버가 지킨다)
@@ -119,7 +119,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   };
 
   const approve = async () => {
-    if (viaDanchu) return approveDanchu();
+    if (viaDanchu) return choices ? approveDanchu(choices) : undefined;
     if (!state.conversationId || !draft) return;
     setOut({ kind: 'sending' });
     try {
@@ -149,27 +149,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const canReview = Boolean(draft) && !state.draftSent && out.kind !== 'done' && !busy;
   const needsQuote = role === 'cro' && !quoteLines.length;
   const openReview = () => {
-    if (viaDanchu) return choices ? setReviewing(true) : setForm(true);
+    if (viaDanchu) {
+      // 에이전트가 대화에서 채운 값으로 시작한다. 사람은 빈 값만 정한다.
+      if (!choices && state.sheet) setChoices(fillFromChat(state.sheet, state.messages.filter((m) => m.role === 'user').map((m) => m.text)));
+      return setReviewing(true);
+    }
     if (role === 'requester' && !recipients.length) return setPicking(true);
     if (needsQuote) return onEditQuote?.();
     setReviewing(true);
   };
-
-  if (form && state.sheet) {
-    return (
-      <DanchuSendForm
-        sheet={state.sheet}
-        initial={choices ?? { ...EMPTY_CHOICES, categories: guessCategories(state.sheet.testType) }}
-        onClose={() => setForm(false)}
-        onDone={(c) => {
-          setChoices(c);
-          setForm(false);
-          setOut({ kind: 'idle' });
-          setReviewing(true);
-        }}
-      />
-    );
-  }
 
   if (picking) {
     return (
@@ -186,21 +174,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   }
 
   const bottom =
-    reviewing && draft && viaDanchu && payload ? (
-      <ApprovalCard
-        title="단추에 견적 요청"
-        recipients={[{ id: 'danchu', name: `분야가 맞는 기관 ${String(payload.croCount ?? '')}`.trim() }]}
-        body={`${summaryLines(payload)
-          .map(([k, v]) => `${k}  ${v}`)
-          .join('\n')}\n\n${String(payload.notes ?? '')}`}
-        attachment="첨부 없음"
-        hideRequester
-        guardPassed={out.kind !== 'sending'}
-        onEdit={() => {
-          setReviewing(false);
-          setForm(true);
-        }}
-        onApprove={approve}
+    reviewing && draft && viaDanchu && state.sheet && choices ? (
+      <DanchuApprovalCard
+        sheet={state.sheet}
+        body={draft.body}
+        choices={choices}
+        onChange={setChoices}
+        sending={out.kind === 'sending'}
+        onClose={() => setReviewing(false)}
+        onApprove={(c) => void approveDanchu(c)}
       />
     ) : reviewing && draft ? (
       <ApprovalCard
@@ -315,7 +297,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           )}
           <View style={styles.act}>
             <Button
-              title={viaDanchu ? '단추 요청서 확인' : role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
+              title={viaDanchu ? '확인하기' : role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
               onPress={openReview}
             />
           </View>
@@ -350,7 +332,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         </View>
       )}
       {out.kind === 'error' && <ErrorLine label="보내지 못했어요" onRetry={() => void approve()} />}
-      {out.kind === 'failed' && <ErrorLine label={out.message} onRetry={() => setForm(true)} />}
+      {out.kind === 'failed' && <ErrorLine label={out.message} onRetry={() => setReviewing(true)} />}
 
       {state.error && <ErrorLine label={ERROR_LABEL[state.error]} onRetry={RETRYABLE.includes(state.error) ? retry : undefined} />}
     </ChatShell>
