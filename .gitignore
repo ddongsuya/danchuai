@@ -14,3 +14,8 @@ graphify-out/
 replica/
 .vercel/
 !apps/mobile/.env.production
+
+# 지식 만들기 중간 파일
+packages/knowledge/data/*.raw.json
+.knowledge-cache/
+__pycache__/

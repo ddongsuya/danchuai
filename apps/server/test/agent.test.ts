@@ -376,3 +376,40 @@ describe("기관 대화", () => {
     ).toBe(400);
   });
 });
+
+describe("에이전트 대화: 가이드라인 근거", () => {
+  it("질문과 관련된 원문 조각을 이번 턴에만 붙이고, 기록에는 남기지 않는다", async () => {
+    const p = new FakeProvider([{ text: "표준 조합은 두 가지 선택지가 있어요(근거: ICH S2 2.2)." }, { text: "네." }]);
+    const { create, turn } = setup(p);
+    const { conv } = await create();
+    const { events } = await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?");
+    const last = p.calls[0]!.messages.at(-1)!.content;
+    expect(last).toContain("<참고자료>");
+    expect(last).toContain('<조각 문서="ICH S2"');
+    // 인용한 원문만 출처로 보낸다
+    const src = events.find((e) => e.event === "sources");
+    expect(src?.data.items.map((s: { doc: string }) => s.doc)).toEqual(["ICH S2"]);
+    expect(src?.data.items[0].url).toMatch(/^https:\/\/database\.ich\.org\//);
+    // 다음 턴의 기록에는 근거 블록이 없다
+    await turn(conv.id, "고마워요");
+    const history = p.calls[1]!.messages.slice(0, -1).map((m) => m.content).join("\n");
+    expect(history).not.toContain("<참고자료>");
+  });
+
+  it("인용이 없으면 출처를 보내지 않는다", async () => {
+    const p = new FakeProvider([{ text: "원문에서 확인하지 못했어요." }]);
+    const { create, turn } = setup(p);
+    const { conv } = await create();
+    const { events } = await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?");
+    expect(events.some((e) => e.event === "sources")).toBe(false);
+  });
+
+  it("시스템 프롬프트에 요청서 항목 체계·시험 묶음·효력 영역이 고정 글로 들어 있다", () => {
+    for (const s of [SYSTEM.requester, SYSTEM.cro]) {
+      expect(s).toContain("<요청서 항목 체계>");
+      expect(s).toContain("<시험 묶음>");
+      expect(s).toContain("<효력시험 질환 영역>");
+      expect(s).not.toMatch(/\d{4}-\d{2}-\d{2}/); // 날짜 같은 바뀌는 값 없음(캐시)
+    }
+  });
+});

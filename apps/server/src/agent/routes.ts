@@ -9,6 +9,7 @@ import {
   type LlmProvider,
   type OutboundDraft,
 } from "@danchuai/core";
+import { citedSources, contextBlock, retrieve } from "@danchuai/knowledge";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
@@ -153,10 +154,12 @@ export function agentRoutes(deps: AgentDeps) {
     // 선정 전 신원 보호: 모델에 가기 전에 연락처를 지운다.
     const userText = redactContacts(parsed.data.text);
     const history = windowed(conv.messages);
+    // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
+    const evidence = retrieve(userText);
     const messages: AgentMessage[] = [
       ...history,
-      // 바뀌는 요청서 상태는 맨 끝에 붙여 앞부분 캐시를 지킨다.
-      { role: "user", content: `${userText}\n\n${sheetContext(conv.sheet)}` },
+      // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다.
+      { role: "user", content: `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}` },
     ];
 
     return streamSSE(c, async (stream) => {
@@ -180,6 +183,9 @@ export function agentRoutes(deps: AgentDeps) {
 
         const { conv: next, events, notes } = interpret(conv, result.toolCalls);
         for (const e of events) await send(e.event, e.data);
+        // 답이 인용한 원문만 출처로 보낸다(앱이 원문 링크로 보여 준다).
+        const sources = citedSources(result.text, evidence.sources);
+        if (sources.length) await send("sources", { items: sources.map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version })) });
 
         const reply = [result.text.trim(), ...notes].filter(Boolean).join("\n") || "(응답 없음)";
         const saved: Conversation = {
