@@ -22,9 +22,10 @@ await build({
   logLevel: "warning",
 });
 
+// maxDuration: 긴 답(출력 4096토큰)과 도구 보정 재호출이 한 턴에 들어가도 끊기지 않게 300초(2026-11-17, 60초에서 올림)
 await writeFile(
   `${fn}/.vc-config.json`,
-  JSON.stringify({ runtime: "nodejs22.x", handler: "index.mjs", launcherType: "Nodejs", supportsResponseStreaming: true, regions: ["hnd1"], maxDuration: 60 }, null, 2),
+  JSON.stringify({ runtime: "nodejs22.x", handler: "index.mjs", launcherType: "Nodejs", supportsResponseStreaming: true, regions: ["hnd1"], maxDuration: 300 }, null, 2),
 );
 await writeFile(`${fn}/package.json`, JSON.stringify({ type: "module" }));
 await writeFile(`${out}/config.json`, JSON.stringify({ version: 3, routes: [{ src: "/(.*)", dest: "/index" }] }, null, 2));

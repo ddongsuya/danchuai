@@ -28,8 +28,10 @@ export const LIMITS = {
   textChars: 2000,
   turns: 40,
   historyMessages: 20,
-  maxTokens: 1200,
-  askMaxTokens: 1600,
+  // 답 길이 상한(출력 토큰). 한국어는 토큰을 많이 쓰고, 요청 대화는 요청서 채우기 도구 호출도 이 안에서 쓴다.
+  // 1200·1600일 때 긴 답이 "답이 길어 중간에 끊겼어요"로 잘렸다(2026-11-17 사용자 시험). 쓴 만큼만 과금된다.
+  maxTokens: 4096,
+  askMaxTokens: 4096,
   recipients: 10,
 } as const;
 
