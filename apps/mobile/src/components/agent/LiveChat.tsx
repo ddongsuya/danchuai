@@ -18,7 +18,7 @@ import { LabPicker } from '@/components/request/LabPicker';
 import { Button } from '@/components/ui/Button';
 import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
 import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
@@ -301,7 +301,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       {out.kind === 'done' &&
         (out.unknown ? (
           <Animated.View entering={lineEnter(0, reduced)} style={styles.row} accessibilityLiveRegion="polite">
-            <CheckCircle size={16} weight="fill" color={tokens.wait} />
+            <CheckCircle size={u(16)} weight="fill" color={tokens.wait} />
             <Txt variant="caption" color={tokens.wait} style={{ fontFamily: fonts.semibold, flex: 1 }}>
               {viaDanchu ? '접수 결과 확인 필요' : `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요`}
             </Txt>
@@ -320,7 +320,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         ))}
       {state.draftSent && out.kind !== 'done' && (
         <View style={styles.row}>
-          <CheckCircle size={16} weight="fill" color={tokens.accent} />
+          <CheckCircle size={u(16)} weight="fill" color={tokens.accent} />
           <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
             보낸 본문
           </Txt>
@@ -369,20 +369,20 @@ function SheetCard({ sheet, message }: { sheet: Record<string, string | null>; m
 export function ErrorLine({ label, onRetry }: { label: string; onRetry?: () => void }) {
   return (
     <View style={styles.row} accessibilityRole="alert">
-      <WarningCircle size={16} weight="fill" color={tokens.danger} />
+      <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
       <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
         {label}
       </Txt>
-      {onRetry && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={onRetry} />}
+      {onRetry && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={onRetry} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   next: { flexDirection: 'row', gap: space.sm },
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
+  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: u(6) },
   act: { marginTop: space.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
   msg: { marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border },
-  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: 44 },
+  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: u(44) },
 });

@@ -18,6 +18,20 @@ export const isUuid = (v: string | undefined): v is string => typeof v === 'stri
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 
+/** 2026-11-26 → 11.26. 목록 줄의 날짜(시안 A05·A06·A09). 값이 없으면 "미정" */
+export function monthDay(s: string | null | undefined): string {
+  if (!s) return '미정';
+  const [y, m, d] = s.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return s;
+  return `${m}.${String(d).padStart(2, '0')}`;
+}
+
+/** 시각(ISO) → 기기 날짜 기준 11.17. 요청함 줄 날짜(시안 A05, 사용자 선택 2026-11-17 "시안대로") */
+export function dayMD(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /** 2026-11-26 → 11.26(목). 날짜 글자 그대로 요일을 계산한다(시간대 영향 없음). 값이 없으면 "미정" */
 export function shortDate(s: string | null | undefined): string {
   if (!s) return '미정';

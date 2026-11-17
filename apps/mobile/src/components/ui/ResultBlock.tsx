@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ReduceMotion, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 
-import { fonts, motion, radius, space, tokens } from '@/constants/theme';
+import { fonts, motion, radius, space, tokens, u } from '@/constants/theme';
 import { easeOut, lineEnter } from '@/lib/motion';
 
 import { Txt } from './Txt';
@@ -19,9 +19,9 @@ export function ResultBlock({ title, meta, rows = [], action }: { title: string;
   return (
     <View style={styles.card} accessibilityLiveRegion="polite">
       <Animated.View entering={pop}>
-        <CheckCircle size={36} weight="fill" color={tokens.accent} />
+        <CheckCircle size={u(36)} weight="fill" color={tokens.accent} />
       </Animated.View>
-      <Animated.View entering={lineEnter(1, reduced)} style={{ gap: 2 }}>
+      <Animated.View entering={lineEnter(1, reduced)} style={{ gap: u(2) }}>
         <Txt variant="heading" style={styles.title} accessibilityRole="header">
           {title}
         </Txt>
@@ -52,7 +52,7 @@ export function ResultBlock({ title, meta, rows = [], action }: { title: string;
 
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.xl, gap: space.md },
-  title: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 28 },
-  row: { flexDirection: 'row', gap: space.md, paddingVertical: 10, borderTopWidth: 1, borderTopColor: tokens.border },
-  k: { width: 72 },
+  title: { fontFamily: fonts.bold, fontSize: u(20), lineHeight: u(28) },
+  row: { flexDirection: 'row', gap: space.md, paddingVertical: u(10), borderTopWidth: 1, borderTopColor: tokens.border },
+  k: { width: u(72) },
 });

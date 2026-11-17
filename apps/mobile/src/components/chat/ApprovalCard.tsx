@@ -9,7 +9,7 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { lineEnter } from '@/lib/motion';
 
 export interface Recipient {
@@ -37,18 +37,18 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
         <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
           {title}
         </Txt>
-        <Chip label="승인 대기" kind="wait" icon={(c) => <HourglassMedium size={13} weight="bold" color={c} />} />
+        <Chip label="승인 대기" kind="wait" icon={(c) => <HourglassMedium size={u(13)} weight="bold" color={c} />} />
       </View>
       <View style={styles.to} accessibilityLabel={`받는 곳 ${recipients.map((r) => r.name).join(', ')}`}>
         {recipients.map((r) => (
           <View key={r.id} style={styles.who}>
             <View style={styles.av}>
               {r.short ? (
-                <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.bold, fontSize: 12 }}>
+                <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.bold, fontSize: u(12) }}>
                   {r.short}
                 </Txt>
               ) : (
-                <User size={13} color={tokens.muted} />
+                <User size={u(13)} color={tokens.muted} />
               )}
             </View>
             <Txt variant="small" style={{ fontFamily: fonts.semibold }}>
@@ -58,14 +58,14 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
         ))}
       </View>
       <View style={styles.body}>
-        <Txt variant="small" style={{ fontSize: 14.5, lineHeight: 24 }} selectable>
+        <Txt variant="small" style={{ fontSize: u(14.5), lineHeight: u(24) }} selectable>
           {body}
         </Txt>
       </View>
       <View style={styles.meta}>
-        <Meta icon={<Paperclip size={16} color={tokens.muted} />} label={attachment} />
-        {hideRequester && <Meta icon={<EyeSlash size={16} color={tokens.muted} />} label="의뢰자 정보 선정 후 공개" />}
-        {guardPassed && <Meta icon={<ShieldCheck size={16} weight="bold" color={tokens.accent} />} label="본문 점검 통과" accent />}
+        <Meta icon={<Paperclip size={u(16)} color={tokens.muted} />} label={attachment} />
+        {hideRequester && <Meta icon={<EyeSlash size={u(16)} color={tokens.muted} />} label="의뢰자 정보 선정 후 공개" />}
+        {guardPassed && <Meta icon={<ShieldCheck size={u(16)} weight="bold" color={tokens.accent} />} label="본문 점검 통과" accent />}
       </View>
       <View style={styles.act}>
         <Button title="고치기" kind="soft" tall flex={1} onPress={onEdit} />
@@ -75,7 +75,7 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
           flex={1.7}
           disabled={!guardPassed}
           onPress={onApprove}
-          icon={<PaperPlaneTilt size={18} weight="bold" color={tokens.onInk} />}
+          icon={<PaperPlaneTilt size={u(18)} weight="bold" color={tokens.onInk} />}
         />
       </View>
     </Animated.View>
@@ -100,20 +100,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.approval,
     borderWidth: 1,
     borderColor: tokens.border,
-    paddingTop: 18,
+    paddingTop: u(18),
     paddingHorizontal: space.lg,
     paddingBottom: space.lg,
     shadowColor: tokens.ink,
     shadowOpacity: 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: u(24),
+    shadowOffset: { width: 0, height: u(10) },
     elevation: 8,
   },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  to: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 },
-  who: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 32, paddingLeft: 4, paddingRight: 12, borderRadius: radius.pill, backgroundColor: tokens.sunken },
-  av: { width: 24, height: 24, borderRadius: 12, backgroundColor: tokens.surface, alignItems: 'center', justifyContent: 'center' },
-  body: { marginTop: space.md, backgroundColor: tokens.sunken, borderRadius: radius.inner, padding: 14 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: u(10) },
+  to: { flexDirection: 'row', flexWrap: 'wrap', gap: u(6), marginTop: u(14) },
+  who: { flexDirection: 'row', alignItems: 'center', gap: u(7), height: u(32), paddingLeft: u(4), paddingRight: u(12), borderRadius: radius.pill, backgroundColor: tokens.sunken },
+  av: { width: u(24), height: u(24), borderRadius: u(12), backgroundColor: tokens.surface, alignItems: 'center', justifyContent: 'center' },
+  body: { marginTop: space.md, backgroundColor: tokens.sunken, borderRadius: radius.inner, padding: u(14) },
   meta: { marginTop: space.md, gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   act: { flexDirection: 'row', gap: space.sm, marginTop: space.lg },

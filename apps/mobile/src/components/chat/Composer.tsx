@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Press } from '@/components/ui/Press';
-import { fonts, space, tokens } from '@/constants/theme';
+import { fonts, space, tokens, u } from '@/constants/theme';
 
 export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSend?: (text: string) => void; disabled?: boolean; placeholder?: string }) {
   const [text, setText] = useState('');
@@ -32,7 +32,7 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
           }}
           style={[styles.send, ready && { backgroundColor: tokens.ink }]}
         >
-          <ArrowUp size={18} weight="bold" color={ready ? tokens.onInk : tokens.muted} />
+          <ArrowUp size={u(18)} weight="bold" color={ready ? tokens.onInk : tokens.muted} />
       </Press>
     </View>
   );
@@ -40,7 +40,7 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
 
 const styles = StyleSheet.create({
   // 한 줄짜리 알약. 글이 길어지면 다섯 줄까지 늘어나고 보내기 버튼은 아래쪽에 붙는다(시안 A).
-  box: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, marginHorizontal: space.md, marginTop: 10, backgroundColor: tokens.surface, borderRadius: 26, borderWidth: 1, borderColor: tokens.border, paddingVertical: 6, paddingRight: 6, paddingLeft: space.lg, minHeight: 52 },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: tokens.text, minHeight: 40, maxHeight: 120, paddingTop: 9, paddingBottom: 9 },
-  send: { width: 40, height: 40, borderRadius: 20, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
+  box: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, marginHorizontal: space.md, marginTop: u(10), backgroundColor: tokens.surface, borderRadius: u(26), borderWidth: 1, borderColor: tokens.border, paddingVertical: u(6), paddingRight: u(6), paddingLeft: space.lg, minHeight: u(52) },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: u(16), lineHeight: u(22), color: tokens.text, minHeight: u(40), maxHeight: u(120), paddingTop: u(9), paddingBottom: u(9) },
+  send: { width: u(40), height: u(40), borderRadius: u(20), backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
 });

@@ -15,7 +15,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { StaggerLines } from '@/components/ui/StaggerLines';
 import { useToast } from '@/components/ui/Toast';
 import { Txt } from '@/components/ui/Txt';
-import { radius, space, tokens } from '@/constants/theme';
+import { radius, space, tokens, u } from '@/constants/theme';
 
 export default function MotionPreview() {
   const { toast, snack } = useToast();
@@ -29,12 +29,12 @@ export default function MotionPreview() {
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.nav}>
         <IconButton label="닫기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-          <X size={20} color={tokens.text} />
+          <X size={u(22)} color={tokens.text} />
         </IconButton>
         <Txt variant="nav" accessibilityRole="header">
           움직임
         </Txt>
-        <View style={{ width: 44 }} />
+        <View style={{ width: u(44) }} />
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <Row name="스낵바">
@@ -61,7 +61,7 @@ export default function MotionPreview() {
         </View>
         <Row name="로딩">
           <View style={styles.load}>
-            <Spinner size={20} />
+            <Spinner size={u(20)} />
             <Button title="요청하는 중" loading onPress={() => {}} />
           </View>
         </Row>
@@ -72,7 +72,7 @@ export default function MotionPreview() {
             </Txt>
             <Button title="다시 보기" kind="text" onPress={() => setTitleKey((k) => k + 1)} />
           </View>
-          <StaggerLines key={titleKey} style={{ gap: 6 }}>
+          <StaggerLines key={titleKey} style={{ gap: u(6) }}>
             <Txt variant="title">단추에 요청했어요</Txt>
             <Txt variant="body" color={tokens.muted}>
               회신 기한 11.26(목)
@@ -97,7 +97,7 @@ export default function MotionPreview() {
       <Sheet visible={sheet} onClose={() => setSheet(false)}>
         <SafeAreaView edges={['bottom']} style={styles.sheet}>
           <View style={styles.grab} />
-          <Txt variant="title" style={{ fontSize: 22, lineHeight: 30 }} accessibilityRole="header">
+          <Txt variant="title" style={{ fontSize: u(22), lineHeight: u(30) }} accessibilityRole="header">
             어떤 시험이에요?
           </Txt>
           {['독성', '효력', '약동학'].map((o) => (
@@ -127,13 +127,13 @@ function Row({ name, children }: { name: string; children: ReactNode }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.sm, height: 56 },
-  body: { paddingHorizontal: space.xl, paddingBottom: 120, gap: space.lg },
-  rowHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: 1, borderBottomColor: tokens.border },
+  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.sm, height: u(56) },
+  body: { paddingHorizontal: space.xl, paddingBottom: u(120), gap: space.lg },
+  rowHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(56), borderBottomWidth: 1, borderBottomColor: tokens.border },
   block: { gap: space.sm, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: tokens.border },
   load: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   acts: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
-  sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: 10, paddingHorizontal: space.xl, paddingBottom: space.xl },
-  grab: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: tokens.border, marginBottom: space.lg },
-  option: { minHeight: 56, justifyContent: 'center', borderTopWidth: 1, borderTopColor: tokens.border },
+  sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: u(10), paddingHorizontal: space.xl, paddingBottom: space.xl },
+  grab: { alignSelf: 'center', width: u(40), height: u(4), borderRadius: u(2), backgroundColor: tokens.border, marginBottom: space.lg },
+  option: { minHeight: u(56), justifyContent: 'center', borderTopWidth: 1, borderTopColor: tokens.border },
 });

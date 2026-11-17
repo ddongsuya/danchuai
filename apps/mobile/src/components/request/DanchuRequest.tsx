@@ -8,10 +8,10 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { DANCHU_URL } from '@/lib/danchuLinks';
-import { shortDate } from '@/lib/format';
+import { monthDay, shortDate } from '@/lib/format';
 import { fetchDanchuRequest, type DanchuCompare, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
 
 const won = (n: number | null) => (n == null ? '미기재' : `${n.toLocaleString('ko-KR')}원`);
@@ -27,16 +27,16 @@ export function DanchuRequest({ no }: { no: string }) {
         {state.kind === 'loading' ? (
           <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
             <View style={[styles.bone, { width: '60%' }]} />
-            <View style={[styles.card, { height: 160 }]} />
-            <View style={[styles.card, { height: 120 }]} />
+            <View style={[styles.card, { height: u(160) }]} />
+            <View style={[styles.card, { height: u(120) }]} />
           </View>
         ) : (
           <View style={styles.err} accessibilityRole="alert">
-            <WarningCircle size={16} weight="fill" color={tokens.danger} />
+            <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
             <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
               {REMOTE_ERROR[state.code]}
             </Txt>
-            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />}
+            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={() => void reload()} />}
           </View>
         )}
       </ChatShell>
@@ -61,7 +61,7 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
       bottom={
         <View style={styles.bar}>
           {choose && <Button title="기관 선정하기" tall onPress={open} />}
-          <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" icon={choose ? undefined : <ArrowSquareOut size={16} color={tokens.text} />} onPress={open} />
+          <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" icon={choose ? undefined : <ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={open} />
         </View>
       }
     >
@@ -80,7 +80,7 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
       </View>
 
       {!compare.open && (
-        <View style={{ gap: 2 }}>
+        <View style={{ gap: u(2) }}>
           <View style={styles.stat} accessible accessibilityLabel={`${r.joined}곳 중 ${r.submitted}곳 제출`}>
             <Txt variant="stat" tabular>
               {String(r.submitted)}
@@ -124,7 +124,7 @@ function CompareList({ columns, missing }: { columns: { lab: string; total: numb
           key={`${c.lab}-${i}`}
           style={[styles.lab, i > 0 && styles.line]}
           accessible
-          accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${md(c.submittedAt)} 회신`}
+          accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${monthDay(c.submittedAt)} 회신`}
         >
           <View style={styles.labTop}>
             <Txt variant="label" style={{ flex: 1, fontFamily: fonts.bold }} numberOfLines={1}>
@@ -136,7 +136,7 @@ function CompareList({ columns, missing }: { columns: { lab: string; total: numb
           </View>
           <View style={styles.labTop}>
             <Txt variant="caption" color={tokens.muted} tabular style={{ flex: 1 }}>
-              {`${md(c.submittedAt)} 회신`}
+              {`${monthDay(c.submittedAt)} 회신`}
             </Txt>
             <Txt variant="caption" color={tokens.muted} tabular>
               {c.weeks ? `${c.weeks}주` : '기간 미기재'}
@@ -144,18 +144,27 @@ function CompareList({ columns, missing }: { columns: { lab: string; total: numb
           </View>
         </View>
       ))}
-      {missing > 0 && (
-        <View style={[styles.lab, styles.line, styles.labTop]}>
-          <Txt variant="label" color={tokens.muted} style={{ flex: 1 }} tabular>
-            {`참여 기관 ${missing}곳`}
+      {missingNames(columns, missing).map((name, i) => (
+        <View key={`missing-${i}`} style={[styles.lab, styles.line, styles.labTop]}>
+          <Txt variant="label" color={tokens.muted} style={{ flex: 1 }} numberOfLines={1}>
+            {name}
           </Txt>
           <Txt variant="label" color={tokens.muted}>
             미제출
           </Txt>
         </View>
-      )}
+      ))}
     </View>
   );
+}
+
+/** 시안 A09(사용자 선택 2026-11-17 "시안대로"): 미제출 기관도 한 줄씩. 단추 이름이 "가 기관" 순서면 다음 글자로 잇고, 아니면 묶어서 한 줄 */
+const ORDER = '가나다라마바사아자차카타파하';
+function missingNames(columns: { lab: string }[], missing: number): string[] {
+  if (missing <= 0) return [];
+  const lettered = columns.every((c) => /^[가-힣] 기관$/.test(c.lab) && ORDER.includes(c.lab[0]));
+  if (!lettered) return [`참여 기관 ${missing}곳`];
+  return Array.from({ length: missing }, (_, i) => `${ORDER[columns.length + i] ?? '?'} 기관`);
 }
 
 function Fact({ k, v, line }: { k: string; v: string; line?: boolean }) {
@@ -173,14 +182,14 @@ function Fact({ k, v, line }: { k: string; v: string; line?: boolean }) {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
-  bone: { height: 16, borderRadius: 8, backgroundColor: tokens.sunken },
-  err: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: space.md },
+  bone: { height: u(16), borderRadius: u(8), backgroundColor: tokens.sunken },
+  err: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
+  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: u(12), gap: space.md },
   stat: { flexDirection: 'row', alignItems: 'baseline' },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  k: { width: 96 },
+  k: { width: u(96) },
   facts: { paddingHorizontal: space.lg },
-  lab: { paddingVertical: 14, paddingHorizontal: space.lg, gap: 4 },
+  lab: { paddingVertical: u(14), paddingHorizontal: space.lg, gap: u(4) },
   labTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
 });

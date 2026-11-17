@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 
 import { Dots } from './Dots';
 import { Press } from './Press';
@@ -63,9 +63,9 @@ export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disable
 }
 
 const styles = StyleSheet.create({
-  base: { height: 44, paddingHorizontal: 18, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  tall: { height: 52 },
-  bar: { height: 56, borderRadius: 0 },
+  base: { height: u(44), paddingHorizontal: u(18), borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  tall: { height: u(52) },
+  bar: { height: u(56), borderRadius: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   hide: { opacity: 0 },
   over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },

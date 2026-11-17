@@ -8,7 +8,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTimin
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { fonts, motion, radius, space, tokens } from '@/constants/theme';
+import { fonts, motion, radius, space, tokens, u } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
 import { Press } from './Press';
@@ -110,7 +110,7 @@ function Item({ note, onDone }: { note: Note; onDone: (id: number) => void }) {
 const styles = StyleSheet.create({
   toastWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center', paddingHorizontal: space.lg },
   snackWrap: { position: 'absolute', left: space.sm, right: space.sm },
-  toast: { flexDirection: 'row', backgroundColor: tokens.ink, borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md, maxWidth: 400 },
-  snack: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: tokens.ink, borderRadius: radius.card, paddingLeft: space.xl, paddingRight: space.sm, minHeight: 56, maxWidth: 560, width: '100%', alignSelf: 'center' },
-  act: { height: 44, paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center', marginLeft: 'auto' },
+  toast: { flexDirection: 'row', backgroundColor: tokens.ink, borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md, maxWidth: u(400) },
+  snack: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: tokens.ink, borderRadius: radius.card, paddingLeft: space.xl, paddingRight: space.sm, minHeight: u(56), maxWidth: u(560), width: '100%', alignSelf: 'center' },
+  act: { height: u(44), paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center', marginLeft: 'auto' },
 });

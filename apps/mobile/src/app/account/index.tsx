@@ -11,7 +11,7 @@ import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { space, tokens } from '@/constants/theme';
+import { space, tokens, u } from '@/constants/theme';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 import { useAuth } from '@/lib/session';
 
@@ -55,7 +55,7 @@ export function AccountView({ name, role, consent, onManage, onLogout }: { name:
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.nav}>
         <IconButton label="닫기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-          <X size={20} color={tokens.text} />
+          <X size={u(22)} color={tokens.text} />
         </IconButton>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
@@ -68,7 +68,7 @@ export function AccountView({ name, role, consent, onManage, onLogout }: { name:
           <Txt variant="body" style={{ flex: 1 }} numberOfLines={1}>
             단추에서 계정 관리
           </Txt>
-          <CaretRight size={16} color={tokens.muted} />
+          <CaretRight size={u(16)} color={tokens.muted} />
         </Press>
         {onLogout && (
           <Press label="로그아웃" accessibilityRole="button" onPress={onLogout} style={styles.row}>
@@ -100,10 +100,10 @@ function Row({ label, right, first, strong }: { label: string; right: string; fi
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 4 },
+  nav: { flexDirection: 'row', alignItems: 'center', height: u(50), paddingHorizontal: u(6) },
   title: { paddingTop: space.xs, paddingBottom: space.md },
   body: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, borderTopWidth: 1, borderTopColor: tokens.border },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(46), borderTopWidth: 1, borderTopColor: tokens.border },
   first: { borderTopWidth: 0 },
   ver: { textAlign: 'center', paddingBottom: space.md },
 });

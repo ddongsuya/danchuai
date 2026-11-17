@@ -8,10 +8,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/ui/IconButton';
 import { Txt } from '@/components/ui/Txt';
-import { space, tokens } from '@/constants/theme';
+import { space, tokens, u } from '@/constants/theme';
 
 interface Props {
   title?: string;
+  /** 시안 t26(기본) 또는 두 줄 제목 t22 */
+  titleVariant?: 'title' | 'title2';
+  /** 본문 줄 간격(시안 화면마다 다름). 기본 16 */
+  gap?: number;
+  /** 본문 위 여백. 기본 4(시안 .bd) */
+  padTop?: number;
   back?: boolean;
   top?: ReactNode;
   children?: ReactNode;
@@ -35,23 +41,24 @@ function useKeyboardShown() {
   return shown;
 }
 
-export function AuthScreen({ title, back, top, children, footer, keyboardFooter }: Props) {
+export function AuthScreen({ title, titleVariant = 'title', gap = space.lg, padTop = u(4), back, top, children, footer, keyboardFooter }: Props) {
   const keyboard = useKeyboardShown();
   const bar = keyboard && keyboardFooter != null;
   return (
     <SafeAreaView style={styles.root} edges={bar ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.nav}>
-          {back && (
-            <IconButton label="뒤로" plain onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}>
-              <CaretLeft size={20} color={tokens.text} />
+        {/* 시안: 뒤로가 있는 화면만 50 높이 줄을 둔다 */}
+        {back && (
+          <View style={styles.nav}>
+            <IconButton label="뒤로" onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}>
+              <CaretLeft size={u(22)} color={tokens.text} />
             </IconButton>
-          )}
-        </View>
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" bounces={false}>
+          </View>
+        )}
+        <ScrollView contentContainerStyle={[styles.body, { gap, paddingTop: padTop }]} keyboardShouldPersistTaps="handled" bounces={false}>
           {top}
           {title && (
-            <Txt variant="title" accessibilityRole="header">
+            <Txt variant={titleVariant} accessibilityRole="header">
               {title}
             </Txt>
           )}
@@ -65,7 +72,8 @@ export function AuthScreen({ title, back, top, children, footer, keyboardFooter 
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { height: 60, paddingHorizontal: 14, paddingTop: 6, justifyContent: 'center' },
-  body: { flexGrow: 1, paddingHorizontal: space.xxl, paddingTop: space.xl, gap: space.xxl },
-  foot: { paddingHorizontal: space.xxl, paddingTop: space.lg, paddingBottom: space.lg, gap: 10 },
+  // 시안 .top / .bd / .ft
+  nav: { height: u(50), paddingHorizontal: u(6), justifyContent: 'center' },
+  body: { flexGrow: 1, paddingHorizontal: space.xl, paddingBottom: space.md },
+  foot: { paddingHorizontal: space.xl, paddingTop: u(10), paddingBottom: space.xl, gap: u(6) },
 });

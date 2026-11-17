@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 
-import { motion } from '@/constants/theme';
+import { motion, u } from '@/constants/theme';
 import { KEEP, linear } from '@/lib/motion';
 
 export function Dots({ color }: { color: string }) {
@@ -35,6 +35,6 @@ function Dot({ i, t, color, still }: { i: number; t: SharedValue<number>; color:
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 4, alignItems: 'center' },
-  dot: { width: 5, height: 5, borderRadius: 3 },
+  row: { flexDirection: 'row', gap: u(4), alignItems: 'center' },
+  dot: { width: u(5), height: u(5), borderRadius: u(3) },
 });

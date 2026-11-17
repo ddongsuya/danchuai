@@ -8,7 +8,7 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, space, tokens } from '@/constants/theme';
+import { fonts, space, tokens, u } from '@/constants/theme';
 import { TRANSFERS, type TransferRow } from '@/lib/consent';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 import { lineEnter } from '@/lib/motion';
@@ -42,7 +42,7 @@ function Item({ t, first }: { t: TransferRow; first: boolean }) {
         onPress={() => setOpen((v) => !v)}
         style={styles.head}
       >
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: u(2) }}>
           <Txt variant="small">
             <Txt variant="small" style={{ fontFamily: fonts.semibold }}>
               [필수] {shortName(t.to)}
@@ -56,7 +56,7 @@ function Item({ t, first }: { t: TransferRow; first: boolean }) {
           </Txt>
         </View>
         <View style={open && styles.flip}>
-          <CaretDown size={18} color={tokens.text} />
+          <CaretDown size={u(18)} color={tokens.text} />
         </View>
       </Press>
       {open && (
@@ -88,13 +88,13 @@ function Row({ k, v }: { k: string; v: string }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.surface, borderRadius: 16, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: space.lg },
+  card: { backgroundColor: tokens.surface, borderRadius: u(16), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: space.lg },
   item: { paddingVertical: space.md },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(44) },
   flip: { transform: [{ rotate: '180deg' }] },
-  more: { gap: 6, paddingTop: space.sm },
+  more: { gap: u(6), paddingTop: space.sm },
   row: { flexDirection: 'row', gap: space.md },
-  k: { width: 64 },
+  k: { width: u(64) },
   link: { textDecorationLine: 'underline', marginTop: space.xs },
 });

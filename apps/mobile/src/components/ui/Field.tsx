@@ -3,7 +3,7 @@ import { WarningCircle } from 'phosphor-react-native';
 import { forwardRef, useState } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 
 import { Txt } from './Txt';
 
@@ -40,7 +40,7 @@ export const Field = forwardRef<React.ComponentRef<typeof TextInput>, Props>(fun
       />
       {error ? (
         <View style={styles.msg} accessibilityLiveRegion="polite">
-          <WarningCircle size={16} color={tokens.danger} style={{ marginTop: 2 }} />
+          <WarningCircle size={u(16)} color={tokens.danger} style={{ marginTop: u(2) }} />
           <Txt variant="small" color={tokens.danger} style={{ flex: 1 }}>
             {error}
           </Txt>
@@ -57,8 +57,8 @@ export const Field = forwardRef<React.ComponentRef<typeof TextInput>, Props>(fun
 const styles = StyleSheet.create({
   wrap: {},
   label: { fontFamily: fonts.semibold, marginBottom: space.sm },
-  input: { height: 52, borderRadius: radius.inner, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, paddingHorizontal: space.lg, fontFamily: fonts.regular, fontSize: 16, color: tokens.text },
+  input: { height: u(52), borderRadius: radius.inner, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, paddingHorizontal: space.lg, fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
   focus: { borderWidth: 2, borderColor: tokens.ink, paddingHorizontal: space.lg - 1 },
   err: { borderWidth: 2, borderColor: tokens.danger, paddingHorizontal: space.lg - 1 },
-  msg: { flexDirection: 'row', gap: 6, marginTop: space.sm },
+  msg: { flexDirection: 'row', gap: u(6), marginTop: space.sm },
 });

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { fonts, radius, tokens } from '@/constants/theme';
+import { fonts, radius, tokens, u } from '@/constants/theme';
 
 import { Txt } from './Txt';
 
@@ -26,5 +26,5 @@ export function Chip({ label, kind = 'mute', icon }: { label: string; kind?: Chi
 }
 
 const styles = StyleSheet.create({
-  chip: { height: 26, paddingHorizontal: 10, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start' },
+  chip: { height: u(26), paddingHorizontal: u(10), borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: u(5), alignSelf: 'flex-start' },
 });

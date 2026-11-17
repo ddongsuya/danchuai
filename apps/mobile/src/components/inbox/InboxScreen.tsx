@@ -13,7 +13,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { StateView } from '@/components/ui/StateView';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAuth } from '@/lib/session';
 
 import type { InboxItem, InboxStatus } from '@/lib/inbox';
@@ -62,15 +62,15 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
           {status === 'disabled' ? (
             // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
             <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
-              <UserSwitch size={20} color={tokens.text} />
+              <UserSwitch size={u(20)} color={tokens.text} />
             </IconButton>
           ) : (
             <IconButton label="계정" onPress={() => router.push('/account')}>
-              <User size={20} color={tokens.text} />
+              <User size={u(20)} color={tokens.text} />
             </IconButton>
           )}
           <Press label="질문하기" onPress={() => router.push({ pathname: '/ask', params: { role } })} style={styles.ask}>
-            <ChatCircle size={16} color={tokens.text} />
+            <ChatCircle size={u(16)} color={tokens.text} />
             <Txt variant="small" style={{ fontFamily: fonts.semibold }}>
               질문하기
             </Txt>
@@ -133,10 +133,10 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
               return (
                 <Press label={`${item.title}, ${chip.label}`} onPress={() => router.push(hrefOf(item.id))} style={styles.item}>
                   <View style={styles.ico}>
-                    <Icon size={20} color={tokens.muted} />
+                    <Icon size={u(20)} color={tokens.muted} />
                     {fresh && <View style={styles.dot} />}
                   </View>
-                  <View style={{ flex: 1, gap: 6 }}>
+                  <View style={{ flex: 1, gap: u(6) }}>
                     <Txt variant="label" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
                       {item.title}
                     </Txt>
@@ -154,7 +154,7 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
         )}
         {role === 'requester' && (
           <View style={styles.bottom}>
-            <Button title="새 요청" tall icon={<Plus size={18} weight="bold" color={tokens.onInk} />} onPress={() => router.push({ pathname: '/requester/[id]', params: { id: 'new' } })} />
+            <Button title="새 요청" tall icon={<Plus size={u(18)} weight="bold" color={tokens.onInk} />} onPress={() => router.push({ pathname: '/requester/[id]', params: { id: 'new' } })} />
           </View>
         )}
       </View>
@@ -169,9 +169,9 @@ function Skeleton() {
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.item}>
           <View style={styles.ico} />
-          <View style={{ flex: 1, gap: 8 }}>
+          <View style={{ flex: 1, gap: u(8) }}>
             <View style={[styles.bone, { width: '62%' }]} />
-            <View style={[styles.bone, { width: 96, height: 22, borderRadius: radius.pill }]} />
+            <View style={[styles.bone, { width: u(96), height: u(22), borderRadius: radius.pill }]} />
           </View>
         </View>
       ))}
@@ -181,18 +181,18 @@ function Skeleton() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
-  ask: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.sunken },
-  title: { paddingHorizontal: space.xl, paddingTop: 4, paddingBottom: space.md },
-  filters: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl, paddingBottom: 14 },
-  filter: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
+  nav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: u(14), paddingTop: u(6), paddingBottom: u(10) },
+  ask: { flexDirection: 'row', alignItems: 'center', gap: u(6), height: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken },
+  title: { paddingHorizontal: space.xl, paddingTop: u(4), paddingBottom: space.md },
+  filters: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl, paddingBottom: u(14) },
+  filter: { flexDirection: 'row', alignItems: 'center', gap: u(6), height: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
   filterOn: { backgroundColor: tokens.ink },
   bottom: { paddingHorizontal: space.xl, paddingTop: space.sm, paddingBottom: space.md },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  list: { paddingHorizontal: space.md, gap: 2, paddingBottom: space.lg },
-  item: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: 16 },
-  ico: { width: 44, height: 44, borderRadius: 14, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
-  dot: { position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: 5, backgroundColor: tokens.ink, borderWidth: 2, borderColor: tokens.bg },
+  list: { paddingHorizontal: space.md, gap: u(2), paddingBottom: space.lg },
+  item: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: u(16) },
+  ico: { width: u(44), height: u(44), borderRadius: u(14), backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
+  dot: { position: 'absolute', top: u(-2), right: u(-2), width: u(10), height: u(10), borderRadius: u(5), backgroundColor: tokens.ink, borderWidth: 2, borderColor: tokens.bg },
   state: { flex: 1, justifyContent: 'center', paddingHorizontal: space.xxl },
-  bone: { height: 14, borderRadius: 7, backgroundColor: tokens.sunken },
+  bone: { height: u(14), borderRadius: u(7), backgroundColor: tokens.sunken },
 });

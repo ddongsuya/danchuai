@@ -6,7 +6,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTimin
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { motion, radius, space, tokens } from '@/constants/theme';
+import { motion, radius, space, tokens, u } from '@/constants/theme';
 import { KEEP, easeIn, easeOut, easeOutSheet } from '@/lib/motion';
 
 import { Button } from './Button';
@@ -91,8 +91,8 @@ export function SheetBody({ title, children, primary, onClose }: { title: string
 const styles = StyleSheet.create({
   dim: { backgroundColor: tokens.overlay },
   end: { flex: 1, justifyContent: 'flex-end' },
-  body: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: 10, paddingHorizontal: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' },
-  grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: tokens.border, alignSelf: 'center', marginBottom: space.xl },
-  title: { fontSize: 22, lineHeight: 30, marginBottom: space.md },
+  body: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: u(10), paddingHorizontal: space.xl, maxWidth: u(640), width: '100%', alignSelf: 'center' },
+  grab: { width: u(40), height: u(5), borderRadius: u(3), backgroundColor: tokens.border, alignSelf: 'center', marginBottom: space.xl },
+  title: { fontSize: u(22), lineHeight: u(30), marginBottom: space.md },
   foot: { marginTop: space.lg, gap: space.xs },
 });

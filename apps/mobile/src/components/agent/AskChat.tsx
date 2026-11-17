@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
 import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { useRemote } from '@/hooks/useRemote';
 import { listAsks, type AgentRole } from '@/lib/agentClient';
@@ -70,7 +70,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
                 <Txt variant="body" style={{ flex: 1 }}>
                   {q}
                 </Txt>
-                <CaretRight size={16} color={tokens.muted} />
+                <CaretRight size={u(16)} color={tokens.muted} />
               </Press>
             ))}
           </View>
@@ -87,7 +87,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
                     onPress={() => router.push({ pathname: '/ask', params: { role, conv: a.id } })}
                     style={[styles.past, i > 0 && styles.line]}
                   >
-                    <ClockCounterClockwise size={18} color={tokens.muted} />
+                    <ClockCounterClockwise size={u(18)} color={tokens.muted} />
                     <Txt variant="small" numberOfLines={1} style={{ flex: 1 }}>
                       {a.title}
                     </Txt>
@@ -162,7 +162,7 @@ function SourcesPill({ sources, onPress }: { sources: SourceRef[]; onPress: () =
   const names = sources.map((s) => s.doc).join(' · ');
   return (
     <Press label={`근거 ${sources.length}건, ${names}`} onPress={onPress} style={styles.pill}>
-      <BookOpenText size={16} color={tokens.muted} />
+      <BookOpenText size={u(16)} color={tokens.muted} />
       <Txt variant="caption" tabular style={{ fontFamily: fonts.semibold }}>
         {`근거 ${sources.length}건`}
       </Txt>
@@ -182,7 +182,7 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
     <Sheet visible={!!sources} onClose={onClose}>
       {/* 할 일이 읽기뿐이라 주 버튼 없이 글자 닫기만 */}
       <SheetBody title={`근거 ${(shown ?? []).length}건`} onClose={onClose}>
-        <ScrollView style={{ maxHeight: 420 }}>
+        <ScrollView style={{ maxHeight: u(420) }}>
           {(shown ?? []).map((s, i) => (
             <Press
               key={`${s.doc}-${s.section}`}
@@ -191,13 +191,13 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
               onPress={s.url ? () => void WebBrowser.openBrowserAsync(s.url!) : undefined}
               style={[styles.src, i > 0 && styles.line]}
             >
-              <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flex: 1, gap: u(2) }}>
                 <Txt variant="label">{s.doc}</Txt>
                 <Txt variant="caption" color={tokens.muted} numberOfLines={2}>
                   {[s.section, s.name, s.version].filter(Boolean).join(', ')}
                 </Txt>
               </View>
-              {s.url && <ArrowSquareOut size={18} color={tokens.muted} />}
+              {s.url && <ArrowSquareOut size={u(18)} color={tokens.muted} />}
             </Press>
           ))}
         </ScrollView>
@@ -209,23 +209,23 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
 const styles = StyleSheet.create({
   ask: { marginTop: space.lg, marginBottom: space.md },
   sugs: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border },
-  sug: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.lg, paddingVertical: space.md },
+  sug: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(56), paddingHorizontal: space.lg, paddingVertical: space.md },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
   pastHead: { marginTop: space.xxl, marginBottom: space.xs, color: tokens.muted },
-  past: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48, paddingVertical: space.sm },
+  past: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(48), paddingVertical: space.sm },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: u(6),
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    height: 36,
-    paddingHorizontal: 14,
+    height: u(36),
+    paddingHorizontal: u(14),
     borderRadius: radius.pill,
     backgroundColor: tokens.surface,
     borderWidth: 1,
     borderColor: tokens.border,
   },
   next: { flexDirection: 'row' },
-  src: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.md },
+  src: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(60), paddingVertical: space.md },
 });

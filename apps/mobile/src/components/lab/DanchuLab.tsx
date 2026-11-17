@@ -7,7 +7,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 import { daysLeft, shortDate } from '@/lib/format';
@@ -23,15 +23,15 @@ export function DanchuLab({ no }: { no: string }) {
         {state.kind === 'loading' ? (
           <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
             <View style={[styles.bone, { width: '60%' }]} />
-            <View style={[styles.card, { height: 200 }]} />
+            <View style={[styles.card, { height: u(200) }]} />
           </View>
         ) : (
           <View style={styles.err} accessibilityRole="alert">
-            <WarningCircle size={16} weight="fill" color={tokens.danger} />
+            <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
             <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
               {REMOTE_ERROR[state.code]}
             </Txt>
-            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />}
+            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={() => void reload()} />}
           </View>
         )}
       </ChatShell>
@@ -44,6 +44,13 @@ export function DanchuLab({ no }: { no: string }) {
 const ACT: DanchuLabItem['group'][] = ['todo', 'decide', 'work'];
 
 /** 할 일을 제목(질문형)과 버튼 이름으로. 참여 결정은 진단 문서 A12 반영안 문구, 나머지는 단추 진행판의 다음 할 일 그대로 */
+/** 시안 A12(사용자 선택 2026-11-17 "시안대로"): 제목 위 줄은 "시험, 동물". 동물은 요청 제목에서 찾는다 */
+const SPECIES = ['랫드', '마우스', '비글견', '토끼', '기니피그', '미니피그', '원숭이', '햄스터'];
+function labLine(it: DanchuLabItem) {
+  const sp = SPECIES.find((x) => it.title.includes(x));
+  return [it.categories, sp].filter(Boolean).join(', ') || it.title;
+}
+
 function task(it: DanchuLabItem) {
   if (it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
   return { title: it.next === '할 일 없음' ? it.stage : it.next, button: `단추에서 ${it.next}` };
@@ -62,16 +69,16 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
       bottom={
         <View style={styles.bar}>
           {act ? (
-            <Button title={t.button} tall icon={<ArrowSquareOut size={16} color={tokens.onInk} />} onPress={open} />
+            <Button title={t.button} tall icon={<ArrowSquareOut size={u(16)} color={tokens.onInk} />} onPress={open} />
           ) : (
-            <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={16} color={tokens.muted} />} onPress={open} />
+            <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />
           )}
         </View>
       }
     >
       <View style={{ gap: space.xs }}>
         <Txt variant="small" color={tokens.muted} numberOfLines={2}>
-          {it.client ? `${it.title}, ${it.client}` : it.title}
+          {it.client ? `${labLine(it)}, ${it.client}` : labLine(it)}
         </Txt>
         <Txt variant="title" accessibilityRole="header">
           {t.title}
@@ -79,7 +86,7 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
       </View>
 
       {act && it.due && left != null && (
-        <View style={{ gap: 2 }}>
+        <View style={{ gap: u(2) }}>
           <View style={styles.stat}>
             <Txt variant="stat" tabular color={left < 0 ? tokens.danger : tokens.text}>
               {left < 0 ? '기한 지남' : left === 0 ? '오늘까지' : `${left}일`}
@@ -100,11 +107,11 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
         {it.steps.map((s, i) => (
           <View key={s.label} style={[styles.tr, i > 0 && styles.line]} accessible accessibilityLabel={`${s.label}, ${s.state === 'done' ? '완료' : s.state === 'now' ? '진행 중' : '예정'}`}>
             {s.state === 'done' ? (
-              <CheckCircle size={18} weight="fill" color={tokens.muted} />
+              <CheckCircle size={u(18)} weight="fill" color={tokens.muted} />
             ) : s.state === 'now' ? (
-              <HourglassMedium size={18} color={tokens.wait} />
+              <HourglassMedium size={u(18)} color={tokens.wait} />
             ) : (
-              <CircleDashed size={18} color={tokens.faint} />
+              <CircleDashed size={u(18)} color={tokens.faint} />
             )}
             <Txt variant="small" style={[{ flex: 1 }, s.state === 'now' && { fontFamily: fonts.semibold }]} color={s.state === 'now' ? tokens.wait : s.state === 'next' ? tokens.muted : tokens.text}>
               {s.label}
@@ -142,12 +149,12 @@ function Row({ k, v }: { k: string; v: string }) {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
-  bone: { height: 16, borderRadius: 8, backgroundColor: tokens.sunken },
-  err: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bone: { height: u(16), borderRadius: u(8), backgroundColor: tokens.sunken },
+  err: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
   stat: { flexDirection: 'row', alignItems: 'baseline' },
-  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, gap: space.md },
+  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: u(11), paddingHorizontal: u(14), gap: space.md },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  fact: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: space.md },
+  fact: { flexDirection: 'row', alignItems: 'center', paddingVertical: u(6), gap: space.md },
   facts: { paddingTop: space.md, borderTopWidth: 1, borderTopColor: tokens.border },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
 });

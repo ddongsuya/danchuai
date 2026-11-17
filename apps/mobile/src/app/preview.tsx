@@ -1,6 +1,6 @@
 // 화면 미리보기. 예시 값만 쓰고 서버를 부르지 않는다. 로그인 없이 열린다(_layout).
 // /preview 는 목록, /preview?view=<이름> 은 그 화면 하나. 실제 화면과 같은 컴포넌트를 그대로 쓴다.
-// 예시 값에 실제 회사·사람·연락처는 넣지 않는다(기관 A·B·C, 시험물질 A).
+// 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
 import type { RequestSheet } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { CaretRight, X } from 'phosphor-react-native';
@@ -16,7 +16,7 @@ import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { DraftCard } from '@/components/chat/DraftCard';
-import { AgentText, UserMessage } from '@/components/chat/Messages';
+import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
@@ -28,7 +28,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
@@ -53,46 +53,45 @@ const LAB_FILTERS = [
   { label: '선정', match: ['selected' as const] },
 ];
 
-const REQ_ITEMS: InboxItem[] = [
-  { id: 'RFQ-0003', title: '랫드 4주 반복투여 독성', sub: '비교표 열림', status: 'replied', when: '오늘', icon: 'flask' },
-  { id: 'c:demo', title: '복귀돌연변이 시험', sub: '요청서 확인 전', status: 'waiting', when: '어제', icon: 'dna' },
-  { id: 'c:demo2', title: '피부 자극 시험', sub: '시험물질 묻는 중', status: 'drafting', when: '11월 10일', icon: 'flask' },
-];
 const md = (n: number) => day(n).slice(5).replace('-', '.');
+const REQ_ITEMS: InboxItem[] = [
+  { id: 'DC-2026-0142', title: '랫드 4주 반복투여독성', sub: '비교표 열림', status: 'replied', when: md(0), icon: 'flask' },
+  { id: 'c:demo', title: '복귀돌연변이시험', sub: '요청서 확인 전', status: 'waiting', when: md(-1), icon: 'dna' },
+  { id: 'c:demo2', title: '비글견 단회투여독성', sub: '시험물질 묻는 중', status: 'drafting', when: md(-3), icon: 'flask' },
+];
 const LAB_ITEMS: InboxItem[] = [
-  { id: 'RFQ-0005', title: '랫드 13주 반복투여 독성', sub: '참여할지 정하기', status: 'new', when: '참여 결정', due: `참여 결정 ${md(3)}까지`, icon: 'flask' },
-  { id: 'RFQ-0004', title: '소핵 시험', sub: '견적 쓰기', status: 'viewed', when: '견적 작성', due: `견적 제출 ${md(6)}까지`, icon: 'dna' },
-  { id: 'RFQ-0001', title: '마우스 PK', sub: '선정 기다리는 중', status: 'sent', when: md(-2), icon: 'drop' },
+  { id: 'DC-2026-0142', title: 'DC-2026-0142 반복투여독성', sub: '참여할지 정하기', status: 'new', when: '참여 결정', due: `참여 결정 ${md(3)}까지`, icon: 'flask' },
+  { id: 'DC-2026-0139', title: 'DC-2026-0139 유전독성', sub: '선정 기다리는 중', status: 'sent', when: md(-2), icon: 'dna' },
 ];
 
 const REQUEST: DanchuRequest = {
-  no: 'RFQ-0003',
-  title: '랫드 4주 반복투여 독성, 시험물질 A',
+  no: 'DC-2026-0142',
+  title: '랫드 4주 반복투여독성',
   categories: ['일반독성'],
   status: 'open',
-  createdAt: `${day(-6)}T09:00:00+09:00`,
-  joinBy: day(-3),
-  replyBy: day(4),
-  sent: 6,
-  joined: 3,
+  createdAt: `${day(-3)}T09:00:00+09:00`,
+  joinBy: day(3),
+  replyBy: day(9),
+  sent: 12,
+  joined: 4,
   submitted: 2,
   compareOpen: false,
   selected: false,
 };
-const WAITING: DanchuCompare = { open: false, joined: 3, submitted: 2, replyBy: day(4) };
+const WAITING: DanchuCompare = { open: false, joined: 4, submitted: 2, replyBy: day(9) };
 const OPEN: DanchuCompare = {
   open: true,
   columns: [
-    { lab: '기관 A', total: 48_400_000, weeks: 10, submittedAt: day(-4) },
-    { lab: '기관 B', total: 52_800_000, weeks: 9, submittedAt: day(-2) },
-    { lab: '기관 C', total: null, weeks: 12, submittedAt: day(-1) },
+    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4) },
+    { lab: '나 기관', total: 51_200_000, weeks: 12, submittedAt: day(5) },
+    { lab: '다 기관', total: 49_800_000, weeks: 16, submittedAt: day(7) },
   ],
 };
 
 const LAB_TODO: DanchuLabItem = {
-  no: 'RFQ-0005',
-  title: '랫드 13주 반복투여 독성',
-  categories: '일반독성',
+  no: 'DC-2026-0142',
+  title: '랫드 4주 반복투여독성',
+  categories: '반복투여독성',
   client: null,
   clientHint: '의뢰자(선정 전 비공개)',
   group: 'decide',
@@ -100,24 +99,24 @@ const LAB_TODO: DanchuLabItem = {
   next: '참여할지 정하기',
   due: day(3),
   steps: [
-    { label: '요청 받음', at: day(-1).slice(5).replace('-', '.'), state: 'done' },
-    { label: '참여 결정', at: `${day(3).slice(5).replace('-', '.')}까지`, state: 'now' },
+    { label: '요청 받음', at: '', state: 'done' },
+    { label: '참여 결정', at: '', state: 'now' },
     { label: '견적 제출', at: '', state: 'next' },
-    { label: '비교표 열림', at: '', state: 'next' },
   ],
   money: [],
 };
 const LAB_SENT: DanchuLabItem = {
   ...LAB_TODO,
-  no: 'RFQ-0001',
-  title: '마우스 PK',
+  no: 'DC-2026-0139',
+  title: '마우스 유전독성',
+  categories: '유전독성',
   group: 'sent',
   stage: '견적 제출',
   next: '선정 기다리는 중',
   due: day(2),
   steps: [
-    { label: '요청 받음', at: day(-8).slice(5).replace('-', '.'), state: 'done' },
-    { label: '견적 제출', at: day(-2).slice(5).replace('-', '.'), state: 'done' },
+    { label: '요청 받음', at: '', state: 'done' },
+    { label: '견적 제출', at: '', state: 'done' },
     { label: '선정 결과', at: '', state: 'now' },
   ],
   money: [['제출 금액', '12,100,000원']],
@@ -125,7 +124,7 @@ const LAB_SENT: DanchuLabItem = {
 
 const SHEET: RequestSheet = {
   testType: '4주 반복투여 독성',
-  substance: '시험물질 A (저분자)',
+  substance: '후보물질 A',
   species: '랫드',
   route: '경구',
   duration: '4주, 회복 2주',
@@ -133,21 +132,15 @@ const SHEET: RequestSheet = {
   dueDate: null,
   notes: null,
 };
-const BODY = '시험물질 A(저분자)의 랫드 4주 경구 반복투여 독성시험(회복 2주 포함, GLP) 견적을 요청드려요. 시험물질은 1주 안에 보낼 수 있어요.';
-/** 새 요청 대화 앞부분(시안 A와 같은 흐름) */
+const BODY = '시험물질 후보물질 A를 랫드에 4주간 경구 투여하고 2주 회복군을 두는 반복투여독성시험 견적을 요청해요. 시험물질은 1주 안에 보낼 수 있어요.';
+/** 새 요청 대화 앞부분(시안 A07·A08과 같은 문장) */
 const CHAT_HEAD = (
   <>
     <AgentText>어떤 시험 견적이 필요해요?</AgentText>
-    <UserMessage text="랫드 4주 반복투여 독성, 회복군 2주 포함이요. 시험물질은 시험물질 A예요." />
-    <AgentText>요청서에 넣었어요. 투여 경로만 알려 주세요.</AgentText>
+    <UserMessage text="랫드 4주 반복투여독성, 회복군 포함이요" />
   </>
 );
-const CHAT_FILLED = (
-  <>
-    <UserMessage text="경구" />
-    <AgentText>요청서를 다 채웠어요. 의뢰 목적만 정하면 단추에 보낼 수 있어요.</AgentText>
-  </>
-);
+const CHAT_FILLED = <AgentText>요청서를 다 채웠어요.</AgentText>;
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 type View_ = { key: string; label: string; group: string };
@@ -189,15 +182,15 @@ function PreviewList() {
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.nav}>
         <IconButton label="닫기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-          <X size={20} color={tokens.text} />
+          <X size={u(22)} color={tokens.text} />
         </IconButton>
         <Txt variant="nav" style={styles.title} accessibilityRole="header">
           화면 미리보기
         </Txt>
-        <View style={{ width: 44 }} />
+        <View style={{ width: u(44) }} />
       </View>
       <ScrollView contentContainerStyle={styles.body}>
-        <Txt variant="caption" color={tokens.muted} style={{ paddingHorizontal: 4 }}>
+        <Txt variant="caption" color={tokens.muted} style={{ paddingHorizontal: u(4) }}>
           예시 데이터
         </Txt>
         {groups.map((g) => (
@@ -211,7 +204,7 @@ function PreviewList() {
                   <Txt variant="body" style={{ flex: 1 }} numberOfLines={1}>
                     {v.label}
                   </Txt>
-                  <CaretRight size={16} color={tokens.faint} />
+                  <CaretRight size={u(16)} color={tokens.faint} />
                 </Press>
               ))}
             </View>
@@ -251,6 +244,7 @@ function PreviewView({ view }: { view: string }) {
       return (
         <ChatShell title="새 요청" bottom={<Composer onSend={noop} />}>
           {CHAT_HEAD}
+          <StepLog steps={[{ label: '요청서 항목 맞추는 중', state: 'now' }]} />
           <QuestionCard title="투여 경로" questions={[{ id: 'route', label: '어떤 경로로 투여해요?', options: ['경구', '정맥', '피하'] }]} onSubmit={() => router.push(toView('approve'))} onSkip={noop} />
         </ChatShell>
       );
@@ -289,7 +283,7 @@ function PreviewView({ view }: { view: string }) {
           {CHAT_FILLED}
           <ResultBlock
             title="단추에 요청했어요"
-            meta="RFQ-0003"
+            meta="DC-2026-0142"
             rows={[['회신 기한', '11.26(목)']]}
             action={<Button title="진행 보기" tall onPress={() => router.push(toView('request'))} />}
           />
@@ -313,6 +307,8 @@ function PreviewView({ view }: { view: string }) {
       return (
         <AuthScreen
           title={'에이전트를 쓰려면\n국외 이전 동의가 필요해요'}
+          titleVariant="title2"
+          gap={u(14)}
           footer={
             <>
               <Button title="필수 동의하고 시작" tall onPress={() => router.back()} />
@@ -325,12 +321,10 @@ function PreviewView({ view }: { view: string }) {
       );
     case 'logout':
       return (
-        <SafeAreaView style={styles.root}>
-          <View style={styles.body}>
-            <Button title="로그아웃 확인 다시 열기" kind="soft" tall onPress={() => setDialog(true)} />
-          </View>
+        <>
+          <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} onManage={noop} onLogout={() => setDialog(true)} />
           <LogoutDialog visible={dialog} onClose={() => setDialog(false)} onConfirm={() => setDialog(false)} />
-        </SafeAreaView>
+        </>
       );
     case 'notfound':
       return <NotFound label="요청을 찾을 수 없어요" />;
@@ -341,11 +335,11 @@ function PreviewView({ view }: { view: string }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: u(14), paddingTop: u(6), paddingBottom: u(10) },
   title: { flex: 1, textAlign: 'center' },
   body: { paddingHorizontal: space.xl, paddingBottom: space.xxl, paddingTop: space.md, gap: space.sm },
-  gh: { fontFamily: fonts.bold, paddingHorizontal: 4, paddingTop: space.md, paddingBottom: space.sm },
+  gh: { fontFamily: fonts.bold, paddingHorizontal: u(4), paddingTop: space.md, paddingBottom: space.sm },
   grp: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
-  gi: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, minHeight: 52 },
+  gi: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, minHeight: u(52) },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
 });

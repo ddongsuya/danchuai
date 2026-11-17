@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
-import { motion, tokens } from '@/constants/theme';
+import { motion, tokens, u } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
 import { Press } from './Press';
@@ -34,13 +34,13 @@ export function LikeButton({ liked, onChange, label }: { liked: boolean; onChang
       style={styles.hit}
     >
       <Animated.View style={pop}>
-        <Heart size={24} color={tokens.muted} />
+        <Heart size={u(24)} color={tokens.muted} />
         <Animated.View style={[StyleSheet.absoluteFill, filled]}>
-          <Heart size={24} weight="fill" color={tokens.ink} />
+          <Heart size={u(24)} weight="fill" color={tokens.ink} />
         </Animated.View>
       </Animated.View>
     </Press>
   );
 }
 
-const styles = StyleSheet.create({ hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' } });
+const styles = StyleSheet.create({ hit: { width: u(44), height: u(44), alignItems: 'center', justifyContent: 'center' } });

@@ -5,7 +5,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { motion, radius, space, tokens } from '@/constants/theme';
+import { motion, space, tokens, u } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
 interface Props {
@@ -56,6 +56,7 @@ export function Dialog({ visible, onClose, children }: Props) {
 
 const styles = StyleSheet.create({
   dim: { backgroundColor: tokens.overlay },
-  center: { flex: 1, justifyContent: 'center', padding: space.xxl },
-  card: { backgroundColor: tokens.surface, borderRadius: radius.approval, padding: space.xxl, maxWidth: 400, width: '100%', alignSelf: 'center' },
+  // 시안 .dlg: 좌우 20, 모서리 24, 안쪽 22/20/16
+  center: { flex: 1, justifyContent: 'center', padding: space.xl },
+  card: { backgroundColor: tokens.surface, borderRadius: u(24), paddingTop: u(22), paddingHorizontal: space.xl, paddingBottom: space.lg, maxWidth: u(400), width: '100%', alignSelf: 'center' },
 });

@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 
-import { motion, tokens } from '@/constants/theme';
+import { motion, tokens, u } from '@/constants/theme';
 import { KEEP, linear } from '@/lib/motion';
 
-export function Spinner({ size = 16, color = tokens.text }: { size?: number; color?: string }) {
+export function Spinner({ size = u(16), color = tokens.text }: { size?: number; color?: string }) {
   const reduced = useReducedMotion();
   const t = useSharedValue(0);
 

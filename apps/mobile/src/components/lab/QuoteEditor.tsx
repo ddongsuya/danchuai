@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { groupDigits, MAX_ROWS, parseWeeks, readQuote, type QuoteRow } from '@/lib/quoteForm';
 
 interface Props {
@@ -44,12 +44,12 @@ export function QuoteEditor({ initial, initialWeeks, onClose, onSave }: Props) {
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.nav}>
           <IconButton label="닫기" onPress={onClose}>
-            <X size={20} color={tokens.text} />
+            <X size={u(22)} color={tokens.text} />
           </IconButton>
           <Txt variant="nav" style={styles.title} accessibilityRole="header">
             견적 금액
           </Txt>
-          <View style={{ width: 44 }} />
+          <View style={{ width: u(44) }} />
         </View>
 
         <ScrollView style={styles.root} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -92,7 +92,7 @@ export function QuoteEditor({ initial, initialWeeks, onClose, onSave }: Props) {
                   <View style={styles.colDel}>
                     {rows.length > 1 && (
                       <IconButton label={`${i + 1}번 항목 빼기`} plain onPress={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
-                        <Trash size={18} color={tokens.muted} />
+                        <Trash size={u(18)} color={tokens.muted} />
                       </IconButton>
                     )}
                   </View>
@@ -101,7 +101,7 @@ export function QuoteEditor({ initial, initialWeeks, onClose, onSave }: Props) {
             })}
             {rows.length < MAX_ROWS && (
               <View style={[styles.line, styles.add]}>
-                <Button title="항목 추가" kind="text" icon={<Plus size={16} weight="bold" color={tokens.muted} />} onPress={() => setRows((rs) => [...rs, row()])} />
+                <Button title="항목 추가" kind="text" icon={<Plus size={u(16)} weight="bold" color={tokens.muted} />} onPress={() => setRows((rs) => [...rs, row()])} />
               </View>
             )}
           </View>
@@ -151,7 +151,7 @@ export function QuoteEditor({ initial, initialWeeks, onClose, onSave }: Props) {
 }
 
 function Sum({ label, value, total }: { label: string; value: string; total?: boolean }) {
-  const s = total ? { fontFamily: fonts.bold, fontSize: 17 } : undefined;
+  const s = total ? { fontFamily: fonts.bold, fontSize: u(17) } : undefined;
   return (
     <View style={styles.sumLn}>
       <Txt variant="small" color={total ? tokens.text : tokens.muted} style={s}>
@@ -166,23 +166,23 @@ function Sum({ label, value, total }: { label: string; value: string; total?: bo
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: u(14), paddingTop: u(6), paddingBottom: u(10) },
   title: { flex: 1, textAlign: 'center' },
   content: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.lg },
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
   head: { backgroundColor: tokens.sunken, paddingVertical: space.sm },
-  grid: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingLeft: space.md, paddingRight: 4, minHeight: 56 },
+  grid: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingLeft: space.md, paddingRight: u(4), minHeight: u(56) },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
   colLabel: { flex: 1.3, minWidth: 0 },
   colAmount: { flex: 1, minWidth: 0 },
-  colDel: { width: 44, alignItems: 'center' },
-  input: { height: 44, borderRadius: radius.inner, backgroundColor: tokens.bg, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: 10, fontFamily: fonts.regular, fontSize: 16, color: tokens.text },
+  colDel: { width: u(44), alignItems: 'center' },
+  input: { height: u(44), borderRadius: radius.inner, backgroundColor: tokens.bg, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: u(10), fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
   num: { textAlign: 'right', fontVariant: ['tabular-nums'] },
-  bad: { borderColor: tokens.danger, borderWidth: 2, paddingHorizontal: 9 },
-  add: { paddingVertical: 4, alignItems: 'flex-start' },
+  bad: { borderColor: tokens.danger, borderWidth: 2, paddingHorizontal: u(9) },
+  add: { paddingVertical: u(4), alignItems: 'flex-start' },
   weeks: { gap: space.sm },
-  weekInput: { width: 120, backgroundColor: tokens.surface, borderColor: tokens.borderInput },
-  sum: { padding: space.lg, borderRadius: radius.card, backgroundColor: tokens.sunken, gap: 6 },
+  weekInput: { width: u(120), backgroundColor: tokens.surface, borderColor: tokens.borderInput },
+  sum: { padding: space.lg, borderRadius: radius.card, backgroundColor: tokens.sunken, gap: u(6) },
   sumLn: { flexDirection: 'row', justifyContent: 'space-between' },
   foot: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, backgroundColor: tokens.bg },
 });

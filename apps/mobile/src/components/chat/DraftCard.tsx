@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 
 export function DraftCard({ title, body, dropped = 0, children, action, onAction }: { title: string; body: string; dropped?: number; children?: ReactNode; action: string; onAction: () => void }) {
   return (
@@ -46,7 +46,7 @@ export function DraftLine({ k, v, bold, right }: { k: string; v: string; bold?: 
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
+  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: u(6) },
   act: { marginTop: space.md },
-  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: 44 },
+  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: u(44) },
 });

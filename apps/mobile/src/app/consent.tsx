@@ -5,7 +5,7 @@ import { AuthScreen } from '@/components/auth/AuthScreen';
 import { ConsentBody } from '@/components/auth/ConsentBody';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { tokens } from '@/constants/theme';
+import { tokens, u } from '@/constants/theme';
 import { agreeConsent } from '@/lib/accountClient';
 import { CONSENT_VERSION } from '@/lib/consent';
 import { useAuth } from '@/lib/session';
@@ -30,6 +30,8 @@ export default function Consent() {
   return (
     <AuthScreen
       title={'에이전트를 쓰려면\n국외 이전 동의가 필요해요'}
+      titleVariant="title2"
+      gap={u(14)}
       footer={
         <>
           {error && (

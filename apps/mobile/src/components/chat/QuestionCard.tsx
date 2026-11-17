@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { haptic } from '@/lib/haptics';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 
 export interface Question {
   id: string;
@@ -33,7 +33,7 @@ export function QuestionCard({ title, questions, initial = {}, onSubmit, onSkip 
         {title}
       </Txt>
       {questions.map((q, i) => (
-        <View key={q.id} style={i > 0 && { marginTop: 14 }} accessibilityRole="radiogroup" accessibilityLabel={q.label}>
+        <View key={q.id} style={i > 0 && { marginTop: u(14) }} accessibilityRole="radiogroup" accessibilityLabel={q.label}>
           <Txt variant="small" color={tokens.muted} style={{ marginBottom: space.sm }}>
             {q.label}
           </Txt>
@@ -74,7 +74,7 @@ export function QuestionCard({ title, questions, initial = {}, onSubmit, onSkip 
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, marginTop: space.md },
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  opt: { minHeight: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
+  opt: { minHeight: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
   optOn: { backgroundColor: tokens.ink },
   act: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: space.sm, marginTop: space.md, marginLeft: -space.md },
 });

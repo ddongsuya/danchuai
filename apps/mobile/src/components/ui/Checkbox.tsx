@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 import Animated, { interpolateColor, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { motion, radius, space, tokens } from '@/constants/theme';
+import { motion, radius, space, tokens, u } from '@/constants/theme';
 import { KEEP, easeIn, easeInOut } from '@/lib/motion';
 
 import { Press } from './Press';
@@ -16,7 +16,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const LEN = 20;
 
 /** 선만 있는 체크. 선택 목록의 고른 항목 표시에 쓴다. */
-export function CheckMark({ on, size = 18, color = tokens.ink, strokeWidth = 2.4 }: { on: boolean; size?: number; color?: string; strokeWidth?: number }) {
+export function CheckMark({ on, size = u(18), color = tokens.ink, strokeWidth = 2.4 }: { on: boolean; size?: number; color?: string; strokeWidth?: number }) {
   const reduced = useReducedMotion();
   const p = useSharedValue(on ? 1 : 0);
 
@@ -56,7 +56,7 @@ export function Checkbox({ checked, onChange, label }: { checked: boolean; onCha
   return (
     <Press label={label} accessibilityRole="checkbox" accessibilityState={{ checked }} onPress={() => onChange(!checked)} style={styles.row}>
       <Animated.View style={[styles.box, box]}>
-        <CheckMark on={checked} size={16} color={tokens.onInk} />
+        <CheckMark on={checked} size={u(16)} color={tokens.onInk} />
       </Animated.View>
       <Txt variant="body" style={{ flex: 1 }}>
         {label}
@@ -66,6 +66,6 @@ export function Checkbox({ checked, onChange, label }: { checked: boolean; onCha
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44 },
-  box: { width: 22, height: 22, borderRadius: radius.inner / 2, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(44) },
+  box: { width: u(22), height: u(22), borderRadius: radius.inner / 2, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });
