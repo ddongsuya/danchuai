@@ -48,8 +48,8 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
     void send(seed);
   }, [seed, send, state.conversationId, state.status, state.messages.length]);
   // 화면을 연 뒤 새로 붙은 말만 올라오며 나타난다(지난 대화는 그대로)
-  const opened = useRef<number | null>(null);
-  if (opened.current === null && state.status === 'idle') opened.current = state.messages.length;
+  const [opened, setOpened] = useState<number | null>(null);
+  if (opened === null && state.status === 'idle') setOpened(state.messages.length);
   // 새 질문 화면에서만 지난 질문을 읽는다
   const { state: past } = useRemote(useCallback(() => listAsks(role), [role]), !conversationId);
   const [open, setOpen] = useState<SourceRef[] | null>(null);
@@ -105,7 +105,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
 
       {state.messages.map((m, i) =>
         m.role === 'user' ? (
-          <UserMessage key={m.id} text={m.text} fresh={opened.current !== null && i >= opened.current} />
+          <UserMessage key={m.id} text={m.text} fresh={opened !== null && i >= opened} />
         ) : (
           <View key={m.id} style={{ gap: space.md }}>
             <Answer text={m.text} />

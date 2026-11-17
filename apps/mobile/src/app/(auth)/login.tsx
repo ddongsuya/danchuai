@@ -41,6 +41,7 @@ export default function Login() {
           <Button title="비밀번호 찾기" kind="text" disabled={busy} onPress={() => Linking.openURL(`${DANCHU_URL}/forgot`)} />
         </>
       }
+      keyboardFooter={<Button title="로그인" bar disabled={!ready} loading={busy} onPress={submit} />}
     >
       <View style={{ gap: space.xl }}>
         <Field
@@ -51,6 +52,8 @@ export default function Login() {
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
+          autoCorrect={false}
+          spellCheck={false}
           textContentType="username"
           returnKeyType="next"
           onSubmitEditing={() => pw.current?.focus()}

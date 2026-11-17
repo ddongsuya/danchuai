@@ -1,8 +1,9 @@
 // 로그인·가입 화면 공통 틀: 뒤로, 제목, 본문, 아래 버튼. 키보드가 올라오면 버튼도 함께 올라간다.
+// 키보드가 떠 있는 동안에는 keyboardFooter(주 버튼 하나)를 키보드 바로 위 꽉 찬 막대로 둔다(토스 입력 화면, Mobbin 280b81aa).
 import { router } from 'expo-router';
 import { CaretLeft } from 'phosphor-react-native';
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/ui/IconButton';
@@ -15,11 +16,30 @@ interface Props {
   top?: ReactNode;
   children?: ReactNode;
   footer: ReactNode;
+  /** 키보드가 떠 있을 때 footer 대신 보일 주 버튼(Button bar) */
+  keyboardFooter?: ReactNode;
 }
 
-export function AuthScreen({ title, back, top, children, footer }: Props) {
+/** 키보드가 떠 있는지. 웹에는 이 신호가 없어 늘 false */
+function useKeyboardShown() {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const a = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', () => setShown(true));
+    const b = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setShown(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
+  return shown;
+}
+
+export function AuthScreen({ title, back, top, children, footer, keyboardFooter }: Props) {
+  const keyboard = useKeyboardShown();
+  const bar = keyboard && keyboardFooter != null;
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.root} edges={bar ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.nav}>
           {back && (
@@ -37,7 +57,7 @@ export function AuthScreen({ title, back, top, children, footer }: Props) {
           )}
           {children}
         </ScrollView>
-        <View style={styles.foot}>{footer}</View>
+        {bar ? <View>{keyboardFooter}</View> : <View style={styles.foot}>{footer}</View>}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

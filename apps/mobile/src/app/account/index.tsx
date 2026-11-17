@@ -1,12 +1,12 @@
 // 계정: 단추 계정 정보(이름·메일·소속)와 로그아웃. 이름·비밀번호·담당자 관리는 단추에서 한다(연동 2단계).
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { ArrowSquareOut, Buildings, ShieldCheck, X } from 'phosphor-react-native';
+import { ArrowSquareOut, Buildings, ShieldCheck, SignOut, X } from 'phosphor-react-native';
 import { useState, type ReactNode } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/Button';
+import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
@@ -19,6 +19,7 @@ export default function Account() {
   const { status, session, org, signOut } = useAuth();
   const signedIn = status === 'ready';
   const [leaving, setLeaving] = useState(false);
+  const [asking, setAsking] = useState(false);
   const name = org?.displayName ?? '이름 없음';
   const email = session?.user.email ?? '';
   const manage = `${DANCHU_URL}/${org?.kind === 'cro' ? 'cro' : 'app'}/profile`;
@@ -65,19 +66,20 @@ export default function Account() {
         </View>
 
         {signedIn && (
-          <View style={styles.out}>
-            <Button title="로그아웃" kind="soft" tall loading={leaving} onPress={() => void logout()} />
+          <View style={[styles.grp, styles.out]}>
+            <Item icon={<SignOut size={20} color={tokens.muted} />} label="로그아웃" onPress={() => setAsking(true)} role="button" />
           </View>
         )}
         <Txt variant="caption" color={tokens.faint} tabular style={styles.ver}>
           {`버전 ${Constants.expoConfig?.version ?? ''}`}
         </Txt>
       </ScrollView>
+      <LogoutDialog visible={asking} busy={leaving} onClose={() => setAsking(false)} onConfirm={() => void logout()} />
     </SafeAreaView>
   );
 }
 
-function Item({ icon, label, right, onPress, line }: { icon: ReactNode; label: string; right?: string; onPress?: () => void; line?: boolean }) {
+function Item({ icon, label, right, onPress, line, role = 'link' }: { icon: ReactNode; label: string; right?: string; onPress?: () => void; line?: boolean; role?: 'link' | 'button' }) {
   const inner = (
     <>
       {icon}
@@ -89,11 +91,10 @@ function Item({ icon, label, right, onPress, line }: { icon: ReactNode; label: s
           {right}
         </Txt>
       ) : null}
-
     </>
   );
   return onPress ? (
-    <Press label={label} accessibilityRole="link" onPress={onPress} style={[styles.gi, line && styles.line]}>
+    <Press label={label} accessibilityRole={role} onPress={onPress} style={[styles.gi, line && styles.line]}>
       {inner}
     </Press>
   ) : (

@@ -11,17 +11,11 @@ import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { DANCHU_URL } from '@/lib/danchuLinks';
-import { dayLabel, fetchDanchuRequest, type DanchuCompare, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
+import { localDay, shortDate } from '@/lib/format';
+import { fetchDanchuRequest, type DanchuCompare, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
 
 const won = (n: number | null) => (n == null ? '미기재' : `${n.toLocaleString('ko-KR')}원`);
-const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
-/** 11.26(목) 처럼 짧게. 요일은 날짜 문자열 그대로 계산한다(시간대 영향 없음) */
-const md = (s: string | null) => {
-  if (!s) return '미정';
-  const [y, m, d] = s.slice(0, 10).split('-').map(Number);
-  if (!y || !m || !d) return s;
-  return `${m}.${d}(${WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]})`;
-};
+const md = shortDate;
 
 export function DanchuRequest({ no }: { no: string }) {
   const load = useCallback(() => fetchDanchuRequest(no), [no]);
@@ -98,7 +92,7 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
         <Fact k="참여" v={`${r.joined}곳`} />
         {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} />}
         <Fact k="회신 기한" v={md(r.replyBy)} />
-        <Fact k="보낸 날" v={`${dayLabel(r.createdAt)}`} />
+        <Fact k="보낸 날" v={md(localDay(r.createdAt))} />
       </View>
     </ChatShell>
   );

@@ -9,6 +9,7 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { ApprovalCard, type Recipient } from '@/components/chat/ApprovalCard';
 import { ChatShell } from '@/components/chat/ChatShell';
+import { DraftCard, DraftLine } from '@/components/chat/DraftCard';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuestionCard } from '@/components/chat/QuestionCard';
@@ -82,9 +83,9 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
   const reduced = useReducedMotion();
   // 화면을 연 뒤 새로 붙은 말만 올라오며 나타난다(이어 쓰는 대화의 지난 말은 그대로)
-  const opened = useRef<number | null>(null);
-  if (opened.current === null && state.status === 'idle') opened.current = state.messages.length;
-  const isFresh = (i: number) => opened.current !== null && i >= opened.current;
+  const [opened, setOpened] = useState<number | null>(null);
+  if (opened === null && state.status === 'idle') setOpened(state.messages.length);
+  const isFresh = (i: number) => opened !== null && i >= opened;
   const [reviewing, setReviewing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>(given);
@@ -275,46 +276,25 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       )}
 
       {canReview && !reviewing && (
-        <View style={styles.card}>
-          <Txt variant="label" style={{ fontFamily: fonts.bold, marginBottom: space.sm }}>
-            {role === 'cro' ? '회신 초안' : '요청 본문 초안'}
-          </Txt>
-          <Txt variant="small">{draft!.body}</Txt>
+        <DraftCard
+          title={role === 'cro' ? '회신 초안' : '요청 본문 초안'}
+          body={draft!.body}
+          dropped={draft!.dropped}
+          action={viaDanchu || role === 'requester' ? (!viaDanchu && !recipients.length ? '받는 기관 고르기' : '요청서 확인') : needsQuote ? '견적 금액 넣기' : '회신 확인'}
+          onAction={openReview}
+        >
           {role === 'requester' && !viaDanchu && (
-            <View style={styles.to}>
-              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
-                받는 기관
-              </Txt>
-              <Txt variant="small" style={{ flex: 1, fontFamily: fonts.semibold }} numberOfLines={2}>
-                {recipients.length ? recipients.map((r) => r.name).join(', ') : '선택 전'}
-              </Txt>
-              {recipients.length > 0 && <Button title="바꾸기" kind="text" onPress={() => setPicking(true)} />}
-            </View>
-          )}
-          {draft!.dropped > 0 && (
-            <Txt variant="caption" color={tokens.wait} style={{ marginTop: space.sm }}>
-              {`점검에서 뺀 문장 ${draft!.dropped}개`}
-            </Txt>
+            <DraftLine k="받는 기관" v={recipients.length ? recipients.map((r) => r.name).join(', ') : '선택 전'} right={recipients.length > 0 ? <Button title="바꾸기" kind="text" onPress={() => setPicking(true)} /> : undefined} />
           )}
           {role === 'cro' && quoteLines.length > 0 && (
-            <View style={styles.to}>
-              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
-                견적 총액
-              </Txt>
-              <Txt variant="small" tabular style={{ flex: 1, fontFamily: fonts.bold }}>
-                {`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
-              </Txt>
-              <Button title="고치기" kind="text" onPress={onEditQuote} />
-            </View>
-          )}
-          <View style={styles.act}>
-            <Button
-              title={viaDanchu || role === 'requester' ? (!viaDanchu && !recipients.length ? '받는 기관 고르기' : '요청서 확인') : needsQuote ? '견적 금액 넣기' : '회신 확인'}
-              tall
-              onPress={openReview}
+            <DraftLine
+              k="견적 총액"
+              bold
+              v={`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
+              right={<Button title="고치기" kind="text" onPress={onEditQuote} />}
             />
-          </View>
-        </View>
+          )}
+        </DraftCard>
       )}
 
       {out.kind === 'done' &&
