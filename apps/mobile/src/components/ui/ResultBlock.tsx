@@ -7,13 +7,14 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ReduceMotion, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 
 import { fonts, motion, radius, space, tokens, u } from '@/constants/theme';
-import { easeOut, lineEnter } from '@/lib/motion';
+import { WEB, easeOut, lineEnter } from '@/lib/motion';
 
 import { Txt } from './Txt';
 
 export function ResultBlock({ title, meta, rows = [], action }: { title: string; meta?: string; rows?: [string, string][]; action?: ReactNode }) {
   const reduced = useReducedMotion();
-  const pop = reduced
+  // 웹은 기본 FadeIn만(lib/motion.ts lineEnter 설명)
+  const pop = reduced || WEB
     ? FadeIn.duration(motion.ms.reduced).reduceMotion(ReduceMotion.Never)
     : ZoomIn.duration(motion.ms.popIn).easing(easeOut).withInitialValues({ transform: [{ scale: motion.popTo }] }).reduceMotion(ReduceMotion.Never);
   return (
