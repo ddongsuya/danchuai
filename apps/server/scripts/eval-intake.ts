@@ -1,6 +1,7 @@
 // 견적 요청 유도 평가: 상황 10개를 실제 모델로 돌리고, 정해 둔 기준으로 자동 채점한다.
-// 실행: ANTHROPIC_API_KEY=... npx tsx scripts/eval-intake.ts [시나리오 번호...] > eval.md
-// 키가 없으면 멈춘다. 대화 기록은 표준 출력(마크다운)으로만 내보내고 로그 파일에 남기지 않는다.
+// 실행: npm run eval:intake -w @danchuai/server -- [시나리오 번호...] > eval.md
+// 키는 DANCHUAI_EVAL_KEY(평가 전용 키, 개발 세션 환경 변수)를 먼저 쓰고, 없으면 ANTHROPIC_API_KEY. 키가 없으면 멈춘다.
+// 개발 세션의 ANTHROPIC_BASE_URL(세션 자체용 주소)은 평가 호출에 쓰지 않는다. 대화 기록은 표준 출력(마크다운)으로만 내보내고 로그 파일에 남기지 않는다.
 import {
   EMPTY_SHEET,
   missingFields,
@@ -145,9 +146,12 @@ function grade(s: Scenario, logs: TurnLog[]) {
 }
 
 async function main() {
-  const provider = providerFromEnv(process.env);
+  const env: Record<string, string | undefined> = { ...process.env };
+  if (env.DANCHUAI_EVAL_KEY) env.ANTHROPIC_API_KEY = env.DANCHUAI_EVAL_KEY;
+  delete process.env.ANTHROPIC_BASE_URL;
+  const provider = providerFromEnv(env);
   if (!provider) {
-    console.error("AI 공급사 설정이 없어요(ANTHROPIC_API_KEY 등). 평가를 멈춰요.");
+    console.error("평가용 키가 없어요(DANCHUAI_EVAL_KEY 또는 ANTHROPIC_API_KEY). 평가를 멈춰요.");
     process.exit(2);
   }
   const pick = process.argv.slice(2).map(Number).filter(Boolean);
