@@ -3,7 +3,7 @@
 import { formatWonShort } from '@danchuai/core';
 import { ArrowClockwise, Buildings, CaretDown, CaretUp, Check, CheckCircle, EnvelopeSimple, HourglassMedium, LockSimple, SealCheck, WarningCircle } from 'phosphor-react-native';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatShell } from '@/components/chat/ChatShell';
@@ -11,6 +11,7 @@ import { AgentText } from '@/components/chat/Messages';
 import { Button } from '@/components/ui/Button';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Press } from '@/components/ui/Press';
+import { Sheet } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
@@ -257,9 +258,7 @@ function SelectSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.dim}>
-        <Press label="닫기" onPress={onClose} style={StyleSheet.absoluteFill} accessibilityRole="none" />
+    <Sheet visible={visible} onClose={onClose}>
         <SafeAreaView edges={['bottom']} style={styles.sheetWrap}>
           <View style={styles.sheet} accessibilityViewIsModal>
             <View style={styles.grab} />
@@ -329,8 +328,7 @@ function SelectSheet({
             </View>
           </View>
         </SafeAreaView>
-      </View>
-    </Modal>
+    </Sheet>
   );
 }
 
@@ -368,7 +366,6 @@ const styles = StyleSheet.create({
   rh: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, minHeight: 52 },
   rb: { paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.md },
   selbar: { paddingHorizontal: space.md, paddingTop: space.sm },
-  dim: { flex: 1, backgroundColor: 'rgba(30, 31, 34, 0.38)', justifyContent: 'flex-end' },
   sheetWrap: { paddingHorizontal: space.sm, paddingBottom: space.sm },
   sheet: { backgroundColor: tokens.surface, borderRadius: 32, paddingTop: 10, paddingHorizontal: space.xl, paddingBottom: 22 },
   grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: tokens.border, alignSelf: 'center', marginBottom: 18 },

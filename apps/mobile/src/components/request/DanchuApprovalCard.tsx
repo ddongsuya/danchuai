@@ -4,17 +4,20 @@
 // 받을 기관 수는 묻지 않는다. 분야가 맞는 참여 기관 전체에게 간다(2026-11-17 사용자 결정).
 // 승인 기록(epoch + 해시)과 한 번만 실행은 서버가 맡는다. 화면은 보낼 값(payload)으로만 그린다.
 import type { RequestSheet } from '@danchuai/core';
-import { CaretDown, CaretRight, Check, X } from 'phosphor-react-native';
+import { CaretDown, CaretRight, X } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/Button';
+import { CheckMark } from '@/components/ui/Checkbox';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
+import { Sheet } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, motion, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens } from '@/constants/theme';
 import { DANCHU_URL } from '@/lib/danchuLinks';
+import { lineEnter } from '@/lib/motion';
 import { AGREEMENTS, FIELD_LABEL, FIELD_OPTIONS, nextMissing, type ChoiceField, type SendChoices } from '@/lib/danchuRequest';
 
 const QUESTION: Record<ChoiceField, string> = {
@@ -35,11 +38,10 @@ interface Props {
   onApprove: (c: SendChoices) => void;
 }
 
-const enter = FadeInDown.duration(motion.approvalEnterMs).withInitialValues({ transform: [{ translateY: 16 }] }).reduceMotion(ReduceMotion.System);
-
 export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending, onClose, onApprove }: Props) {
   const [asking, setAsking] = useState<ChoiceField | null>(null);
   const [open, setOpen] = useState(false);
+  const reduced = useReducedMotion();
   const gap = nextMissing(sheet, c);
   const value = (f: ChoiceField) => (f === 'categories' ? c.categories.join(', ') : c[f]) || null;
 
@@ -61,7 +63,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
         : { title: '동의하고 요청하기', onPress: () => onApprove({ ...c, agreed: true }) };
 
   return (
-    <Animated.View entering={enter} style={styles.card} accessibilityViewIsModal>
+    <Animated.View entering={lineEnter(0, reduced)} style={styles.card} accessibilityViewIsModal>
       <View style={styles.head}>
         <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
           이대로 단추에 요청할까요?
@@ -72,7 +74,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
       </View>
 
       <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ paddingBottom: 2 }}>
-        {rows.map((r) => {
+        {rows.map((r, i) => {
           const empty = !r.value;
           const inner = (
             <>
@@ -85,14 +87,17 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
               {r.field && <CaretRight size={14} color={tokens.faint} />}
             </>
           );
-          return r.field ? (
-            <Press key={r.key} label={`${r.label} ${r.value ?? '비어 있음'}`} onPress={() => setAsking(r.field!)} style={styles.row}>
-              {inner}
-            </Press>
-          ) : (
-            <View key={r.key} style={styles.row}>
-              {inner}
-            </View>
+          // 카드 안 줄도 위에서부터 한 줄씩(줄 단위 등장 규칙)
+          return (
+            <Animated.View key={r.key} entering={lineEnter(i + 1, reduced)}>
+              {r.field ? (
+                <Press label={`${r.label} ${r.value ?? '비어 있음'}`} onPress={() => setAsking(r.field!)} style={styles.row}>
+                  {inner}
+                </Press>
+              ) : (
+                <View style={styles.row}>{inner}</View>
+              )}
+            </Animated.View>
           );
         })}
         <Press label={open ? '요청 본문 접기' : '요청 본문 펼치기'} onPress={() => setOpen((v) => !v)} style={[styles.row, { alignItems: 'flex-start' }]}>
@@ -139,36 +144,33 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
 /** 아래에서 올라오는 질문 시트. 하나 고르면 바로 닫힌다(시험 항목만 여러 개). */
 function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null; choices: SendChoices; onClose: () => void; onPick: (c: SendChoices) => void }) {
   const [many, setMany] = useState<string[]>([]);
-  const multi = field === 'categories';
+  // 닫히는 동안에도 마지막 질문을 그대로 보여 준다(내려가는 중에 내용이 비지 않게).
+  const [last, setLast] = useState<ChoiceField | null>(field);
+  if (field !== null && field !== last) setLast(field);
+  const f = field ?? last;
+  const multi = f === 'categories';
   return (
-    <Modal
-      visible={field !== null}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      onShow={() => setMany(choices.categories)}
-    >
-      <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="닫기" />
-      {field && (
+    <Sheet visible={field !== null} onClose={onClose} onShow={() => setMany(choices.categories)}>
+      {f && (
         <View style={styles.sheet}>
           <Txt variant="title" style={{ fontSize: 22, lineHeight: 30, marginBottom: space.md }} accessibilityRole="header">
-            {QUESTION[field]}
+            {QUESTION[f]}
           </Txt>
           <ScrollView style={{ maxHeight: 420 }}>
-            {FIELD_OPTIONS[field].map((o) => {
-              const on = multi ? many.includes(o) : choices[field] === o;
+            {FIELD_OPTIONS[f].map((o) => {
+              const on = multi ? many.includes(o) : choices[f] === o;
               return (
                 <Press
                   key={o}
                   label={o}
                   accessibilityState={{ selected: on }}
                   style={styles.option}
-                  onPress={() => (multi ? setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o])) : onPick({ ...choices, [field]: o }))}
+                  onPress={() => (multi ? setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o])) : onPick({ ...choices, [f]: o }))}
                 >
                   <Txt variant="body" style={{ flex: 1, fontFamily: on ? fonts.semibold : fonts.regular }}>
                     {o}
                   </Txt>
-                  {on && <Check size={18} weight="bold" color={tokens.ink} />}
+                  <CheckMark on={on} />
                 </Press>
               );
             })}
@@ -180,7 +182,7 @@ function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null
           )}
         </View>
       )}
-    </Modal>
+    </Sheet>
   );
 }
 
@@ -206,7 +208,6 @@ const styles = StyleSheet.create({
   value: { flex: 1, fontFamily: fonts.semibold },
   agree: { marginTop: space.md },
   link: { textDecorationLine: 'underline' },
-  scrim: { flex: 1, backgroundColor: 'rgba(30, 31, 34, 0.32)' },
   sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: space.xxl, paddingHorizontal: space.xl, paddingBottom: 34 },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: 56, borderTopWidth: 1, borderTopColor: tokens.border },
 });

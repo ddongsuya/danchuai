@@ -5,6 +5,7 @@ import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-nativ
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { ApprovalCard, type Recipient } from '@/components/chat/ApprovalCard';
 import { ChatShell } from '@/components/chat/ChatShell';
@@ -19,6 +20,7 @@ import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
 import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
+import { lineEnter } from '@/lib/motion';
 import { useAuth } from '@/lib/session';
 import type { ChatErrorCode } from '@/lib/chat';
 
@@ -76,6 +78,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   }, [seed, send, state.conversationId, state.status, state.messages.length]);
   // 이어 쓰는 대화는 요청서에서 제목을 만든다(서버 목록과 같은 규칙).
   const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
+  const reduced = useReducedMotion();
   const [reviewing, setReviewing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>(given);
@@ -305,7 +308,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       )}
 
       {out.kind === 'done' && (
-        <View style={styles.row} accessibilityLiveRegion="polite">
+        <Animated.View entering={lineEnter(0, reduced)} style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={16} weight="fill" color={out.unknown ? tokens.wait : tokens.accent} />
           <Txt variant="caption" color={out.unknown ? tokens.wait : tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
             {viaDanchu
@@ -321,7 +324,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           {role === 'requester' && sentRequestId && (
             <Button title="진행 보기" kind="line" onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
           )}
-        </View>
+        </Animated.View>
       )}
       {state.draftSent && out.kind !== 'done' && (
         <View style={styles.row}>

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { ToastProvider } from '@/components/ui/Toast';
 import { Txt } from '@/components/ui/Txt';
 import { AuthProvider, useAuth } from '@/lib/session';
 
@@ -25,8 +26,10 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <Gate />
+      <ToastProvider>
+        <StatusBar style="dark" />
+        <Gate />
+      </ToastProvider>
     </AuthProvider>
   );
 }
@@ -69,6 +72,8 @@ function Gate() {
       </Stack.Protected>
       {/* "/"는 항상 열고, 들어온 뒤 상태에 맞는 화면으로 보낸다(app/index.tsx). */}
       <Stack.Screen name="index" />
+      {/* 움직임 기준 미리보기(예시 값만, 로그인 없이 열림) */}
+      <Stack.Screen name="motion" />
       <Stack.Protected guard={inApp}>
         <Stack.Screen name="lab" />
         <Stack.Screen name="requester" />
