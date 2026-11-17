@@ -8,7 +8,8 @@
     "start": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build:vercel": "node scripts/build-vercel.mjs"
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "eval:intake": "tsx scripts/eval-intake.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

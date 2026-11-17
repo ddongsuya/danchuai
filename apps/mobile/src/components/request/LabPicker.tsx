@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { fetchLabs, initialOf } from '@/lib/marketClient';
 
@@ -36,17 +36,17 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.nav}>
         <IconButton label="닫기" onPress={onClose}>
-          <X size={20} color={tokens.text} />
+          <X size={u(22)} color={tokens.text} />
         </IconButton>
         <Txt variant="nav" style={styles.title} accessibilityRole="header">
           받는 기관
         </Txt>
-        <View style={{ width: 44 }} />
+        <View style={{ width: u(44) }} />
       </View>
 
       <View style={styles.search}>
-        <View style={{ width: 18, height: 18 }}>
-          <MagnifyingGlass size={18} color={tokens.muted} />
+        <View style={{ width: u(18), height: u(18) }}>
+          <MagnifyingGlass size={u(18)} color={tokens.muted} />
         </View>
         <TextInput
           value={q}
@@ -65,14 +65,14 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
           {picked.map((p) => (
             <Press key={p.id} label={`${p.name} 빼기`} onPress={() => toggle(p)} style={styles.who}>
               <View style={styles.av}>
-                <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.bold, fontSize: 12 }}>
+                <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.bold, fontSize: u(12) }}>
                   {p.short ?? initialOf(p.name)}
                 </Txt>
               </View>
               <Txt variant="small" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
                 {p.name}
               </Txt>
-              <X size={14} weight="bold" color={tokens.muted} />
+              <X size={u(14)} weight="bold" color={tokens.muted} />
             </Press>
           ))}
         </View>
@@ -90,7 +90,7 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
       ) : state.kind === 'error' ? (
         <View style={styles.state} accessibilityRole="alert">
           <Txt variant="label">{REMOTE_ERROR[state.code]}</Txt>
-          <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />
+          <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={() => void reload()} />
         </View>
       ) : (
         <FlatList
@@ -123,10 +123,10 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
                     {initialOf(item.name)}
                   </Txt>
                 </View>
-                <Txt variant="label" style={{ flex: 1, fontSize: 15.5 }} numberOfLines={1}>
+                <Txt variant="label" style={{ flex: 1, fontSize: u(15.5) }} numberOfLines={1}>
                   {item.name}
                 </Txt>
-                <View style={[styles.ck, sel && styles.ckOn]}>{sel && <Check size={15} weight="bold" color={tokens.onInk} />}</View>
+                <View style={[styles.ck, sel && styles.ckOn]}>{sel && <Check size={u(15)} weight="bold" color={tokens.onInk} />}</View>
               </Press>
             );
           }}
@@ -142,21 +142,21 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: u(14), paddingTop: u(6), paddingBottom: u(10) },
   title: { flex: 1, textAlign: 'center' },
-  search: { marginHorizontal: space.xl, marginBottom: space.md, height: 46, borderRadius: 14, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: 16, color: tokens.text },
-  picked: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: space.xl, paddingBottom: space.md },
-  who: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 32, paddingLeft: 4, paddingRight: 8, borderRadius: radius.pill, backgroundColor: tokens.sunken, maxWidth: '100%' },
-  av: { width: 24, height: 24, borderRadius: 12, backgroundColor: tokens.surface, alignItems: 'center', justifyContent: 'center' },
-  sect: { paddingHorizontal: space.xl, paddingTop: 10, paddingBottom: 6, fontFamily: fonts.bold },
-  lab: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.xl, minHeight: 60 },
+  search: { marginHorizontal: space.xl, marginBottom: space.md, height: u(46), borderRadius: u(14), backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, flexDirection: 'row', alignItems: 'center', gap: u(10), paddingHorizontal: u(14) },
+  input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
+  picked: { flexDirection: 'row', flexWrap: 'wrap', gap: u(6), paddingHorizontal: space.xl, paddingBottom: space.md },
+  who: { flexDirection: 'row', alignItems: 'center', gap: u(7), height: u(32), paddingLeft: u(4), paddingRight: u(8), borderRadius: radius.pill, backgroundColor: tokens.sunken, maxWidth: '100%' },
+  av: { width: u(24), height: u(24), borderRadius: u(12), backgroundColor: tokens.surface, alignItems: 'center', justifyContent: 'center' },
+  sect: { paddingHorizontal: space.xl, paddingTop: u(10), paddingBottom: u(6), fontFamily: fonts.bold },
+  lab: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.xl, minHeight: u(60) },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  lav: { width: 40, height: 40, borderRadius: 12, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
-  ck: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: tokens.borderInput, alignItems: 'center', justifyContent: 'center' },
+  lav: { width: u(40), height: u(40), borderRadius: u(12), backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
+  ck: { width: u(26), height: u(26), borderRadius: u(13), borderWidth: 1.5, borderColor: tokens.borderInput, alignItems: 'center', justifyContent: 'center' },
   ckOn: { backgroundColor: tokens.ink, borderColor: tokens.ink },
-  bone: { height: 14, borderRadius: 7, backgroundColor: tokens.sunken },
-  state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  empty: { textAlign: 'center', paddingTop: 40 },
+  bone: { height: u(14), borderRadius: u(7), backgroundColor: tokens.sunken },
+  state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: u(14) },
+  empty: { textAlign: 'center', paddingTop: u(40) },
   foot: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, backgroundColor: tokens.bg },
 });

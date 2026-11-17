@@ -6,7 +6,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { space, tokens } from '@/constants/theme';
+import { space, tokens, u } from '@/constants/theme';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL ?? `${DANCHU_URL}/terms`;
@@ -15,15 +15,17 @@ const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL ?? `${DANCHU_URL}/privac
 export default function Welcome() {
   return (
     <AuthScreen
+      padTop={u(40)}
+      gap={0}
       top={
         <View style={styles.mark}>
-          <ChatTeardropDots size={22} weight="bold" color={tokens.onInk} />
+          <ChatTeardropDots size={u(22)} weight="bold" color={tokens.onInk} />
         </View>
       }
       footer={
         <>
           <Button title="단추 계정으로 로그인" tall onPress={() => router.push('/login')} />
-          <Button title="단추에서 가입" kind="ghost" onPress={() => Linking.openURL(`${DANCHU_URL}/signup`)} />
+          <Button title="단추에서 가입" kind="text" onPress={() => Linking.openURL(`${DANCHU_URL}/signup`)} />
           {(TERMS_URL || PRIVACY_URL) && (
             <View style={styles.legal}>
               {TERMS_URL && (
@@ -41,7 +43,7 @@ export default function Welcome() {
         </>
       }
     >
-      <View style={{ gap: space.sm, marginTop: -space.xl }}>
+      <View style={styles.intro}>
         <Txt variant="title" accessibilityRole="header">
           견적 에이전트
         </Txt>
@@ -54,7 +56,9 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  mark: { width: 44, height: 44, borderRadius: 14, backgroundColor: tokens.ink, alignItems: 'center', justifyContent: 'center', marginTop: 40 },
+  mark: { width: u(44), height: u(44), borderRadius: u(14), backgroundColor: tokens.ink, alignItems: 'center', justifyContent: 'center' },
+  // 시안 A01 오른쪽 안: 로고는 위, 제목은 로고와 버튼 사이 가운데
+  intro: { flex: 1, justifyContent: 'center', gap: space.sm },
   legal: { flexDirection: 'row', justifyContent: 'center', gap: space.md },
   link: { textDecorationLine: 'underline' },
 });

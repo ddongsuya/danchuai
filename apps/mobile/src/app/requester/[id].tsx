@@ -11,7 +11,7 @@ import { RFQ_NO } from '@/lib/marketClient';
 
 export default function RequesterRequest() {
   const { id, conv, seed } = useLocalSearchParams<{ id: string; conv?: string; seed?: string }>();
-  if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" />;
+  if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
   if (id === 'new') return <LiveChat key={conv ?? 'new'} role="requester" title={conv ? '요청' : '새 요청'} conversationId={conv && isUuid(conv) ? conv : undefined} seed={!conv && seed ? seed.slice(0, 1000) : undefined} />;
   if (RFQ_NO.test(id)) return <DanchuRequest no={id} />;
   if (isUuid(id)) return <RequestProgress requestId={id} />;

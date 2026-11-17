@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { dayLabel, fetchLabRequest, markViewed, type LabDetail } from '@/lib/marketClient';
 
@@ -38,16 +38,16 @@ export function LabRequest({ requestId }: { requestId: string }) {
       <ChatShell title="받은 요청" bottom={null}>
         {state.kind === 'loading' ? (
           <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
-            <View style={[styles.card, { height: 120 }]} />
+            <View style={[styles.card, { height: u(120) }]} />
             <View style={[styles.bone, { width: '60%' }]} />
           </View>
         ) : (
           <View style={styles.row} accessibilityRole="alert">
-            <WarningCircle size={16} weight="fill" color={tokens.danger} />
+            <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
             <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
               {REMOTE_ERROR[state.code]}
             </Txt>
-            {state.code !== 'not_found' && <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />}
+            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={() => void reload()} />}
           </View>
         )}
       </ChatShell>
@@ -104,7 +104,7 @@ function Result({ d }: { d: LabDetail }) {
       {d.status === 'selected' && d.requester ? (
         <View style={styles.banner}>
           <View style={styles.bh}>
-            <SealCheck size={20} weight="fill" color={tokens.accent} />
+            <SealCheck size={u(20)} weight="fill" color={tokens.accent} />
             <Txt variant="label" color={tokens.accent} style={{ fontFamily: fonts.bold }}>
               선정됐어요
             </Txt>
@@ -141,7 +141,7 @@ function Result({ d }: { d: LabDetail }) {
               <Txt variant="small" style={{ fontFamily: fonts.bold }}>
                 견적 총액
               </Txt>
-              <Txt variant="small" tabular style={{ fontFamily: fonts.bold, fontSize: 16 }}>
+              <Txt variant="small" tabular style={{ fontFamily: fonts.bold, fontSize: u(16) }}>
                 {formatWonShort(q.totalWithVatWon)}
               </Txt>
             </View>
@@ -160,7 +160,7 @@ function Result({ d }: { d: LabDetail }) {
             <Txt variant="small" color={tokens.muted} style={{ flex: 1, fontFamily: fonts.semibold }}>
               회신 본문
             </Txt>
-            {open ? <CaretUp size={16} color={tokens.muted} /> : <CaretDown size={16} color={tokens.muted} />}
+            {open ? <CaretUp size={u(16)} color={tokens.muted} /> : <CaretDown size={u(16)} color={tokens.muted} />}
           </Press>
           {open && (
             <Txt variant="small" style={styles.body}>
@@ -190,15 +190,15 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   hidden: { display: 'none' },
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
-  bone: { height: 16, borderRadius: 8, backgroundColor: tokens.sunken },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bone: { height: u(16), borderRadius: u(8), backgroundColor: tokens.sunken },
+  row: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
   banner: { padding: space.lg, borderRadius: radius.card, backgroundColor: tokens.accentSoft, gap: space.sm },
   muteBanner: { backgroundColor: tokens.sunken },
-  bh: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: 2 },
+  bh: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: u(2) },
   kv: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md },
-  top: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, minHeight: 52 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, minHeight: u(52) },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  sum: { marginHorizontal: space.md, marginBottom: space.md, padding: space.md, borderRadius: radius.inner, backgroundColor: tokens.sunken, gap: 6 },
+  sum: { marginHorizontal: space.md, marginBottom: space.md, padding: space.md, borderRadius: radius.inner, backgroundColor: tokens.sunken, gap: u(6) },
   ln: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   body: { paddingHorizontal: space.lg, paddingBottom: space.lg },
 });

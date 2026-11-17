@@ -48,6 +48,7 @@ const sessions: Record<string, Session> = {
 };
 
 const FULL: RequestSheet = {
+  ...EMPTY_SHEET,
   testType: "독성",
   substance: "저분자 화합물",
   species: "랫드",

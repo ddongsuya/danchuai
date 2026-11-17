@@ -63,7 +63,7 @@ export function guessCategories(testType: string | null): string[] {
 
 /** 대화에서 요청서 값을 채운다. 대화에 근거가 있는 것만 채우고, 없으면 비워서 카드에서 묻는다 */
 export function fillFromChat(sheet: RequestSheet, texts: string[]): SendChoices {
-  const t = [...texts, sheet.notes ?? '', sheet.glp ?? ''].join(' ');
+  const t = [...texts, sheet.purpose ?? '', sheet.notes ?? '', sheet.glp ?? ''].join(' ');
   const purpose: SendChoices['purpose'] = /허가|IND|임상\s*신청|제출용|GLP/i.test(t) ? '허가자료 제출용' : /자체\s*연구|탐색|내부\s*검토/.test(t) ? '자체 연구용' : null;
   const intent: SendChoices['intent'] = /발주|진행\s*예정|바로\s*진행|계약\s*예정/.test(t) ? '발주 예정' : /예산/.test(t) ? '예산 검토' : /비교|여러\s*곳|견적\s*받/.test(t) ? '비교 견적' : null;
   const confid: SendChoices['confid'] = /자체\s*CDA|우리\s*CDA|회사\s*CDA/i.test(t) ? '자체 CDA 사용' : /CDA|NDA|비밀유지|기밀/i.test(t) ? 'CDA 필요 (단추 표준 CDA)' : '일반';
@@ -102,6 +102,10 @@ export const FIELD_OPTIONS: Record<ChoiceField, readonly string[]> = {
 /** 대화 요청서의 시험 조건을 단추 "추가로 알려 주실 내용"에 한 줄씩 */
 function conditions(sheet: RequestSheet): string {
   const rows: [string, string | null][] = [
+    ['물질 종류', sheet.modality],
+    ['제출 목적', sheet.purpose],
+    ['임상 계획', sheet.clinicalPlan],
+    ['끝낸 시험', sheet.priorStudies],
     ['시험 종류', sheet.testType],
     ['동물 종', sheet.species],
     ['투여 경로', sheet.route],

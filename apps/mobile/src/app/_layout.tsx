@@ -3,13 +3,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/Button';
-import { Txt } from '@/components/ui/Txt';
+import { GateState } from '@/components/auth/GateState';
+import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider, useAuth } from '@/lib/session';
 
-import { fonts, space, tokens } from '@/constants/theme';
+import { fonts, tokens } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,8 +24,10 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <Gate />
+      <ToastProvider>
+        <StatusBar style="dark" />
+        <Gate />
+      </ToastProvider>
     </AuthProvider>
   );
 }
@@ -40,24 +41,8 @@ function Gate() {
   }, [status]);
 
   if (status === 'loading') return null;
-  if (status === 'error') {
-    return (
-      <View style={styles.error}>
-        <Txt variant="body">계정 정보를 불러오지 못했어요.</Txt>
-        <Button title="다시 시도" onPress={refresh} />
-        <Button title="로그아웃" kind="ghost" onPress={signOut} />
-      </View>
-    );
-  }
-  if (status === 'blocked') {
-    return (
-      <View style={styles.error}>
-        <Txt variant="body">{blocked === 'org_not_ready' ? '단추에서 기관 승인이 끝나면 쓸 수 있어요.' : '이 계정은 에이전트를 쓰지 않아요.'}</Txt>
-        <Button title="다시 확인" onPress={refresh} />
-        <Button title="로그아웃" kind="ghost" onPress={signOut} />
-      </View>
-    );
-  }
+  if (status === 'error') return <GateState kind="error" onRetry={refresh} onSignOut={signOut} />;
+  if (status === 'blocked') return <GateState kind={blocked === 'org_not_ready' ? 'org_not_ready' : 'unsupported'} onRetry={refresh} onSignOut={signOut} />;
   const inApp = status === 'ready' || status === 'disabled';
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tokens.bg } }}>
@@ -69,6 +54,10 @@ function Gate() {
       </Stack.Protected>
       {/* "/"는 항상 열고, 들어온 뒤 상태에 맞는 화면으로 보낸다(app/index.tsx). */}
       <Stack.Screen name="index" />
+      {/* 움직임 기준 미리보기(예시 값만, 로그인 없이 열림) */}
+      <Stack.Screen name="motion" />
+      {/* 화면 미리보기(예시 값만, 서버 없이, 로그인 없이 열림) */}
+      <Stack.Screen name="preview" />
       <Stack.Protected guard={inApp}>
         <Stack.Screen name="lab" />
         <Stack.Screen name="requester" />
@@ -78,7 +67,3 @@ function Gate() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  error: { flex: 1, backgroundColor: tokens.bg, justifyContent: 'center', padding: space.xxl, gap: space.md },
-});

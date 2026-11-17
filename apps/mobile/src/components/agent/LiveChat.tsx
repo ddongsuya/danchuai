@@ -5,20 +5,26 @@ import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-nativ
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { ApprovalCard, type Recipient } from '@/components/chat/ApprovalCard';
 import { ChatShell } from '@/components/chat/ChatShell';
+import { DraftCard, DraftLine } from '@/components/chat/DraftCard';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
 import { LabPicker } from '@/components/request/LabPicker';
 import { Button } from '@/components/ui/Button';
+import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
 import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
+import { shortDate } from '@/lib/format';
+import { haptic } from '@/lib/haptics';
+import { lineEnter } from '@/lib/motion';
 import { useAuth } from '@/lib/session';
 import type { ChatErrorCode } from '@/lib/chat';
 
@@ -76,6 +82,11 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   }, [seed, send, state.conversationId, state.status, state.messages.length]);
   // 이어 쓰는 대화는 요청서에서 제목을 만든다(서버 목록과 같은 규칙).
   const heading = conversationId && state.sheet ? sheetTitle(state.sheet) ?? title : title;
+  const reduced = useReducedMotion();
+  // 화면을 연 뒤 새로 붙은 말만 올라오며 나타난다(이어 쓰는 대화의 지난 말은 그대로)
+  const [opened, setOpened] = useState<number | null>(null);
+  if (opened === null && state.status === 'idle') setOpened(state.messages.length);
+  const isFresh = (i: number) => opened !== null && i >= opened;
   const [reviewing, setReviewing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>(given);
@@ -104,16 +115,19 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       const r = await approveDanchuAction('requester', danchuMade.current.d);
       danchuMade.current = null;
       if (r.status === 'failed') {
+        haptic.error();
         setOut({ kind: 'failed', message: typeof r.result?.error === 'string' ? r.result.error : '단추가 받지 않았어요' });
         setReviewing(false);
         return;
       }
       const rfqNo = typeof r.result?.rfqNo === 'string' ? r.result.rfqNo : undefined;
+      if (r.status === 'sent') haptic.success();
       setOut({ kind: 'done', sent: r.status === 'sent' ? 1 : 0, unknown: r.status === 'sent' ? 0 : 1, rfqNo });
       setSentRequestId(rfqNo ?? null);
       setReviewing(false);
       if (r.status === 'sent') onSent?.();
     } catch {
+      haptic.error();
       setOut({ kind: 'error' });
     }
   };
@@ -210,11 +224,11 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       )}
       {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
 
-      {state.messages.map((m) => (m.role === 'user' ? <UserMessage key={m.id} text={m.text} /> : <AgentText key={m.id}>{m.text}</AgentText>))}
+      {state.messages.map((m, i) => (m.role === 'user' ? <UserMessage key={m.id} text={m.text} fresh={isFresh(i)} /> : <AgentText key={m.id}>{m.text}</AgentText>))}
 
       {state.status === 'streaming' && (
         <View>
-          <StepLog steps={[{ label: state.step ?? '답 준비', state: 'now' }]} />
+          <StepLog steps={[{ label: state.step ?? '답 준비 중', state: 'now' }]} />
           {state.streaming ? <AgentText>{state.streaming}</AgentText> : null}
         </View>
       )}
@@ -252,80 +266,61 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
               <Txt variant="small" tabular style={{ flex: 1, fontFamily: fonts.bold }}>
                 {`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
               </Txt>
-              <Button title="고치기" kind="ghost" onPress={onEditQuote} />
+              <Button title="고치기" kind="text" onPress={onEditQuote} />
             </View>
           )}
           <View style={styles.next}>
             {!quoteLines.length && <Button title="견적 금액 넣기" flex={1} onPress={onEditQuote} />}
-            <Button title="회신 초안 만들기" kind={quoteLines.length ? 'ink' : 'line'} flex={1} onPress={() => void send('회신 초안을 써 주세요.')} />
+            <Button title="회신 초안 만들기" kind={quoteLines.length ? 'ink' : 'soft'} flex={1} onPress={() => void send('회신 초안을 써 주세요.')} />
           </View>
         </View>
       )}
 
       {canReview && !reviewing && (
-        <View style={styles.card}>
-          <Txt variant="label" style={{ fontFamily: fonts.bold, marginBottom: space.sm }}>
-            {role === 'cro' ? '회신 초안' : '요청 본문 초안'}
-          </Txt>
-          <Txt variant="small">{draft!.body}</Txt>
+        <DraftCard
+          title={role === 'cro' ? '회신 초안' : '요청 본문 초안'}
+          body={draft!.body}
+          dropped={draft!.dropped}
+          action={viaDanchu || role === 'requester' ? (!viaDanchu && !recipients.length ? '받는 기관 고르기' : '요청서 확인') : needsQuote ? '견적 금액 넣기' : '회신 확인'}
+          onAction={openReview}
+        >
           {role === 'requester' && !viaDanchu && (
-            <View style={styles.to}>
-              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
-                받는 기관
-              </Txt>
-              <Txt variant="small" style={{ flex: 1, fontFamily: fonts.semibold }} numberOfLines={2}>
-                {recipients.length ? recipients.map((r) => r.name).join(', ') : '선택 전'}
-              </Txt>
-              {recipients.length > 0 && <Button title="바꾸기" kind="ghost" onPress={() => setPicking(true)} />}
-            </View>
-          )}
-          {draft!.dropped > 0 && (
-            <Txt variant="caption" color={tokens.wait} style={{ marginTop: space.sm }}>
-              {`점검에서 뺀 문장 ${draft!.dropped}개`}
-            </Txt>
+            <DraftLine k="받는 기관" v={recipients.length ? recipients.map((r) => r.name).join(', ') : '선택 전'} right={recipients.length > 0 ? <Button title="바꾸기" kind="text" onPress={() => setPicking(true)} /> : undefined} />
           )}
           {role === 'cro' && quoteLines.length > 0 && (
-            <View style={styles.to}>
-              <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
-                견적 총액
-              </Txt>
-              <Txt variant="small" tabular style={{ flex: 1, fontFamily: fonts.bold }}>
-                {`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
-              </Txt>
-              <Button title="고치기" kind="ghost" onPress={onEditQuote} />
-            </View>
-          )}
-          <View style={styles.act}>
-            <Button
-              title={viaDanchu ? '확인하기' : role === 'requester' && !recipients.length ? '받는 기관 고르기' : needsQuote ? '견적 금액 넣기' : '확인하기'}
-              onPress={openReview}
+            <DraftLine
+              k="견적 총액"
+              bold
+              v={`${formatWonShort(computeTotals(quoteLines).totalWithVatWon)}${durationWeeks ? `, ${durationWeeks}주` : ''}`}
+              right={<Button title="고치기" kind="text" onPress={onEditQuote} />}
             />
-          </View>
-        </View>
+          )}
+        </DraftCard>
       )}
 
-      {out.kind === 'done' && (
-        <View style={styles.row} accessibilityLiveRegion="polite">
-          <CheckCircle size={16} weight="fill" color={out.unknown ? tokens.wait : tokens.accent} />
-          <Txt variant="caption" color={out.unknown ? tokens.wait : tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-            {viaDanchu
-              ? out.unknown
-                ? '접수 결과 확인 필요'
-                : `${out.rfqNo ?? ''} 접수했어요`.trim()
-              : out.unknown
-                ? `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요`
-                : role === 'cro'
-                  ? '회신을 보냈어요'
-                  : `${out.sent}곳에 보냈어요`}
-          </Txt>
-          {role === 'requester' && sentRequestId && (
-            <Button title="진행 보기" kind="line" onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
-          )}
-        </View>
-      )}
+      {out.kind === 'done' &&
+        (out.unknown ? (
+          <Animated.View entering={lineEnter(0, reduced)} style={styles.row} accessibilityLiveRegion="polite">
+            <CheckCircle size={u(16)} weight="fill" color={tokens.wait} />
+            <Txt variant="caption" color={tokens.wait} style={{ fontFamily: fonts.semibold, flex: 1 }}>
+              {viaDanchu ? '접수 결과 확인 필요' : `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요`}
+            </Txt>
+          </Animated.View>
+        ) : (
+          <ResultBlock
+            title={viaDanchu ? '단추에 요청했어요' : role === 'cro' ? '회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
+            meta={viaDanchu ? out.rfqNo : undefined}
+            rows={viaDanchu && choices?.replyBy ? [['회신 기한', shortDate(choices.replyBy)]] : undefined}
+            action={
+              role === 'requester' && sentRequestId ? (
+                <Button title="진행 보기" tall onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
+              ) : undefined
+            }
+          />
+        ))}
       {state.draftSent && out.kind !== 'done' && (
         <View style={styles.row}>
-          <CheckCircle size={16} weight="fill" color={tokens.accent} />
+          <CheckCircle size={u(16)} weight="fill" color={tokens.accent} />
           <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
             보낸 본문
           </Txt>
@@ -374,20 +369,20 @@ function SheetCard({ sheet, message }: { sheet: Record<string, string | null>; m
 export function ErrorLine({ label, onRetry }: { label: string; onRetry?: () => void }) {
   return (
     <View style={styles.row} accessibilityRole="alert">
-      <WarningCircle size={16} weight="fill" color={tokens.danger} />
+      <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
       <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
         {label}
       </Txt>
-      {onRetry && <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={onRetry} />}
+      {onRetry && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={u(14)} color={tokens.text} />} onPress={onRetry} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   next: { flexDirection: 'row', gap: space.sm },
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: 6 },
-  act: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: space.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: u(6) },
+  act: { marginTop: space.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
   msg: { marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border },
-  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: 44 },
+  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: u(44) },
 });

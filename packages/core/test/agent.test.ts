@@ -6,6 +6,7 @@ import {
   mergeSheet,
   missingFields,
   redactContacts,
+  retrievalQuery,
   sheetContext,
 } from "../src/agent";
 
@@ -28,6 +29,21 @@ describe("요청서", () => {
     const ctx = sheetContext(mergeSheet(EMPTY_SHEET, { testType: "독성" }));
     expect(ctx).toContain("testType: 독성");
     expect(ctx).toContain("빈 칸:");
+  });
+  it("상황 칸은 빈 칸 목록에 넣지 않고, 모르면 (모름)으로 적는다", () => {
+    expect(missingFields(EMPTY_SHEET)).not.toContain("purpose");
+    const ctx = sheetContext(mergeSheet(EMPTY_SHEET, { modality: "합성의약품", purpose: "IND" }));
+    expect(ctx).toContain("modality: 합성의약품");
+    expect(ctx).toContain("clinicalPlan: (모름)");
+    expect(ctx.indexOf("상황:")).toBeLessThan(ctx.indexOf("요청 내용:"));
+  });
+  it("원문 검색어에 상황 칸을 더한다", () => {
+    const s = mergeSheet(EMPTY_SHEET, { modality: "항체", purpose: "IND", clinicalPlan: "1상 3개월 반복" });
+    const q = retrievalQuery("3개월이요", s);
+    expect(q).toContain("3개월이요");
+    expect(q).toContain("항체");
+    expect(q).toContain("1상 3개월 반복");
+    expect(retrievalQuery("가".repeat(800), EMPTY_SHEET)).toHaveLength(600);
   });
 });
 

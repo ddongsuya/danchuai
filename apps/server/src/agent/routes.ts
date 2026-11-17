@@ -4,6 +4,7 @@ import {
   EMPTY_SHEET,
   missingFields,
   redactContacts,
+  retrievalQuery,
   sheetContext,
   type AgentMessage,
   type LlmProvider,
@@ -17,7 +18,8 @@ import type { Session } from "../auth";
 import { sha256 } from "../hash";
 import type { MarketRepo } from "../db/market";
 import type { OutboundRepo } from "../repo";
-import { interpret } from "./interpret";
+import type { AgentEvent } from "./interpret";
+import { runToolTurn } from "./repair";
 import { ASK_SYSTEM, SYSTEM } from "./prompts";
 import { TOOLS } from "./tools";
 import type { Conversation, ConversationRepo, RequestDirectory, StoredMessage } from "./store";
@@ -172,8 +174,9 @@ export function agentRoutes(deps: AgentDeps) {
     const userText = redactContacts(parsed.data.text);
     const history = windowed(conv.messages);
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
-    const evidence = retrieve(userText);
+    // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
+    const evidence = retrieve(ask ? userText : retrievalQuery(userText, conv.sheet));
     const messages: AgentMessage[] = [
       ...history,
       // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.
@@ -190,20 +193,24 @@ export function agentRoutes(deps: AgentDeps) {
       stream.onAbort(() => abort.abort());
       try {
         await send("step", { label: ask ? "원문 찾기" : conv.role === "cro" ? "요청 확인" : "요청서 확인" });
-        const result = await provider.complete({
-          system: ask ? ASK_SYSTEM : SYSTEM[conv.role],
-          messages,
-          // 질문 대화에는 도구가 없다(요청서·본문을 만들지 않는다).
-          tools: ask ? undefined : TOOLS[conv.role],
-          maxTokens: ask ? LIMITS.askMaxTokens : LIMITS.maxTokens,
-          signal: abort.signal,
-          onText: (delta) => {
-            writes = writes.then(() => send("text", { delta }));
-          },
-        });
+        const onText = (delta: string) => {
+          writes = writes.then(() => send("text", { delta }));
+        };
+        // 질문 대화에는 도구가 없다(요청서·본문을 만들지 않는다).
+        // 도구가 있는 대화는 태그가 섞인 글을 거르고, 질문 없이 끝난 의뢰자 턴은 한 번 더 부른다(repair.ts).
+        const result = ask
+          ? await provider
+              .complete({ system: ASK_SYSTEM, messages, maxTokens: LIMITS.askMaxTokens, signal: abort.signal, onText })
+              .then((r) => ({ ...r, conv, events: [] as AgentEvent[], notes: [] as string[] }))
+          : await runToolTurn({
+              provider,
+              conv,
+              request: { system: SYSTEM[conv.role], messages, tools: TOOLS[conv.role], maxTokens: LIMITS.maxTokens, signal: abort.signal },
+              onText,
+            });
         await writes;
 
-        const { conv: next, events, notes } = ask ? { conv, events: [], notes: [] } : interpret(conv, result.toolCalls);
+        const { conv: next, events, notes } = result;
         for (const e of events) await send(e.event, e.data);
         // 답이 인용한 원문만 출처로 보낸다(앱이 원문 링크로 보여 준다).
         const sources = citedSources(result.text, evidence.sources).map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version }));

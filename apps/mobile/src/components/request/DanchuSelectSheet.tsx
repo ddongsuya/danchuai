@@ -8,7 +8,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { approveDanchuAction, draftDanchuAction } from '@/lib/agentClient';
 import type { DanchuCompareColumn } from '@/lib/marketClient';
 
@@ -61,12 +61,12 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
             <Txt variant="title" style={styles.q} accessibilityRole="header">
               어느 기관을 선정할까요?
             </Txt>
-            <ScrollView style={{ maxHeight: 420 }}>
+            <ScrollView style={{ maxHeight: u(420) }}>
               {columns.map((c, i) => {
                 const ok = !!c.selectable && !!c.quoteId && !!c.revision;
                 return (
                   <Press key={c.quoteId ?? i} label={`${c.lab} ${won(c.total)}`} disabled={!ok} onPress={() => setStep({ kind: 'confirm', col: c })} style={styles.option}>
-                    <View style={{ flex: 1, gap: 2 }}>
+                    <View style={{ flex: 1, gap: u(2) }}>
                       <Txt variant="body" style={{ fontFamily: fonts.semibold }}>
                         {c.lab}
                       </Txt>
@@ -74,7 +74,7 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
                         {ok ? `${won(c.total)}, ${weeks(c.weeks)}` : '정식 견적서 전'}
                       </Txt>
                     </View>
-                    {ok && <CaretRight size={16} color={tokens.faint} />}
+                    {ok && <CaretRight size={u(16)} color={tokens.faint} />}
                   </Press>
                 );
               })}
@@ -103,7 +103,7 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
             </View>
             {step.kind === 'error' && (
               <View style={styles.err} accessibilityRole="alert">
-                <WarningCircle size={16} weight="fill" color={tokens.danger} />
+                <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
                 <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
                   {step.message}
                 </Txt>
@@ -114,10 +114,10 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
                 title="선정하기"
                 tall
                 loading={step.kind === 'sending'}
-                icon={<CheckCircle size={18} weight="bold" color={tokens.onInk} />}
+                icon={<CheckCircle size={u(18)} weight="bold" color={tokens.onInk} />}
                 onPress={() => void select(step.col)}
               />
-              <Button title="다른 기관 보기" kind="ghost" disabled={step.kind === 'sending'} onPress={() => setStep({ kind: 'pick' })} />
+              <Button title="다른 기관 보기" kind="text" disabled={step.kind === 'sending'} onPress={() => setStep({ kind: 'pick' })} />
             </View>
           </>
         )}
@@ -129,7 +129,7 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
 function Fact({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
   return (
     <View style={styles.fact}>
-      <Txt variant="small" color={tokens.muted} style={{ width: 72 }}>
+      <Txt variant="small" color={tokens.muted} style={{ width: u(72) }}>
         {k}
       </Txt>
       <Txt variant={strong ? 'heading' : 'small'} tabular style={{ flex: 1, fontFamily: strong ? fonts.bold : fonts.semibold }}>
@@ -141,11 +141,11 @@ function Fact({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
 
 const styles = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(30, 31, 34, 0.32)' },
-  sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: space.xxl, paddingHorizontal: space.xl, paddingBottom: 34 },
-  q: { fontSize: 22, lineHeight: 30, marginBottom: space.md },
-  option: { flexDirection: 'row', alignItems: 'center', minHeight: 64, paddingVertical: 10, borderTopWidth: 1, borderTopColor: tokens.border, gap: space.md },
+  sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: space.xxl, paddingHorizontal: space.xl, paddingBottom: u(34) },
+  q: { fontSize: u(22), lineHeight: u(30), marginBottom: space.md },
+  option: { flexDirection: 'row', alignItems: 'center', minHeight: u(64), paddingVertical: u(10), borderTopWidth: 1, borderTopColor: tokens.border, gap: space.md },
   facts: { borderTopWidth: 1, borderTopColor: tokens.border },
-  fact: { flexDirection: 'row', alignItems: 'center', minHeight: 48, borderBottomWidth: 1, borderBottomColor: tokens.border, gap: space.md },
-  notes: { marginTop: space.md, gap: 4 },
-  err: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: space.md },
+  fact: { flexDirection: 'row', alignItems: 'center', minHeight: u(48), borderBottomWidth: 1, borderBottomColor: tokens.border, gap: space.md },
+  notes: { marginTop: space.md, gap: u(4) },
+  err: { flexDirection: 'row', alignItems: 'center', gap: u(8), marginTop: space.md },
 });
