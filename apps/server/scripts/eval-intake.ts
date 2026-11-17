@@ -13,7 +13,7 @@ import {
   type SheetField,
 } from "@danchuai/core";
 import { contextBlock, retrieve } from "@danchuai/knowledge";
-import { interpret } from "../src/agent/interpret";
+import { runToolTurn } from "../src/agent/repair";
 import { SYSTEM } from "../src/agent/prompts";
 import type { Conversation } from "../src/agent/store";
 import { TOOLS } from "../src/agent/tools";
@@ -96,6 +96,9 @@ const SCENARIOS: Scenario[] = [
 const USAGE = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 };
 
 // "표 1 원문"처럼 숫자 뒤 "원문·원료"는 금액이 아니다.
+// 서버 보정이 일한 횟수: 질문이 없어 다시 부른 턴, 모델이 도구 태그를 글에 쓴 턴(걸러서 사용자에겐 안 보임).
+const REPAIR = { retried: 0, leaked: 0 };
+
 const BANNED = [/추천/, /\d[\d,]*\s*(만\s*원|억|원(?![문료본가칙]))/];
 
 interface TurnLog { user: string; text: string; question: { field: string; question: string; options: string[] } | null; sheet: Record<string, string | null> }
@@ -111,27 +114,33 @@ async function run(s: Scenario, provider: NonNullable<ReturnType<typeof provider
   for (const raw of s.turns) {
     const user = redactContacts(raw);
     const evidence = retrieve(retrievalQuery(user, conv.sheet));
-    const result = await provider.complete({
-      system: SYSTEM.requester,
-      messages: [...history, { role: "user", content: `${user}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}` }],
-      tools: TOOLS.requester,
-      maxTokens: 1200,
+    // 운영 서버와 같은 한 턴 처리(태그 거르기, 질문 없으면 한 번 더 부르기)를 쓴다.
+    const result = await runToolTurn({
+      provider,
+      conv,
+      request: {
+        system: SYSTEM.requester,
+        messages: [...history, { role: "user", content: `${user}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}` }],
+        tools: TOOLS.requester,
+        maxTokens: 1200,
+      },
     });
     USAGE.inputTokens += result.usage.inputTokens;
     USAGE.outputTokens += result.usage.outputTokens;
     USAGE.cacheReadTokens += result.usage.cacheReadTokens;
     USAGE.cacheWriteTokens += result.usage.cacheWriteTokens;
-    USAGE.calls += 1;
-    const out = interpret(conv, result.toolCalls);
-    conv = out.conv;
-    const asked = out.events.find((e) => e.event === "question");
+    USAGE.calls += result.retried ? 2 : 1;
+    if (result.retried) REPAIR.retried += 1;
+    if (result.leaked) REPAIR.leaked += 1;
+    conv = result.conv;
+    const asked = result.events.find((e) => e.event === "question");
     logs.push({
       user: raw,
-      text: result.text.trim(),
+      text: result.text,
       question: asked ? (asked.data as TurnLog["question"]) : null,
       sheet: { ...conv.sheet },
     });
-    history.push({ role: "user", content: user }, { role: "assistant", content: [result.text.trim(), ...out.notes].join("\n") });
+    history.push({ role: "user", content: user }, { role: "assistant", content: [result.text, ...result.notes].filter(Boolean).join("\n") });
   }
   return logs;
 }
@@ -194,6 +203,7 @@ async function main() {
   console.log(`\n합계: ${pass}/${total} 통과`);
   const cost = (USAGE.inputTokens * 2 + USAGE.outputTokens * 10 + USAGE.cacheReadTokens * 0.1 + USAGE.cacheWriteTokens * 2.5) / 1e6;
   console.log(`\n사용량: 호출 ${USAGE.calls}회, 입력 ${USAGE.inputTokens}, 출력 ${USAGE.outputTokens}, 캐시 읽기 ${USAGE.cacheReadTokens}, 캐시 쓰기 ${USAGE.cacheWriteTokens} 토큰 / 추정 비용 $${cost.toFixed(4)} (Sonnet 5.5 단가 기준)`);
+  console.log(`\n서버 보정: 질문 없어 다시 부른 턴 ${REPAIR.retried}, 도구 태그를 걸러 낸 턴 ${REPAIR.leaked}`);
 }
 
 main();
