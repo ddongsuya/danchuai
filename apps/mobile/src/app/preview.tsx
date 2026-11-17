@@ -104,9 +104,17 @@ const LAB_TODO: DanchuLabItem = {
     { label: '견적 제출', at: '', state: 'next' },
   ],
   money: [],
+  // 단추 lib/request-policy.ts JOIN_CONSENT·CRO_TERMS_VERSION(2026-11-17) 그대로
+  join: {
+    terms: 'pilot-2026-12-11',
+    consent:
+      '이 요청에 참여합니다. 요청서 내용은 이 견적에만 쓰고 외부에 알리지 않습니다. 견적을 제출하면 기관 이용약관의 요금표에 따라 청구 대상이 됩니다(2027년 12월 31일까지 참여한 요청은 무료). 제출 전에는 언제든 철회할 수 있고, 철회하면 청구하지 않습니다.',
+    termsUrl: '/terms/cro',
+  },
 };
 const LAB_SENT: DanchuLabItem = {
   ...LAB_TODO,
+  join: null,
   no: 'DC-2026-0139',
   title: '마우스 유전독성',
   categories: '유전독성',
@@ -163,6 +171,8 @@ const VIEWS: View_[] = [
   { key: 'select', label: '기관 선정 시트', group: '진행·비교' },
   { key: 'selected', label: '진행, 선정 뒤', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
+  { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
+  { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -305,6 +315,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
+    case 'lab-join':
+      return <DanchuLabView it={LAB_TODO} initialSheet="join" />;
+    case 'lab-decline':
+      return <DanchuLabView it={LAB_TODO} initialSheet="decline" />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
     case 'gate-error':

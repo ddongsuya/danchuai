@@ -1,10 +1,11 @@
-// 기관: 단추에서 받은 요청 한 건의 진행 (연동 2단계, 읽기만). 선정 전에는 의뢰자 회사 대신 단추가 준 표시만.
-// 참여·견적 제출은 연동 4단계에서 승인 카드로 연다. 지금은 단추에서 한다.
+// 기관: 단추에서 받은 요청 한 건의 진행. 선정 전에는 의뢰자 회사 대신 단추가 준 표시만.
+// 참여 결정 전에는 앱에서 참여하기·이번 요청 불참(연동 4단계, 시트에서 승인). 견적 작성·제출은 아직 단추에서 한다.
 import { ArrowClockwise, ArrowSquareOut, CheckCircle, CircleDashed, HourglassMedium, WarningCircle } from 'phosphor-react-native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
+import { DanchuDeclineSheet, DanchuJoinSheet } from '@/components/lab/DanchuJoinSheets';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
@@ -38,7 +39,7 @@ export function DanchuLab({ no }: { no: string }) {
     );
   }
 
-  return <DanchuLabView it={state.data} />;
+  return <DanchuLabView it={state.data} onChanged={() => void reload()} />;
 }
 
 const ACT: DanchuLabItem['group'][] = ['todo', 'decide', 'work'];
@@ -52,13 +53,18 @@ function labLine(it: DanchuLabItem) {
 }
 
 function task(it: DanchuLabItem) {
-  if (it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
+  if (it.join || it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
   return { title: it.next === '할 일 없음' ? it.stage : it.next, button: `단추에서 ${it.next}` };
 }
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
-export function DanchuLabView({ it }: { it: DanchuLabItem }) {
+export function DanchuLabView({ it, onChanged, initialSheet = null }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null }) {
   const open = () => Linking.openURL(`${DANCHU_URL}/cro`);
+  const [sheet, setSheet] = useState<'join' | 'decline' | null>(initialSheet);
+  const done = () => {
+    setSheet(null);
+    onChanged?.();
+  };
   // 할 일이 있는 단계에서만 주 버튼 하나. 나머지는 단추로 가는 글자 버튼.
   const act = ACT.includes(it.group);
   const left = daysLeft(it.due);
@@ -68,7 +74,12 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
       title={it.no}
       bottom={
         <View style={styles.bar}>
-          {act ? (
+          {it.join ? (
+            <>
+              <Button title="참여하기" tall onPress={() => setSheet('join')} />
+              <Button title="이번 요청 불참" kind="text" onPress={() => setSheet('decline')} />
+            </>
+          ) : act ? (
             <Button title={t.button} tall icon={<ArrowSquareOut size={u(16)} color={tokens.onInk} />} onPress={open} />
           ) : (
             <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />
@@ -120,6 +131,8 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
         ))}
       </View>
 
+      {it.join && <Button title="단추에서 요약 보기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />}
+
       {/* 할 일이 있을 때는 숫자와 단계만(진단 문서 A12 반영안). 제출 뒤에는 단계, 기한, 제출 금액 */}
       {!act && (
         <View style={styles.facts}>
@@ -129,6 +142,13 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
             <Row key={k} k={k} v={v.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3')} />
           ))}
         </View>
+      )}
+
+      {it.join && (
+        <>
+          <DanchuJoinSheet no={it.no} visible={sheet === 'join'} join={it.join} onClose={() => setSheet(null)} onDone={done} />
+          <DanchuDeclineSheet no={it.no} visible={sheet === 'decline'} onClose={() => setSheet(null)} onDone={done} />
+        </>
       )}
     </ChatShell>
   );

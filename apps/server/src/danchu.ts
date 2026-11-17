@@ -40,6 +40,8 @@ export interface DanchuCroItem {
   due: string | null;
   steps: { label: string; at: string; state: "done" | "now" | "next" }[];
   money: [string, string][];
+  /** 참여 결정 전에만: 단추 웹 참여 화면과 같은 동의 문장·이용 조건 판. 판은 join 동작에 그대로 넘긴다 */
+  join?: { terms: string; consent: string; termsUrl: string } | null;
 }
 
 export type DanchuCompare =
