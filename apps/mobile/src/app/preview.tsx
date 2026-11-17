@@ -123,6 +123,10 @@ const LAB_SENT: DanchuLabItem = {
 };
 
 const SHEET: RequestSheet = {
+  modality: null,
+  purpose: null,
+  clinicalPlan: null,
+  priorStudies: null,
   testType: '4주 반복투여 독성',
   substance: '후보물질 A',
   species: '랫드',

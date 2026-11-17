@@ -17,7 +17,7 @@ export const AskQuestion = z
   .object({
     field: z.enum(SHEET_FIELDS),
     question: z.string().min(1).max(80),
-    options: z.array(z.string().min(1).max(40)).min(2).max(5),
+    options: z.array(z.string().min(1).max(40)).min(2).max(6),
   })
   .strict();
 

@@ -4,6 +4,7 @@ import {
   EMPTY_SHEET,
   missingFields,
   redactContacts,
+  retrievalQuery,
   sheetContext,
   type AgentMessage,
   type LlmProvider,
@@ -172,8 +173,9 @@ export function agentRoutes(deps: AgentDeps) {
     const userText = redactContacts(parsed.data.text);
     const history = windowed(conv.messages);
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
-    const evidence = retrieve(userText);
+    // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
+    const evidence = retrieve(ask ? userText : retrievalQuery(userText, conv.sheet));
     const messages: AgentMessage[] = [
       ...history,
       // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.

@@ -6,6 +6,12 @@ import { computeTotals, formatWonShort, type QuoteLine } from "./money";
 
 /** 요청서 칸. 회사명·연락처 칸은 일부러 두지 않는다(선정 전 신원 보호). */
 export const SHEET_FIELDS = [
+  // 상황: 시험 구성을 정하는 근거. 비어 있어도 보낼 수 있지만, 에이전트가 먼저 파악한다.
+  "modality",
+  "purpose",
+  "clinicalPlan",
+  "priorStudies",
+  // 요청 내용
   "testType",
   "substance",
   "species",
@@ -19,6 +25,10 @@ export type SheetField = (typeof SHEET_FIELDS)[number];
 export type RequestSheet = Record<SheetField, string | null>;
 
 export const SHEET_LABELS: Record<SheetField, string> = {
+  modality: "물질 종류",
+  purpose: "제출 목적",
+  clinicalPlan: "임상 계획",
+  priorStudies: "끝낸 시험",
   testType: "시험 종류",
   substance: "시험물질",
   species: "동물 종",
@@ -29,7 +39,10 @@ export const SHEET_LABELS: Record<SheetField, string> = {
   notes: "기타",
 };
 
-/** 비어 있으면 질문해야 하는 칸(notes는 선택). */
+/** 상황 칸. 요청서 상태를 모델에 넘길 때 따로 묶는다. */
+export const SITUATION_FIELDS: readonly SheetField[] = ["modality", "purpose", "clinicalPlan", "priorStudies"];
+
+/** 비어 있으면 질문해야 하는 칸(상황 칸과 notes는 선택). */
 const REQUIRED: readonly SheetField[] = ["testType", "substance", "species", "route", "duration", "glp", "dueDate"];
 
 export const EMPTY_SHEET: RequestSheet = Object.freeze(
@@ -57,14 +70,24 @@ export function missingFields(sheet: RequestSheet): SheetField[] {
 
 /** 모델에 넘기는 요청서 상태. 매 턴 바뀌므로 캐시 접두부 뒤(마지막 사용자 메시지)에 붙인다. */
 export function sheetContext(sheet: RequestSheet): string {
-  const filled = SHEET_FIELDS.filter((f) => sheet[f]).map((f) => `${f}: ${sheet[f]}`);
+  const situation = SITUATION_FIELDS.map((f) => `${f}: ${sheet[f] || "(모름)"}`);
+  const filled = SHEET_FIELDS.filter((f) => !SITUATION_FIELDS.includes(f) && sheet[f]).map((f) => `${f}: ${sheet[f]}`);
   const missing = missingFields(sheet);
   return [
     "<요청서>",
+    "상황:",
+    ...situation,
+    "요청 내용:",
     ...(filled.length ? filled : ["(비어 있음)"]),
     `빈 칸: ${missing.length ? missing.join(", ") : "없음"}`,
     "</요청서>",
   ].join("\n");
+}
+
+/** 원문 검색어. 이번 말만으로는 "2주요"처럼 맥락이 빠지므로 상황 칸과 시험 종류를 덧붙인다. */
+export function retrievalQuery(text: string, sheet: RequestSheet): string {
+  const ctx = [...SITUATION_FIELDS, "testType" as const].map((f) => sheet[f]).filter((v): v is string => Boolean(v && v.trim()));
+  return [text, ...ctx].join(" ").slice(0, 600);
 }
 
 const EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/gu;
