@@ -97,7 +97,19 @@ export interface DanchuRequest {
 
 export type DanchuCompare =
   | { open: false; joined: number; submitted: number; replyBy: string | null }
-  | { open: true; columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[] };
+  | { open: true; columns: DanchuCompareColumn[] };
+
+/** 단추 비교표 한 칸. quoteId·revision 은 선정 승인에 그대로 넘긴다. selectable 은 단추 선정 조건(정식 견적서·유효기간) */
+export interface DanchuCompareColumn {
+  lab: string;
+  total: number | null;
+  weeks: number | null;
+  submittedAt: string | null;
+  quoteId?: string | null;
+  revision?: number | null;
+  selectable?: boolean;
+  selected?: boolean;
+}
 
 export interface DanchuLabItem {
   no: string;

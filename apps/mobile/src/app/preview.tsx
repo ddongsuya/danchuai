@@ -82,9 +82,9 @@ const WAITING: DanchuCompare = { open: false, joined: 4, submitted: 2, replyBy: 
 const OPEN: DanchuCompare = {
   open: true,
   columns: [
-    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4) },
-    { lab: '나 기관', total: 51_200_000, weeks: 12, submittedAt: day(5) },
-    { lab: '다 기관', total: 49_800_000, weeks: 16, submittedAt: day(7) },
+    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4), quoteId: 'q-demo-1', revision: 1, selectable: true },
+    { lab: '나 기관', total: 51_200_000, weeks: 12, submittedAt: day(5), quoteId: 'q-demo-2', revision: 2, selectable: true },
+    { lab: '다 기관', total: 49_800_000, weeks: 16, submittedAt: day(7), quoteId: 'q-demo-3', revision: 1, selectable: false },
   ],
 };
 
@@ -160,6 +160,8 @@ const VIEWS: View_[] = [
   { key: 'done', label: '요청 완료', group: '새 요청' },
   { key: 'request', label: '진행, 회신 받는 중', group: '진행·비교' },
   { key: 'compare', label: '진행, 비교표 열림', group: '진행·비교' },
+  { key: 'select', label: '기관 선정 시트', group: '진행·비교' },
+  { key: 'selected', label: '진행, 선정 뒤', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
@@ -297,6 +299,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: REQUEST, compare: WAITING }} />;
     case 'compare':
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} />;
+    case 'select':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} initialSelecting />;
+    case 'selected':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
     case 'lab-sent':

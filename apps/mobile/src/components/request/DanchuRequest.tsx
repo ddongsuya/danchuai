@@ -1,18 +1,20 @@
-// 의뢰자: 단추에 보낸 요청의 진행과 비교표 (연동 2단계, 읽기만).
+// 의뢰자: 단추에 보낸 요청의 진행과 비교표 (연동 2단계 읽기 + 5단계 기관 선정).
 // 비교표가 열리기 전에는 숫자만, 열린 뒤에는 회신 도착 순 그대로(순위·추천 없음). 금액은 단추가 저장한 값 그대로.
 import { formatWonShort } from '@danchuai/core';
 import { ArrowClockwise, ArrowSquareOut, WarningCircle } from 'phosphor-react-native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
+import { DanchuSelectSheet } from '@/components/request/DanchuSelectSheet';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 import { monthDay, shortDate } from '@/lib/format';
-import { fetchDanchuRequest, type DanchuCompare, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
+import { fetchDanchuRequest, type DanchuCompare, type DanchuCompareColumn, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
 
 const won = (n: number | null) => (n == null ? '미기재' : `${n.toLocaleString('ko-KR')}원`);
 const md = shortDate;
@@ -43,24 +45,37 @@ export function DanchuRequest({ no }: { no: string }) {
     );
   }
 
-  return <DanchuRequestView data={state.data} />;
+  return <DanchuRequestView data={state.data} onSelected={() => void reload()} />;
 }
 
 /** 지금 상태를 한 문장으로(오류가 아니므로 느낌표 없음) */
 const headline = (r: DanchuRequestData) => (r.selected ? '기관을 선정했어요' : r.compareOpen ? '비교표가 열렸어요' : '회신을 받고 있어요');
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
-export function DanchuRequestView({ data }: { data: { request: DanchuRequestData; compare: DanchuCompare } }) {
+export function DanchuRequestView({
+  data,
+  onSelected,
+  initialSelecting = false,
+}: {
+  data: { request: DanchuRequestData; compare: DanchuCompare };
+  /** 선정이 끝났다(화면이 다시 읽는다) */
+  onSelected?: () => void;
+  /** 미리보기에서 시트를 연 채로 보여 줄 때만 */
+  initialSelecting?: boolean;
+}) {
   const { request: r, compare } = data;
+  const [selecting, setSelecting] = useState(initialSelecting);
   const open = () => Linking.openURL(`${DANCHU_URL}/app/r/${encodeURIComponent(r.no)}`);
   // 상태에 맞는 주 동작 하나. 기다리기만 하면 되는 때에는 주 버튼을 두지 않는다.
   const choose = compare.open && !r.selected && compare.columns.length > 0;
+  // 앱에서 바로 선정할 수 있는 칸(정식 견적서, 선정 승인에 넘길 id·판)이 하나라도 있으면 시트로, 없으면 단추에서
+  const inApp = choose && compare.columns.some((c) => c.selectable && c.quoteId && c.revision);
   return (
     <ChatShell
       title={r.no}
       bottom={
         <View style={styles.bar}>
-          {choose && <Button title="기관 선정하기" tall onPress={open} />}
+          {choose && <Button title="기관 선정하기" tall onPress={inApp ? () => setSelecting(true) : open} />}
           <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" icon={choose ? undefined : <ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={open} />
         </View>
       }
@@ -104,12 +119,25 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
           {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} line />}
         </View>
       )}
+
+      {inApp && compare.open && (
+        <DanchuSelectSheet
+          no={r.no}
+          visible={selecting}
+          columns={compare.columns}
+          onClose={() => setSelecting(false)}
+          onDone={() => {
+            setSelecting(false);
+            onSelected?.();
+          }}
+        />
+      )}
     </ChatShell>
   );
 }
 
 /** 비교는 회신 도착 순 세로 목록(결정 E5 ①, 시안 A). 순위·추천·강조 없음. 금액은 단추가 저장한 값 그대로. */
-function CompareList({ columns, missing }: { columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[]; missing: number }) {
+function CompareList({ columns, missing }: { columns: DanchuCompareColumn[]; missing: number }) {
   if (!columns.length) {
     return (
       <Txt variant="body" color={tokens.muted}>
@@ -124,12 +152,15 @@ function CompareList({ columns, missing }: { columns: { lab: string; total: numb
           key={`${c.lab}-${i}`}
           style={[styles.lab, i > 0 && styles.line]}
           accessible
-          accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${monthDay(c.submittedAt)} 회신`}
+          accessibilityLabel={`${c.lab}${c.selected ? ', 선정' : ''}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${monthDay(c.submittedAt)} 회신`}
         >
           <View style={styles.labTop}>
-            <Txt variant="label" style={{ flex: 1, fontFamily: fonts.bold }} numberOfLines={1}>
-              {c.lab}
-            </Txt>
+            <View style={styles.labName}>
+              <Txt variant="label" style={{ flexShrink: 1, fontFamily: fonts.bold }} numberOfLines={1}>
+                {c.lab}
+              </Txt>
+              {c.selected && <Chip label="선정" kind="accent" />}
+            </View>
             <Txt variant="label" tabular style={{ fontFamily: fonts.bold }}>
               {c.total == null ? '미기재' : `${formatWonShort(c.total)} 원`}
             </Txt>
@@ -191,5 +222,6 @@ const styles = StyleSheet.create({
   facts: { paddingHorizontal: space.lg },
   lab: { paddingVertical: u(14), paddingHorizontal: space.lg, gap: u(4) },
   labTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  labName: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
 });
