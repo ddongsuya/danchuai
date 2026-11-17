@@ -46,15 +46,17 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
   const gap = nextMissing(sheet, c);
   const value = (f: ChoiceField) => (f === 'categories' ? c.categories.join(', ') : c[f]) || null;
 
-  const rows: { key: string; label: string; value: string | null; field?: ChoiceField }[] = [
+  type Row = { key: string; label: string; value: string | null; field?: ChoiceField };
+  const rows = ([
     { key: 'to', label: '받는 곳', value: '분야가 맞는 참여 기관 전체' },
     { key: 'substance', label: '시험물질', value: sheet.substance?.trim() || null },
+    { key: 'route', label: '투여 경로', value: sheet.route?.trim() || null },
     { key: 'categories', label: FIELD_LABEL.categories, value: value('categories'), field: 'categories' },
     { key: 'purpose', label: FIELD_LABEL.purpose, value: value('purpose'), field: 'purpose' },
     { key: 'intent', label: FIELD_LABEL.intent, value: value('intent'), field: 'intent' },
     { key: 'confid', label: FIELD_LABEL.confid, value: value('confid'), field: 'confid' },
     { key: 'reply', label: '회신 기한', value: c.replyBy || '7영업일 후' },
-  ];
+  ] as Row[]).filter((r) => r.key !== 'route' || r.value);
 
   const primary =
     gap === 'substance'

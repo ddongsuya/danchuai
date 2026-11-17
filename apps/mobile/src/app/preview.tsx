@@ -14,8 +14,7 @@ import { GateState, type GateKind } from '@/components/auth/GateState';
 import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
-import { DraftCard } from '@/components/chat/DraftCard';
-import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
+import { AgentText, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
@@ -134,7 +133,21 @@ const SHEET: RequestSheet = {
   notes: null,
 };
 const BODY = '시험물질 A(저분자)의 랫드 4주 경구 반복투여 독성시험(회복 2주 포함, GLP) 견적을 요청드려요. 시험물질은 1주 안에 보낼 수 있어요.';
-const CHOICES: SendChoices = { purpose: '허가자료 제출용', intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
+/** 새 요청 대화 앞부분(시안 A와 같은 흐름) */
+const CHAT_HEAD = (
+  <>
+    <AgentText>어떤 시험 견적이 필요해요?</AgentText>
+    <UserMessage text="랫드 4주 반복투여 독성, 회복군 2주 포함이요. 시험물질은 시험물질 A예요." />
+    <AgentText>요청서에 넣었어요. 투여 경로만 알려 주세요.</AgentText>
+  </>
+);
+const CHAT_FILLED = (
+  <>
+    <UserMessage text="경구" />
+    <AgentText>요청서를 다 채웠어요. 의뢰 목적만 정하면 단추에 보낼 수 있어요.</AgentText>
+  </>
+);
+const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
@@ -143,7 +156,6 @@ const VIEWS: View_[] = [
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
   { key: 'inbox-error', label: '요청함, 불러오기 실패', group: '요청함' },
   { key: 'chat', label: '새 요청 대화, 질문 카드', group: '새 요청' },
-  { key: 'draft', label: '요청 본문 초안', group: '새 요청' },
   { key: 'approve', label: '요청서 확인(승인 카드)', group: '새 요청' },
   { key: 'done', label: '요청 완료', group: '새 요청' },
   { key: 'request', label: '진행, 회신 받는 중', group: '진행·비교' },
@@ -234,24 +246,9 @@ function PreviewView({ view }: { view: string }) {
       );
     case 'chat':
       return (
-        <ChatShell title="새 요청" bottom={<Composer placeholder="답하거나 더 알려 주세요" onSend={noop} />}>
-          <UserMessage text="랫드 4주 반복투여 독성 견적 받고 싶어요. 시험물질 A, 경구, GLP로요." />
-          <AgentText>시험물질 A의 랫드 4주 경구 반복투여 독성시험(GLP)으로 정리했어요. 회복군을 둘지 알려 주세요.</AgentText>
-          <StepLog
-            steps={[
-              { label: '요청 내용 정리', state: 'done' },
-              { label: '빠진 항목 확인', state: 'done' },
-            ]}
-          />
-          <QuestionCard title="투여 기간" questions={[{ id: 'duration', label: '회복군을 둘까요?', options: ['4주, 회복 2주', '4주, 회복 없음', '4주, 회복 4주'] }]} onSubmit={noop} onSkip={noop} />
-        </ChatShell>
-      );
-    case 'draft':
-      return (
-        <ChatShell title="새 요청" bottom={<Composer placeholder="답하거나 더 알려 주세요" onSend={noop} />}>
-          <UserMessage text="회복 2주로 해 주세요." />
-          <AgentText>요청 본문을 만들었어요. 확인하고 단추에 요청하면 분야가 맞는 참여 기관 모두에게 가요.</AgentText>
-          <DraftCard title="요청 본문 초안" body={BODY} action="요청서 확인" onAction={() => router.push(toView('approve'))} />
+        <ChatShell title="새 요청" bottom={<Composer onSend={noop} />}>
+          {CHAT_HEAD}
+          <QuestionCard title="투여 경로" questions={[{ id: 'route', label: '어떤 경로로 투여해요?', options: ['경구', '정맥', '피하'] }]} onSubmit={() => router.push(toView('approve'))} onSkip={noop} />
         </ChatShell>
       );
     case 'approve':
@@ -261,15 +258,24 @@ function PreviewView({ view }: { view: string }) {
           dim
           bottom={<DanchuApprovalCard sheet={SHEET} body={BODY} choices={choices} onChange={setChoices} sending={false} onClose={() => router.back()} onApprove={() => router.push(toView('done'))} />}
         >
-          <UserMessage text="회복 2주로 해 주세요." />
-          <DraftCard title="요청 본문 초안" body={BODY} action="요청서 확인" onAction={noop} />
+          {CHAT_HEAD}
+          {CHAT_FILLED}
         </ChatShell>
       );
     case 'done':
       return (
-        <ChatShell title="새 요청" bottom={<Composer placeholder="답하거나 더 알려 주세요" onSend={noop} />}>
-          <UserMessage text="회복 2주로 해 주세요." />
-          <ResultBlock title="단추에 요청했어요" meta="RFQ-0003" action={<Button title="진행 보기" tall onPress={() => router.push(toView('request'))} />} />
+        <ChatShell title="새 요청" bottom={<Composer onSend={noop} />}>
+          {CHAT_HEAD}
+          {CHAT_FILLED}
+          <ResultBlock
+            title="단추에 요청했어요"
+            meta="RFQ-0003"
+            rows={[
+              ['받는 곳', '분야가 맞는 참여 기관 전체'],
+              ['회신 기한', '7영업일 후'],
+            ]}
+            action={<Button title="진행 보기" tall onPress={() => router.push(toView('request'))} />}
+          />
         </ChatShell>
       );
     case 'request':

@@ -20,10 +20,8 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
         style={styles.input}
         selectionColor={tokens.accent}
       />
-      <View style={styles.bar}>
-        {/* 파일 첨부·음성 입력은 기능이 생기면 단다(누를 수 없는 버튼을 두지 않는다) */}
-        <View style={{ flex: 1 }} />
-        <Press
+      {/* 파일 첨부·음성 입력은 기능이 생기면 단다(누를 수 없는 버튼을 두지 않는다) */}
+      <Press
           label="보내기"
           disabled={!ready}
           onPress={() => {
@@ -33,15 +31,14 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
           style={[styles.send, ready && { backgroundColor: tokens.ink }]}
         >
           <ArrowUp size={18} weight="bold" color={ready ? tokens.onInk : tokens.muted} />
-        </Press>
-      </View>
+      </Press>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { marginHorizontal: space.md, marginTop: 10, backgroundColor: tokens.surface, borderRadius: 26, borderWidth: 1, borderColor: tokens.border, paddingTop: 12, paddingRight: 10, paddingBottom: 10, paddingLeft: space.lg },
-  input: { fontFamily: fonts.regular, fontSize: 16, color: tokens.text, minHeight: 24, maxHeight: 120, paddingVertical: 2, marginBottom: 6 },
-  bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  // 한 줄짜리 알약. 글이 길어지면 다섯 줄까지 늘어나고 보내기 버튼은 아래쪽에 붙는다(시안 A).
+  box: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, marginHorizontal: space.md, marginTop: 10, backgroundColor: tokens.surface, borderRadius: 26, borderWidth: 1, borderColor: tokens.border, paddingVertical: 6, paddingRight: 6, paddingLeft: space.lg, minHeight: 52 },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: tokens.text, minHeight: 40, maxHeight: 120, paddingTop: 9, paddingBottom: 9 },
   send: { width: 40, height: 40, borderRadius: 20, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
 });

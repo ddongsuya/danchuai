@@ -1,7 +1,7 @@
 // 의뢰자: 단추에 보낸 요청의 진행과 비교표 (연동 2단계, 읽기만).
 // 비교표가 열리기 전에는 숫자만, 열린 뒤에는 회신 도착 순 그대로(순위·추천 없음). 금액은 단추가 저장한 값 그대로.
 import { formatWonShort } from '@danchuai/core';
-import { ArrowClockwise, WarningCircle } from 'phosphor-react-native';
+import { ArrowClockwise, ArrowSquareOut, WarningCircle } from 'phosphor-react-native';
 import { useCallback } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -11,7 +11,7 @@ import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { DANCHU_URL } from '@/lib/danchuLinks';
-import { localDay, shortDate } from '@/lib/format';
+import { shortDate } from '@/lib/format';
 import { fetchDanchuRequest, type DanchuCompare, type DanchuRequest as DanchuRequestData } from '@/lib/marketClient';
 
 const won = (n: number | null) => (n == null ? '미기재' : `${n.toLocaleString('ko-KR')}원`);
@@ -60,8 +60,8 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
       title={r.no}
       bottom={
         <View style={styles.bar}>
-          {choose && <Button title="단추에서 기관 선정하기" tall onPress={open} />}
-          <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" onPress={open} />
+          {choose && <Button title="기관 선정하기" tall icon={<ArrowSquareOut size={16} color={tokens.onInk} />} onPress={open} />}
+          <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" icon={choose ? undefined : <ArrowSquareOut size={16} color={tokens.text} />} onPress={open} />
         </View>
       }
     >
@@ -76,30 +76,36 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
 
       {!compare.open && (
         <View style={{ gap: 2 }}>
-          <Txt variant="stat" tabular accessibilityLabel={`${r.joined}곳 중 ${r.submitted}곳 제출`}>
-            {`${r.submitted}/${r.joined}곳`}
-          </Txt>
+          <View style={styles.stat} accessible accessibilityLabel={`${r.joined}곳 중 ${r.submitted}곳 제출`}>
+            <Txt variant="stat" tabular>
+              {String(r.submitted)}
+            </Txt>
+            <Txt variant="label" tabular style={{ fontFamily: fonts.semibold }}>
+              {` / ${r.joined}곳 제출`}
+            </Txt>
+          </View>
           <Txt variant="small" color={tokens.muted} tabular>
-            {`견적 제출, 비교표 공개 ${md(compare.replyBy)}`}
+            {`비교표 공개 ${md(compare.replyBy)}`}
           </Txt>
         </View>
       )}
 
-      {compare.open && <CompareList columns={compare.columns} />}
+      {compare.open && <CompareList columns={compare.columns} missing={Math.max(0, r.joined - compare.columns.length)} />}
 
-      <View style={styles.facts}>
-        <Fact k="보낸 기관" v={`${r.sent}곳`} />
-        <Fact k="참여" v={`${r.joined}곳`} />
-        {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} />}
-        <Fact k="회신 기한" v={md(r.replyBy)} />
-        <Fact k="보낸 날" v={md(localDay(r.createdAt))} />
-      </View>
+      {!compare.open && (
+        <View style={[styles.card, styles.facts]}>
+          <Fact k="보낸 기관" v={`${r.sent}곳`} />
+          <Fact k="참여" v={`${r.joined}곳`} line />
+          {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} line />}
+          <Fact k="회신 기한" v={md(r.replyBy)} line />
+        </View>
+      )}
     </ChatShell>
   );
 }
 
-/** 비교는 회신 도착 순 세로 목록(결정 E5 ①). 순위·추천·강조 없음. 금액은 단추가 저장한 값 그대로. */
-function CompareList({ columns }: { columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[] }) {
+/** 비교는 회신 도착 순 세로 목록(결정 E5 ①, 시안 A). 순위·추천·강조 없음. 금액은 단추가 저장한 값 그대로. */
+function CompareList({ columns, missing }: { columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[]; missing: number }) {
   if (!columns.length) {
     return (
       <Txt variant="body" color={tokens.muted}>
@@ -108,50 +114,53 @@ function CompareList({ columns }: { columns: { lab: string; total: number | null
     );
   }
   return (
-    <View>
-      <Txt variant="caption" color={tokens.muted} style={{ marginBottom: space.sm }} tabular>
-        {`회신 도착 순, ${columns.length}곳`}
-      </Txt>
-      <View style={styles.card}>
-        {columns.map((c, i) => (
-          <View
-            key={`${c.lab}-${i}`}
-            style={[styles.lab, i > 0 && styles.line]}
-            accessible
-            accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${md(c.submittedAt)} 회신`}
-          >
-            <View style={styles.labTop}>
-              <Txt variant="label" style={{ flex: 1, fontFamily: fonts.bold }} numberOfLines={1}>
-                {c.lab}
-              </Txt>
-              <Txt variant="label" tabular style={{ fontFamily: fonts.bold }}>
-                {c.total == null ? '미기재' : formatWonShort(c.total)}
-              </Txt>
-            </View>
-            <View style={styles.labTop}>
-              <Txt variant="caption" color={tokens.muted} tabular style={{ flex: 1 }}>
-                {`${md(c.submittedAt)} 회신, ${c.weeks ? `${c.weeks}주` : '기간 미기재'}`}
-              </Txt>
-              {c.total != null && (
-                <Txt variant="caption" color={tokens.muted} tabular>
-                  {won(c.total)}
-                </Txt>
-              )}
-            </View>
+    <View style={styles.card}>
+      {columns.map((c, i) => (
+        <View
+          key={`${c.lab}-${i}`}
+          style={[styles.lab, i > 0 && styles.line]}
+          accessible
+          accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${md(c.submittedAt)} 회신`}
+        >
+          <View style={styles.labTop}>
+            <Txt variant="label" style={{ flex: 1, fontFamily: fonts.bold }} numberOfLines={1}>
+              {c.lab}
+            </Txt>
+            <Txt variant="label" tabular style={{ fontFamily: fonts.bold }}>
+              {c.total == null ? '미기재' : `${formatWonShort(c.total)} 원`}
+            </Txt>
           </View>
-        ))}
-      </View>
+          <View style={styles.labTop}>
+            <Txt variant="caption" color={tokens.muted} tabular style={{ flex: 1 }}>
+              {`${md(c.submittedAt)} 회신`}
+            </Txt>
+            <Txt variant="caption" color={tokens.muted} tabular>
+              {c.weeks ? `${c.weeks}주` : '기간 미기재'}
+            </Txt>
+          </View>
+        </View>
+      ))}
+      {missing > 0 && (
+        <View style={[styles.lab, styles.line, styles.labTop]}>
+          <Txt variant="label" color={tokens.muted} style={{ flex: 1 }} tabular>
+            {`참여 기관 ${missing}곳`}
+          </Txt>
+          <Txt variant="label" color={tokens.muted}>
+            미제출
+          </Txt>
+        </View>
+      )}
     </View>
   );
 }
 
-function Fact({ k, v }: { k: string; v: string }) {
+function Fact({ k, v, line }: { k: string; v: string; line?: boolean }) {
   return (
-    <View style={styles.tr}>
+    <View style={[styles.tr, line && styles.line]}>
       <Txt variant="small" color={tokens.muted} style={styles.k}>
         {k}
       </Txt>
-      <Txt variant="small" tabular style={{ flexShrink: 1, textAlign: 'right' }}>
+      <Txt variant="small" tabular style={{ flex: 1 }}>
         {v}
       </Txt>
     </View>
@@ -162,10 +171,11 @@ const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
   bone: { height: 16, borderRadius: 8, backgroundColor: tokens.sunken },
   err: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: space.md },
+  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: space.md },
+  stat: { flexDirection: 'row', alignItems: 'baseline' },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  k: { flex: 1, minWidth: 84 },
-  facts: { paddingTop: space.md, borderTopWidth: 1, borderTopColor: tokens.border },
+  k: { width: 96 },
+  facts: { paddingHorizontal: space.lg },
   lab: { paddingVertical: 14, paddingHorizontal: space.lg, gap: 4 },
   labTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },

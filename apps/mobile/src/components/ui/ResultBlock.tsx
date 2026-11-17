@@ -11,7 +11,7 @@ import { easeOut, lineEnter } from '@/lib/motion';
 
 import { Txt } from './Txt';
 
-export function ResultBlock({ title, meta, action }: { title: string; meta?: string; action?: ReactNode }) {
+export function ResultBlock({ title, meta, rows = [], action }: { title: string; meta?: string; rows?: [string, string][]; action?: ReactNode }) {
   const reduced = useReducedMotion();
   const pop = reduced
     ? FadeIn.duration(motion.ms.reduced).reduceMotion(ReduceMotion.Never)
@@ -31,7 +31,21 @@ export function ResultBlock({ title, meta, action }: { title: string; meta?: str
           </Txt>
         ) : null}
       </Animated.View>
-      {action ? <Animated.View entering={lineEnter(2, reduced)}>{action}</Animated.View> : null}
+      {rows.length > 0 && (
+        <Animated.View entering={lineEnter(2, reduced)}>
+          {rows.map(([k, v]) => (
+            <View key={k} style={styles.row}>
+              <Txt variant="small" color={tokens.muted} style={styles.k}>
+                {k}
+              </Txt>
+              <Txt variant="small" tabular style={{ flex: 1 }}>
+                {v}
+              </Txt>
+            </View>
+          ))}
+        </Animated.View>
+      )}
+      {action ? <Animated.View entering={lineEnter(3, reduced)}>{action}</Animated.View> : null}
     </View>
   );
 }
@@ -39,4 +53,6 @@ export function ResultBlock({ title, meta, action }: { title: string; meta?: str
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.xl, gap: space.md },
   title: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 28 },
+  row: { flexDirection: 'row', gap: space.md, paddingVertical: 10, borderTopWidth: 1, borderTopColor: tokens.border },
+  k: { width: 72 },
 });

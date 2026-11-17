@@ -22,6 +22,7 @@ import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
 import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
+import { shortDate } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
 import { useAuth } from '@/lib/session';
@@ -172,6 +173,14 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
     setReviewing(true);
   };
 
+  // 단추 연동 모드: 요청서가 다 차면 본문 초안 카드를 거치지 않고 접수 확인 카드를 바로 연다(시안 A). 초안 판마다 한 번.
+  const [autoFor, setAutoFor] = useState<number | null>(null);
+  if (viaDanchu && canReview && draft && state.sheet && autoFor !== draft.version) {
+    setAutoFor(draft.version);
+    if (!choices) setChoices(fillFromChat(state.sheet, state.messages.filter((m) => m.role === 'user').map((m) => m.text)));
+    setReviewing(true);
+  }
+
   if (picking) {
     return (
       <LabPicker
@@ -309,6 +318,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           <ResultBlock
             title={viaDanchu ? '단추에 요청했어요' : role === 'cro' ? '회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
             meta={viaDanchu ? out.rfqNo : undefined}
+            rows={viaDanchu ? [['받는 곳', '분야가 맞는 참여 기관 전체'], ['회신 기한', choices?.replyBy ? shortDate(choices.replyBy) : '7영업일 후']] : undefined}
             action={
               role === 'requester' && sentRequestId ? (
                 <Button title="진행 보기" tall onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
