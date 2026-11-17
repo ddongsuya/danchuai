@@ -101,7 +101,7 @@ export function QuoteEditor({ initial, initialWeeks, onClose, onSave }: Props) {
             })}
             {rows.length < MAX_ROWS && (
               <View style={[styles.line, styles.add]}>
-                <Button title="항목 추가" kind="ghost" icon={<Plus size={16} weight="bold" color={tokens.muted} />} onPress={() => setRows((rs) => [...rs, row()])} />
+                <Button title="항목 추가" kind="text" icon={<Plus size={16} weight="bold" color={tokens.muted} />} onPress={() => setRows((rs) => [...rs, row()])} />
               </View>
             )}
           </View>

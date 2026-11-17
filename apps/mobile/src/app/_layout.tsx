@@ -48,7 +48,7 @@ function Gate() {
       <View style={styles.error}>
         <Txt variant="body">계정 정보를 불러오지 못했어요.</Txt>
         <Button title="다시 시도" onPress={refresh} />
-        <Button title="로그아웃" kind="ghost" onPress={signOut} />
+        <Button title="로그아웃" kind="text" onPress={signOut} />
       </View>
     );
   }
@@ -57,7 +57,7 @@ function Gate() {
       <View style={styles.error}>
         <Txt variant="body">{blocked === 'org_not_ready' ? '단추에서 기관 승인이 끝나면 쓸 수 있어요.' : '이 계정은 에이전트를 쓰지 않아요.'}</Txt>
         <Button title="다시 확인" onPress={refresh} />
-        <Button title="로그아웃" kind="ghost" onPress={signOut} />
+        <Button title="로그아웃" kind="text" onPress={signOut} />
       </View>
     );
   }

@@ -47,7 +47,7 @@ export function LabRequest({ requestId }: { requestId: string }) {
             <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
               {REMOTE_ERROR[state.code]}
             </Txt>
-            {state.code !== 'not_found' && <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />}
+            {state.code !== 'not_found' && <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />}
           </View>
         )}
       </ChatShell>

@@ -1,8 +1,7 @@
-import { ArrowUp, Microphone, Plus } from 'phosphor-react-native';
+import { ArrowUp } from 'phosphor-react-native';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { fonts, space, tokens } from '@/constants/theme';
 
@@ -22,13 +21,8 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
         selectionColor={tokens.accent}
       />
       <View style={styles.bar}>
-        <IconButton label="파일 첨부" plain>
-          <Plus size={20} color={tokens.text} />
-        </IconButton>
+        {/* 파일 첨부·음성 입력은 기능이 생기면 단다(누를 수 없는 버튼을 두지 않는다) */}
         <View style={{ flex: 1 }} />
-        <IconButton label="음성 입력" plain>
-          <Microphone size={20} color={tokens.text} />
-        </IconButton>
         <Press
           label="보내기"
           disabled={!ready}

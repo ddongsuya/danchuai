@@ -68,7 +68,7 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
         {guardPassed && <Meta icon={<ShieldCheck size={16} weight="bold" color={tokens.accent} />} label="본문 점검 통과" accent />}
       </View>
       <View style={styles.act}>
-        <Button title="고치기" kind="line" tall flex={1} onPress={onEdit} />
+        <Button title="고치기" kind="soft" tall flex={1} onPress={onEdit} />
         <Button
           title="승인하고 보내기"
           tall

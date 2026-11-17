@@ -39,7 +39,7 @@ export default function Consent() {
             </Txt>
           )}
           <Button title="동의하고 시작" tall loading={busy} onPress={agree} />
-          <Button title="로그아웃" kind="ghost" disabled={busy} onPress={signOut} />
+          <Button title="로그아웃" kind="text" disabled={busy} onPress={signOut} />
         </>
       }
     >

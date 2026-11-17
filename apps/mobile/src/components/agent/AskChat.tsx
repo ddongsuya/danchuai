@@ -2,17 +2,16 @@
 // 의뢰자는 답을 본 뒤 같은 질문으로 견적 요청 대화를 바로 열 수 있다. 보내기는 여기서 일어나지 않는다.
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowSquareOut, BookOpenText, CaretRight, ChatCircle, ClockCounterClockwise } from 'phosphor-react-native';
-import { useCallback, useState } from 'react';
+import { ArrowSquareOut, BookOpenText, CaretRight, ClockCounterClockwise } from 'phosphor-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { StepLog, UserMessage } from '@/components/chat/Messages';
 import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
-import { Sheet } from '@/components/ui/Sheet';
+import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
@@ -39,8 +38,18 @@ const SUGGESTIONS: Record<AgentRole, string[]> = {
   ],
 };
 
-export function AskChat({ role, conversationId }: { role: AgentRole; conversationId?: string }) {
+export function AskChat({ role, conversationId, seed }: { role: AgentRole; conversationId?: string; seed?: string }) {
   const { state, send, retry } = useAgentChat(role, undefined, conversationId, 'ask');
+  // 요청함 입력창에서 넘어온 첫 질문은 대화가 열린 뒤 한 번만 보낸다.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seed || seeded.current || !state.conversationId || state.status !== 'idle' || state.messages.length) return;
+    seeded.current = true;
+    void send(seed);
+  }, [seed, send, state.conversationId, state.status, state.messages.length]);
+  // 화면을 연 뒤 새로 붙은 말만 올라오며 나타난다(지난 대화는 그대로)
+  const opened = useRef<number | null>(null);
+  if (opened.current === null && state.status === 'idle') opened.current = state.messages.length;
   // 새 질문 화면에서만 지난 질문을 읽는다
   const { state: past } = useRemote(useCallback(() => listAsks(role), [role]), !conversationId);
   const [open, setOpen] = useState<SourceRef[] | null>(null);
@@ -50,7 +59,7 @@ export function AskChat({ role, conversationId }: { role: AgentRole; conversatio
 
   return (
     <ChatShell title="질문하기" bottom={<Composer placeholder="질문" disabled={busy || !state.conversationId} onSend={(t) => void send(t)} />}>
-      {!state.messages.length && state.status === 'idle' && !state.error && (
+      {!state.messages.length && state.status === 'idle' && !state.error && !seed && (
         <View>
           <Txt variant="heading" accessibilityRole="header" style={styles.ask}>
             무엇이 궁금해요?
@@ -94,9 +103,9 @@ export function AskChat({ role, conversationId }: { role: AgentRole; conversatio
       )}
       {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
 
-      {state.messages.map((m) =>
+      {state.messages.map((m, i) =>
         m.role === 'user' ? (
-          <UserMessage key={m.id} text={m.text} />
+          <UserMessage key={m.id} text={m.text} fresh={opened.current !== null && i >= opened.current} />
         ) : (
           <View key={m.id} style={{ gap: space.md }}>
             <Answer text={m.text} />
@@ -104,9 +113,8 @@ export function AskChat({ role, conversationId }: { role: AgentRole; conversatio
             {role === 'requester' && m === lastAgent && !busy && lastQuestion && (
               <View style={styles.next}>
                 <Button
-                  title="견적 요청"
-                  kind="line"
-                  icon={<ChatCircle size={16} color={tokens.text} />}
+                  title="이 시험 견적 요청하기"
+                  kind="soft"
                   onPress={() =>
                     router.push({ pathname: '/requester/[id]', params: { id: 'new', seed: `${lastQuestion}\n이 시험 견적을 요청하고 싶어요.` } })
                   }
@@ -119,7 +127,7 @@ export function AskChat({ role, conversationId }: { role: AgentRole; conversatio
 
       {state.status === 'streaming' && (
         <View>
-          <StepLog steps={[{ label: state.step ?? '원문 찾기', state: 'now' }]} />
+          <StepLog steps={[{ label: state.step ?? '원문 찾는 중', state: 'now' }]} />
           {state.streaming ? <Answer text={state.streaming} /> : null}
         </View>
       )}
@@ -155,8 +163,8 @@ function SourcesPill({ sources, onPress }: { sources: SourceRef[]; onPress: () =
   return (
     <Press label={`근거 ${sources.length}건, ${names}`} onPress={onPress} style={styles.pill}>
       <BookOpenText size={16} color={tokens.muted} />
-      <Txt variant="caption" style={{ fontFamily: fonts.semibold }}>
-        {`근거 ${sources.length}`}
+      <Txt variant="caption" tabular style={{ fontFamily: fonts.semibold }}>
+        {`근거 ${sources.length}건`}
       </Txt>
       <Txt variant="caption" color={tokens.muted} numberOfLines={1} style={{ flexShrink: 1 }}>
         {names}
@@ -172,36 +180,28 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
   const shown = sources ?? last;
   return (
     <Sheet visible={!!sources} onClose={onClose}>
-        <SafeAreaView edges={['bottom']} style={styles.sheetWrap}>
-          <View style={styles.sheet} accessibilityViewIsModal>
-            <View style={styles.grab} />
-            <Txt variant="heading" accessibilityRole="header">
-              근거 원문
-            </Txt>
-            <ScrollView style={{ maxHeight: 420, marginTop: space.md }}>
-              {(shown ?? []).map((s, i) => (
-                <Press
-                  key={`${s.doc}-${s.section}`}
-                  label={`${s.doc} ${s.section}${s.url ? ', 원문 열기' : ''}`}
-                  disabled={!s.url}
-                  onPress={s.url ? () => void WebBrowser.openBrowserAsync(s.url!) : undefined}
-                  style={[styles.src, i > 0 && styles.line]}
-                >
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Txt variant="label">{s.section ? `${s.doc}  ${s.section}` : s.doc}</Txt>
-                    <Txt variant="caption" color={tokens.muted} numberOfLines={2}>
-                      {[s.name, s.version].filter(Boolean).join(', ')}
-                    </Txt>
-                  </View>
-                  {s.url && <ArrowSquareOut size={18} color={tokens.muted} />}
-                </Press>
-              ))}
-            </ScrollView>
-            <View style={{ marginTop: space.lg }}>
-              <Button title="닫기" kind="line" tall onPress={onClose} />
-            </View>
-          </View>
-        </SafeAreaView>
+      {/* 할 일이 읽기뿐이라 주 버튼 없이 글자 닫기만 */}
+      <SheetBody title={`근거 ${(shown ?? []).length}건`} onClose={onClose}>
+        <ScrollView style={{ maxHeight: 420 }}>
+          {(shown ?? []).map((s, i) => (
+            <Press
+              key={`${s.doc}-${s.section}`}
+              label={`${s.doc} ${s.section}${s.url ? ', 원문 열기' : ''}`}
+              disabled={!s.url}
+              onPress={s.url ? () => void WebBrowser.openBrowserAsync(s.url!) : undefined}
+              style={[styles.src, i > 0 && styles.line]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Txt variant="label">{s.doc}</Txt>
+                <Txt variant="caption" color={tokens.muted} numberOfLines={2}>
+                  {[s.section, s.name, s.version].filter(Boolean).join(', ')}
+                </Txt>
+              </View>
+              {s.url && <ArrowSquareOut size={18} color={tokens.muted} />}
+            </Press>
+          ))}
+        </ScrollView>
+      </SheetBody>
     </Sheet>
   );
 }
@@ -227,8 +227,5 @@ const styles = StyleSheet.create({
     borderColor: tokens.border,
   },
   next: { flexDirection: 'row' },
-  sheetWrap: { paddingHorizontal: space.sm, paddingBottom: space.sm },
-  sheet: { backgroundColor: tokens.surface, borderRadius: 32, paddingTop: 10, paddingHorizontal: space.xl, paddingBottom: 22 },
-  grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: tokens.border, alignSelf: 'center', marginBottom: 18 },
   src: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.md },
 });

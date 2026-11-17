@@ -13,10 +13,11 @@ import { Button } from '@/components/ui/Button';
 import { CheckMark } from '@/components/ui/Checkbox';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
-import { Sheet } from '@/components/ui/Sheet';
+import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { DANCHU_URL } from '@/lib/danchuLinks';
+import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
 import { AGREEMENTS, FIELD_LABEL, FIELD_OPTIONS, nextMissing, type ChoiceField, type SendChoices } from '@/lib/danchuRequest';
 
@@ -125,7 +126,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
       </Txt>
 
       <View style={{ marginTop: space.md }}>
-        <Button title={primary.title} tall loading={sending} onPress={primary.onPress} />
+        <Button title={primary.title} tall loading={sending} loadingTitle="요청할게요" onPress={primary.onPress} />
       </View>
 
       <Picker
@@ -152,10 +153,11 @@ function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null
   return (
     <Sheet visible={field !== null} onClose={onClose} onShow={() => setMany(choices.categories)}>
       {f && (
-        <View style={styles.sheet}>
-          <Txt variant="title" style={{ fontSize: 22, lineHeight: 30, marginBottom: space.md }} accessibilityRole="header">
-            {QUESTION[f]}
-          </Txt>
+        <SheetBody
+          title={QUESTION[f]}
+          onClose={onClose}
+          primary={multi ? <Button title={many.length ? `${many.length}개 정하기` : '고르기 전'} tall disabled={!many.length} onPress={() => onPick({ ...choices, categories: many })} /> : undefined}
+        >
           <ScrollView style={{ maxHeight: 420 }}>
             {FIELD_OPTIONS[f].map((o) => {
               const on = multi ? many.includes(o) : choices[f] === o;
@@ -163,9 +165,14 @@ function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null
                 <Press
                   key={o}
                   label={o}
-                  accessibilityState={{ selected: on }}
+                  accessibilityRole={multi ? 'checkbox' : 'radio'}
+                  accessibilityState={multi ? { checked: on } : { selected: on }}
                   style={styles.option}
-                  onPress={() => (multi ? setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o])) : onPick({ ...choices, [f]: o }))}
+                  onPress={() => {
+                    haptic.tap();
+                    if (multi) setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o]));
+                    else onPick({ ...choices, [f]: o });
+                  }}
                 >
                   <Txt variant="body" style={{ flex: 1, fontFamily: on ? fonts.semibold : fonts.regular }}>
                     {o}
@@ -175,12 +182,7 @@ function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null
               );
             })}
           </ScrollView>
-          {multi && (
-            <View style={{ marginTop: space.md }}>
-              <Button title={many.length ? `${many.length}개 선택` : '선택 전'} tall disabled={!many.length} onPress={() => onPick({ ...choices, categories: many })} />
-            </View>
-          )}
-        </View>
+        </SheetBody>
       )}
     </Sheet>
   );
@@ -208,6 +210,5 @@ const styles = StyleSheet.create({
   value: { flex: 1, fontFamily: fonts.semibold },
   agree: { marginTop: space.md },
   link: { textDecorationLine: 'underline' },
-  sheet: { backgroundColor: tokens.surface, borderTopLeftRadius: radius.approval, borderTopRightRadius: radius.approval, paddingTop: space.xxl, paddingHorizontal: space.xl, paddingBottom: 34 },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: 56, borderTopWidth: 1, borderTopColor: tokens.border },
 });

@@ -31,6 +31,8 @@ export default function RequesterInbox() {
   if (org?.kind === 'cro') return <Redirect href="/lab" />;
   return (
     <InboxScreen
+      role="requester"
+      placeholder="어떤 시험을 맡길까요?"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
       errorLabel={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
@@ -39,9 +41,6 @@ export default function RequesterInbox() {
       hrefOf={hrefOf}
       switchTo="/lab"
       switchLabel="기관 화면으로 바꾸기"
-      askHref={{ pathname: '/ask', params: { role: 'requester' } }}
-      newLabel="새 요청"
-      newHref={{ pathname: '/requester/[id]', params: { id: 'new' } }}
     />
   );
 }

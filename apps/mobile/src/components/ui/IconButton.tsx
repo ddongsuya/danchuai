@@ -5,7 +5,7 @@ import { tokens } from '@/constants/theme';
 
 import { Press } from './Press';
 
-export function IconButton({ label, onPress, children, plain }: { label: string; onPress?: () => void; children: ReactNode; plain?: boolean }) {
+export function IconButton({ label, onPress, children, plain }: { label: string; onPress: () => void; children: ReactNode; plain?: boolean }) {
   return (
     <Press label={label} onPress={onPress} style={[styles.btn, plain && styles.plain]}>
       {children}

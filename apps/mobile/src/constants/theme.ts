@@ -44,6 +44,8 @@ export const type = {
   label: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   small: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20 },
   caption: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  /** 화면에 하나만 두는 상태 숫자(제출 2/4곳, 3일 남음) */
+  stat: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
 } as const;
 
 /**
@@ -77,6 +79,8 @@ export const motion = {
     line: 320,
     stagger: 70,
     reduced: 200,
+    /** 진행 중 점 셋이 한 번 밝아지는 주기 */
+    dots: 900,
   },
   /** 줄 단위 등장 때 올라오는 거리 */
   lineRise: 8,

@@ -1,22 +1,33 @@
-import { CaretRight, CheckCircle, CircleNotch, ListChecks } from 'phosphor-react-native';
+import { CheckCircle } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
-import { Press } from '@/components/ui/Press';
+import { Spinner } from '@/components/ui/Spinner';
 import { Txt } from '@/components/ui/Txt';
+import { lineEnter } from '@/lib/motion';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 
-/** 내 메시지만 말풍선. 에이전트 글은 말풍선 없이 본문으로 쓴다. */
-export function UserMessage({ text }: { text: string }) {
+/** 내 메시지만 말풍선. 에이전트 글은 말풍선 없이 본문으로 쓴다. fresh 면 아래에서 8px 올라오며 나타난다. */
+export function UserMessage({ text, fresh }: { text: string; fresh?: boolean }) {
+  const reduced = useReducedMotion();
   return (
-    <View style={styles.me}>
+    <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined} style={styles.me}>
       <Txt variant="body">{text}</Txt>
-    </View>
+    </Animated.View>
   );
 }
 
-export function AgentText({ children }: { children: string }) {
-  return <Txt variant="agent">{children}</Txt>;
+export function AgentText({ children, fresh }: { children: string; fresh?: boolean }) {
+  const reduced = useReducedMotion();
+  return (
+    <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined}>
+      <Txt variant="agent">{children}</Txt>
+    </Animated.View>
+  );
 }
+
+/** 진행 문구는 끝나지 않았다는 뜻으로 "…"을 붙인다(서버가 준 단계 이름에도) */
+const ongoing = (label: string) => (/[.…]$/.test(label) ? label : `${label}…`);
 
 export interface Step {
   label: string;
@@ -37,9 +48,9 @@ export function StepLog({ steps }: { steps: Step[] }) {
           </View>
         ) : (
           <View key={s.label} style={styles.step} accessibilityLiveRegion="polite">
-            <CircleNotch size={16} color={tokens.accent} weight="bold" />
+            <Spinner size={16} color={tokens.accent} />
             <Txt variant="small" style={{ fontFamily: fonts.semibold }}>
-              {s.label}
+              {ongoing(s.label)}
             </Txt>
           </View>
         ),
@@ -48,38 +59,8 @@ export function StepLog({ steps }: { steps: Step[] }) {
   );
 }
 
-/** 끝난 작업은 한 줄로 접는다. */
-export function FoldedLog({ count, onPress }: { count: number; onPress?: () => void }) {
-  return (
-    <Press label={`작업 기록 ${count}건 펼치기`} onPress={onPress} style={styles.fold}>
-      <ListChecks size={16} color={tokens.muted} />
-      <Txt variant="small" color={tokens.muted}>
-        작업 기록 {count}건
-      </Txt>
-      <CaretRight size={14} color={tokens.muted} />
-    </Press>
-  );
-}
-
-export function WaitingLine({ label }: { label: string }) {
-  return (
-    <View style={styles.waiting} accessibilityLiveRegion="polite">
-      <View style={styles.ring}>
-        <View style={styles.pulse} />
-      </View>
-      <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold }}>
-        {label}
-      </Txt>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   me: { alignSelf: 'flex-end', maxWidth: '82%', backgroundColor: tokens.sunken, borderRadius: radius.bubble, paddingVertical: 11, paddingHorizontal: space.lg },
   steps: { gap: 9, marginBottom: space.md },
   step: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  fold: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 10, minHeight: 24 },
-  waiting: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 10 },
-  ring: { width: 16, height: 16, borderRadius: 8, backgroundColor: tokens.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  pulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: tokens.accent },
 });

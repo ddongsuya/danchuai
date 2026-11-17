@@ -66,7 +66,7 @@ export default function Account() {
 
         {signedIn && (
           <View style={styles.out}>
-            <Button title="로그아웃" kind="line" tall loading={leaving} onPress={() => void logout()} />
+            <Button title="로그아웃" kind="soft" tall loading={leaving} onPress={() => void logout()} />
           </View>
         )}
         <Txt variant="caption" color={tokens.faint} tabular style={styles.ver}>

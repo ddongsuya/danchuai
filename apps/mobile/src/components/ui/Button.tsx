@@ -1,36 +1,63 @@
+// 버튼 세 종류: ink(주 버튼, 화면에 하나), soft(회색 채움, 중립 동작), text(글자, 빠지는 동작).
+// 테두리 버튼은 쓰지 않는다(토스 결과 화면 방식, Mobbin aaa9c213·678d2a8c).
+// 비활성은 흐리게 하지 않고 연한 회색 바탕 + 옅은 글자(대비 4.2:1 이상).
+// 처리 중에는 글자 대신 점 셋. 폭은 그대로 두고, loadingTitle 이 있으면 "요청할게요"처럼 그 말과 함께 보인다.
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { fonts, radius, space, tokens } from '@/constants/theme';
 
+import { Dots } from './Dots';
 import { Press } from './Press';
-import { Spinner } from './Spinner';
 import { Txt } from './Txt';
 
-type Kind = 'ink' | 'line' | 'ghost';
+export type ButtonKind = 'ink' | 'soft' | 'text';
 
 interface Props {
   title: string;
   onPress?: () => void;
-  kind?: Kind;
+  kind?: ButtonKind;
   icon?: ReactNode;
   tall?: boolean;
   flex?: number;
   disabled?: boolean;
-  /** 처리 중: 누를 수 없고 글자 앞에 작은 표시 */
   loading?: boolean;
+  /** 처리 중에 보일 말(할까요 → 할게요) */
+  loadingTitle?: string;
+  /** 키보드 바로 위에 붙는 폭 전체 막대 */
+  bar?: boolean;
 }
 
-export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading }: Props) {
-  const color = kind === 'ink' ? tokens.onInk : kind === 'ghost' ? tokens.muted : tokens.text;
+const fg: Record<ButtonKind, string> = { ink: tokens.onInk, soft: tokens.text, text: tokens.muted };
+
+export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading, loadingTitle, bar }: Props) {
+  const off = disabled && !loading;
+  const color = off ? tokens.faint : fg[kind];
   return (
-    <Press label={title} onPress={onPress} disabled={disabled || loading} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={[styles.base, styles[kind], tall && styles.tall, flex != null && { flex }]}>
-      <View style={styles.row}>
-        {loading ? <Spinner color={color} /> : icon}
+    <Press
+      label={loading && loadingTitle ? loadingTitle : title}
+      onPress={onPress}
+      disabled={disabled || loading}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
+      style={[styles.base, styles[kind], tall && styles.tall, bar && styles.bar, off && kind !== 'text' && styles.off, flex != null && { flex }]}
+    >
+      {/* 글자는 자리만 지켜 폭이 바뀌지 않게 한다 */}
+      <View style={[styles.row, loading && styles.hide]}>
+        {icon}
         <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
           {title}
         </Txt>
       </View>
+      {loading && (
+        <View style={styles.over}>
+          {loadingTitle ? (
+            <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+              {loadingTitle}
+            </Txt>
+          ) : null}
+          <Dots color={color} />
+        </View>
+      )}
     </Press>
   );
 }
@@ -38,8 +65,12 @@ export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disable
 const styles = StyleSheet.create({
   base: { height: 44, paddingHorizontal: 18, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   tall: { height: 52 },
+  bar: { height: 56, borderRadius: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  hide: { opacity: 0 },
+  over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   ink: { backgroundColor: tokens.ink },
-  line: { borderWidth: 1, borderColor: tokens.borderInput },
-  ghost: {},
+  soft: { backgroundColor: tokens.sunken },
+  text: { paddingHorizontal: space.md },
+  off: { backgroundColor: tokens.sunken },
 });

@@ -90,7 +90,7 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
       ) : state.kind === 'error' ? (
         <View style={styles.state} accessibilityRole="alert">
           <Txt variant="label">{REMOTE_ERROR[state.code]}</Txt>
-          <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />
+          <Button title="다시 시도" kind="soft" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={() => void reload()} />
         </View>
       ) : (
         <FlatList

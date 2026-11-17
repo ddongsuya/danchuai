@@ -38,7 +38,7 @@ export default function Login() {
       footer={
         <>
           <Button title="로그인" tall disabled={!ready} loading={busy} onPress={submit} />
-          <Button title="비밀번호 찾기" kind="ghost" disabled={busy} onPress={() => Linking.openURL(`${DANCHU_URL}/forgot`)} />
+          <Button title="비밀번호 찾기" kind="text" disabled={busy} onPress={() => Linking.openURL(`${DANCHU_URL}/forgot`)} />
         </>
       }
     >

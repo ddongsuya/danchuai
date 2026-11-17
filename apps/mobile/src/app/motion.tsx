@@ -38,16 +38,16 @@ export default function MotionPreview() {
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <Row name="스낵바">
-          <Button title="요청 삭제" kind="line" onPress={() => snack('요청을 지웠어요', { label: '되돌리기', onPress: () => toast('되돌렸어요') })} />
+          <Button title="요청 삭제" kind="soft" onPress={() => snack('요청을 지웠어요', { label: '되돌리기', onPress: () => toast('되돌렸어요') })} />
         </Row>
         <Row name="토스트">
-          <Button title="번호 복사" kind="line" onPress={() => toast('복사했어요')} />
+          <Button title="번호 복사" kind="soft" onPress={() => toast('복사했어요')} />
         </Row>
         <Row name="팝업">
-          <Button title="로그아웃" kind="line" onPress={() => setDialog(true)} />
+          <Button title="로그아웃" kind="soft" onPress={() => setDialog(true)} />
         </Row>
         <Row name="바텀시트">
-          <Button title="시험 항목" kind="line" onPress={() => setSheet(true)} />
+          <Button title="시험 항목" kind="soft" onPress={() => setSheet(true)} />
         </Row>
         <Row name="좋아요">
           <LikeButton liked={liked} onChange={setLiked} label="답 저장" />
@@ -70,7 +70,7 @@ export default function MotionPreview() {
             <Txt variant="label" color={tokens.muted} style={{ flex: 1 }}>
               타이틀과 서브타이틀
             </Txt>
-            <Button title="다시 보기" kind="ghost" onPress={() => setTitleKey((k) => k + 1)} />
+            <Button title="다시 보기" kind="text" onPress={() => setTitleKey((k) => k + 1)} />
           </View>
           <StaggerLines key={titleKey} style={{ gap: 6 }}>
             <Txt variant="title">단추에 요청했어요</Txt>
@@ -89,7 +89,7 @@ export default function MotionPreview() {
           로그아웃할까요?
         </Txt>
         <View style={styles.acts}>
-          <Button title="닫기" kind="line" tall flex={1} onPress={() => setDialog(false)} />
+          <Button title="닫기" kind="soft" tall flex={1} onPress={() => setDialog(false)} />
           <Button title="로그아웃" tall flex={1} onPress={() => setDialog(false)} />
         </View>
       </Dialog>
@@ -106,7 +106,7 @@ export default function MotionPreview() {
             </View>
           ))}
           <View style={{ marginTop: space.md }}>
-            <Button title="닫기" kind="line" tall onPress={() => setSheet(false)} />
+            <Button title="닫기" kind="soft" tall onPress={() => setSheet(false)} />
           </View>
         </SafeAreaView>
       </Sheet>

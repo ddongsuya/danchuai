@@ -25,6 +25,8 @@ export default function LabInbox() {
   if (org?.kind === 'requester') return <Redirect href="/" />;
   return (
     <InboxScreen
+      role="cro"
+      placeholder="가이드라인을 물어보세요"
       title="받은 요청"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
@@ -35,8 +37,6 @@ export default function LabInbox() {
       hrefOf={(id) => ({ pathname: '/lab/[id]', params: { id } })}
       switchTo="/"
       switchLabel="의뢰자 화면으로 바꾸기"
-      askHref={{ pathname: '/ask', params: { role: 'cro' } }}
-      newLabel="새 대화"
     />
   );
 }

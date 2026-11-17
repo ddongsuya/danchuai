@@ -1,14 +1,19 @@
 // 요청함(Manus 작업 목록 방식). 의뢰자와 기관이 같은 틀을 쓰고 항목과 상태 이름만 다르다.
+// 들어가는 곳은 아래 입력창 하나(결정 E3 ①). 의뢰자의 첫 말은 코드가 질문과 요청으로 가른다(firstMessageIntent).
+// 기관은 앱에서 요청을 만들지 않으므로 입력창이 질문하기로 간다.
+import { firstMessageIntent } from '@danchuai/core';
 import { router, type Href } from 'expo-router';
-import { ArrowClockwise, BookOpenText, ChatCircle, Dna, Drop, Flask, MagnifyingGlass, Tray, User, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ClockCounterClockwise, Dna, Drop, Flask, User, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Composer } from '@/components/chat/Composer';
 import { Button } from '@/components/ui/Button';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
+import { StateView } from '@/components/ui/StateView';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAuth } from '@/lib/session';
@@ -30,6 +35,7 @@ const statusChip: Record<InboxStatus, { label: string; kind: ChipTone }> = {
 const icons = { flask: Flask, dna: Dna, drop: Drop };
 
 interface Props {
+  role: 'requester' | 'cro';
   title?: string;
   items: InboxItem[];
   filters: { label: string; match: InboxStatus[] | null }[];
@@ -41,128 +47,128 @@ interface Props {
   hrefOf: (id: string) => Href;
   switchTo: Href;
   switchLabel: string;
-  newLabel: string;
-  newHref?: Href;
-  /** 가이드라인 질문하기 */
-  askHref?: Href;
+  /** 입력창 안내 */
+  placeholder: string;
 }
 
-export function InboxScreen({ title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, newLabel, newHref, askHref }: Props) {
+export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel, placeholder }: Props) {
   const { status } = useAuth();
   const [active, setActive] = useState(0);
-  const shown = useMemo(() => {
-    const m = filters[active]?.match;
-    return m ? items.filter((i) => m.includes(i.status)) : items;
-  }, [active, filters, items]);
+  // 거름은 건수가 있는 것만 보인다(전체는 늘). 숫자는 고정폭.
+  const tabs = useMemo(
+    () => filters.map((f) => ({ ...f, count: f.match ? items.filter((i) => f.match!.includes(i.status)).length : items.length })).filter((f) => !f.match || f.count > 0),
+    [filters, items],
+  );
+  const current = tabs[active] ?? tabs[0];
+  const shown = useMemo(() => (current?.match ? items.filter((i) => current.match!.includes(i.status)) : items), [current, items]);
+
+  const start = (text: string) => {
+    const intent = role === 'cro' ? 'ask' : firstMessageIntent(text);
+    if (intent === 'ask') router.push({ pathname: '/ask', params: { role, seed: text } });
+    else router.push({ pathname: '/requester/[id]', params: { id: 'new', seed: text } });
+  };
 
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <View style={styles.nav}>
-        {status === 'disabled' ? (
-          // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
-          <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
-            <UserSwitch size={20} color={tokens.text} />
-          </IconButton>
-        ) : (
-          <IconButton label="계정" onPress={() => router.push('/account')}>
-            <User size={20} color={tokens.text} />
-          </IconButton>
-        )}
-        <View style={styles.navRight}>
-          {askHref && (
-            <Press label="질문하기" onPress={() => router.push(askHref)} style={styles.ask}>
-              <BookOpenText size={18} color={tokens.text} />
-              <Txt variant="label" style={{ fontFamily: fonts.semibold }}>
-                질문하기
-              </Txt>
-            </Press>
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.nav}>
+          {status === 'disabled' ? (
+            // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
+            <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
+              <UserSwitch size={20} color={tokens.text} />
+            </IconButton>
+          ) : (
+            <IconButton label="계정" onPress={() => router.push('/account')}>
+              <User size={20} color={tokens.text} />
+            </IconButton>
           )}
-          <IconButton label="검색">
-            <MagnifyingGlass size={20} color={tokens.text} />
+          <IconButton label="지난 질문" onPress={() => router.push({ pathname: '/ask', params: { role } })}>
+            <ClockCounterClockwise size={20} color={tokens.text} />
           </IconButton>
         </View>
-      </View>
-      <Txt variant="title" accessibilityRole="header" style={styles.title}>
-        {title}
-      </Txt>
-      <View style={styles.filters} accessibilityRole="tablist">
-        {filters.map((f, i) => (
-          <Press
-            key={f.label}
-            label={f.label}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: i === active }}
-            onPress={() => setActive(i)}
-            style={[styles.filter, i === active && styles.filterOn]}
-          >
-            <Txt variant="small" color={i === active ? tokens.onInk : tokens.muted} style={{ fontFamily: fonts.semibold }}>
-              {f.label}
-            </Txt>
-          </Press>
-        ))}
-      </View>
-      {load === 'loading' ? (
-        <Skeleton />
-      ) : load === 'error' ? (
-        <View style={styles.state} accessibilityRole="alert">
-          <WarningCircle size={28} color={tokens.danger} />
-          <Txt variant="label">{errorLabel ?? '불러오지 못했어요'}</Txt>
-          {onRetry && <Button title="다시 시도" kind="line" icon={<ArrowClockwise size={14} color={tokens.text} />} onPress={onRetry} />}
-        </View>
-      ) : !items.length ? (
-        <View style={styles.state}>
-          <View style={styles.ei}>
-            <Tray size={28} color={tokens.muted} />
-          </View>
-          <Txt variant="heading">{emptyLabel}</Txt>
-        </View>
-      ) : (
-      <FlatList
-        data={shown}
-        keyExtractor={(i) => i.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <Txt variant="small" color={tokens.muted} style={styles.empty}>
-            해당 요청 없음
-          </Txt>
-        }
-        renderItem={({ item }) => {
-          const Icon = icons[item.icon];
-          const chip = statusChip[item.status];
-          const fresh = item.status === 'new' || item.status === 'replied';
-          return (
-            <Press label={`${item.title}, ${chip.label}`} onPress={() => router.push(hrefOf(item.id))} style={styles.item}>
-              <View style={styles.ico}>
-                <Icon size={20} color={tokens.muted} />
-                {fresh && <View style={styles.dot} />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Txt variant="label" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
-                  {item.title}
-                </Txt>
-                <Txt variant="caption" color={tokens.muted} style={{ marginTop: 3 }} numberOfLines={1}>
-                  {item.sub}
-                </Txt>
-              </View>
-              <View style={styles.right}>
-                <Chip label={chip.label} kind={chip.kind} />
-                <Txt variant="caption" color={tokens.faint} tabular>
-                  {item.when}
-                </Txt>
-              </View>
-            </Press>
-          );
-        }}
-      />
-      )}
-      {newHref && (
-      <Press label={newLabel} onPress={newHref ? () => router.push(newHref) : undefined} style={styles.fab}>
-        <ChatCircle size={20} weight="bold" color={tokens.onInk} />
-        <Txt variant="label" color={tokens.onInk} style={{ fontFamily: fonts.semibold }}>
-          {newLabel}
+        <Txt variant="title" accessibilityRole="header" style={styles.title}>
+          {title}
         </Txt>
-      </Press>
-      )}
+        {load === 'ready' && items.length > 0 && (
+          <View style={styles.filters} accessibilityRole="tablist">
+            {tabs.map((f, i) => {
+              const on = f === current;
+              return (
+                <Press
+                  key={f.label}
+                  label={f.match ? `${f.label} ${f.count}건` : f.label}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => setActive(i)}
+                  style={[styles.filter, on && styles.filterOn]}
+                >
+                  <Txt variant="small" color={on ? tokens.onInk : tokens.muted} style={{ fontFamily: fonts.semibold }}>
+                    {f.label}
+                  </Txt>
+                  {f.match ? (
+                    <Txt variant="small" tabular color={on ? tokens.onInk : tokens.text} style={{ fontFamily: fonts.bold }}>
+                      {f.count}
+                    </Txt>
+                  ) : null}
+                </Press>
+              );
+            })}
+          </View>
+        )}
+        {load === 'loading' ? (
+          <Skeleton />
+        ) : load === 'error' ? (
+          <View style={styles.state}>
+            <StateView
+              tone="error"
+              title={errorLabel ?? '목록을 불러오지 못했어요'}
+              reason="인터넷 연결을 확인하고 다시 시도해 주세요."
+              actions={onRetry ? <Button title="다시 시도" kind="soft" tall onPress={onRetry} /> : undefined}
+            />
+          </View>
+        ) : !items.length ? (
+          <View style={styles.state}>
+            <StateView tone="empty" title={emptyLabel} />
+          </View>
+        ) : (
+          <FlatList
+            data={shown}
+            keyExtractor={(i) => i.id}
+            contentContainerStyle={styles.list}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => {
+              const Icon = icons[item.icon];
+              const chip = statusChip[item.status];
+              const fresh = item.status === 'new' || item.status === 'replied';
+              return (
+                <Press label={`${item.title}, ${chip.label}`} onPress={() => router.push(hrefOf(item.id))} style={styles.item}>
+                  <View style={styles.ico}>
+                    <Icon size={20} color={tokens.muted} />
+                    {fresh && <View style={styles.dot} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Txt variant="label" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+                      {item.title}
+                    </Txt>
+                    <Txt variant="caption" color={tokens.muted} tabular style={{ marginTop: 3 }} numberOfLines={1}>
+                      {item.sub}
+                    </Txt>
+                  </View>
+                  <View style={styles.right}>
+                    <Chip label={chip.label} kind={chip.kind} />
+                    <Txt variant="caption" color={tokens.faint} tabular>
+                      {item.when}
+                    </Txt>
+                  </View>
+                </Press>
+              );
+            }}
+          />
+        )}
+        <View style={styles.bottom}>
+          <Composer placeholder={placeholder} onSend={start} />
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -188,20 +194,16 @@ function Skeleton() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
   nav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10 },
-  navRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  ask: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border },
   title: { paddingHorizontal: space.xl, paddingTop: 4, paddingBottom: space.md },
   filters: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl, paddingBottom: 14 },
-  filter: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border, justifyContent: 'center' },
+  filter: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border, justifyContent: 'center' },
   filterOn: { backgroundColor: tokens.ink, borderColor: tokens.ink },
-  list: { paddingHorizontal: space.md, gap: 2, paddingBottom: 120 },
+  bottom: { paddingBottom: space.md },
+  list: { paddingHorizontal: space.md, gap: 2, paddingBottom: space.lg },
   item: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: 16 },
   ico: { width: 44, height: 44, borderRadius: 14, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
   dot: { position: 'absolute', top: -2, right: -2, width: 11, height: 11, borderRadius: 6, backgroundColor: tokens.accent, borderWidth: 2, borderColor: tokens.bg },
   right: { alignItems: 'flex-end', gap: 6 },
-  empty: { textAlign: 'center', paddingTop: 48 },
-  state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 40, paddingBottom: 120 },
-  ei: { width: 64, height: 64, borderRadius: 20, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.border, alignItems: 'center', justifyContent: 'center' },
+  state: { flex: 1, justifyContent: 'center', paddingHorizontal: space.xxl },
   bone: { height: 14, borderRadius: 7, backgroundColor: tokens.sunken },
-  fab: { position: 'absolute', right: space.xl, bottom: 34, height: 54, paddingHorizontal: space.xl, borderRadius: radius.pill, backgroundColor: tokens.ink, flexDirection: 'row', alignItems: 'center', gap: space.sm, shadowColor: tokens.ink, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
 });

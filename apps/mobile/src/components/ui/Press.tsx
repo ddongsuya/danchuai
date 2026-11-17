@@ -1,5 +1,5 @@
 // 누를 수 있는 모든 요소의 공통 바탕. 누르면 0.2초 동안 0.97로 줄고, 떼면 같은 속도로 돌아온다.
-// 동작 줄이기가 켜져 있으면 크기는 그대로 둔다.
+// 동작 줄이기가 켜져 있으면 크기는 그대로 둔다. 비활성 모양은 각 컴포넌트가 정한다(흐리게 하지 않는다).
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -37,7 +37,7 @@ export function Press({ style, label, disabled, onPressIn, onPressOut, ...rest }
         to(1);
         onPressOut?.(e);
       }}
-      style={[style, pressed, disabled && { opacity: 0.45 }]}
+      style={[style, pressed]}
       {...rest}
     />
   );

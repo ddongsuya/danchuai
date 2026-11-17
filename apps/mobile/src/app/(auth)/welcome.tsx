@@ -23,7 +23,7 @@ export default function Welcome() {
       footer={
         <>
           <Button title="단추 계정으로 로그인" tall onPress={() => router.push('/login')} />
-          <Button title="단추에서 가입" kind="ghost" onPress={() => Linking.openURL(`${DANCHU_URL}/signup`)} />
+          <Button title="단추에서 가입" kind="text" onPress={() => Linking.openURL(`${DANCHU_URL}/signup`)} />
           {(TERMS_URL || PRIVACY_URL) && (
             <View style={styles.legal}>
               {TERMS_URL && (
