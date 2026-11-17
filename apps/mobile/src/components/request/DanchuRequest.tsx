@@ -60,7 +60,7 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
       title={r.no}
       bottom={
         <View style={styles.bar}>
-          {choose && <Button title="기관 선정하기" tall icon={<ArrowSquareOut size={16} color={tokens.onInk} />} onPress={open} />}
+          {choose && <Button title="기관 선정하기" tall onPress={open} />}
           <Button title={choose ? '단추에서 비교표 보기' : '단추에서 열기'} kind="text" icon={choose ? undefined : <ArrowSquareOut size={16} color={tokens.text} />} onPress={open} />
         </View>
       }
@@ -72,6 +72,11 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
         <Txt variant="title" accessibilityRole="header">
           {headline(r)}
         </Txt>
+        {compare.open && (
+          <Txt variant="small" color={tokens.muted} tabular>
+            {`회신 도착 순, ${Math.max(r.joined, compare.columns.length)}곳`}
+          </Txt>
+        )}
       </View>
 
       {!compare.open && (
@@ -97,7 +102,6 @@ export function DanchuRequestView({ data }: { data: { request: DanchuRequestData
           <Fact k="보낸 기관" v={`${r.sent}곳`} />
           <Fact k="참여" v={`${r.joined}곳`} line />
           {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} line />}
-          <Fact k="회신 기한" v={md(r.replyBy)} line />
         </View>
       )}
     </ChatShell>

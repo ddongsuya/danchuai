@@ -10,6 +10,8 @@ export interface InboxItem {
   sub: string;
   status: InboxStatus;
   when: string;
+  /** 할 일 기한(기관 받은 요청). 있으면 목록에서 날짜 대신 보인다("참여 결정 11.20까지") */
+  due?: string;
   icon: 'flask' | 'dna' | 'drop';
 }
 
@@ -81,6 +83,9 @@ const DANCHU_LAB: Record<DanchuLabItem['group'], InboxItem['status']> = {
 
 /** 단추 받은 요청 한 줄. 상태 이름·다음 할 일은 단추 진행판 값 그대로 */
 export function danchuLabItem(r: DanchuLabItem): InboxItem {
-  const sub = r.due ? `${r.next}, ${r.due.slice(5).replace('-', '.')}까지` : r.next;
-  return { id: r.no, title: r.title, sub, status: DANCHU_LAB[r.group], when: r.stage, icon: iconOf(`${r.title} ${r.categories}`) };
+  const md = r.due ? r.due.slice(5).replace('-', '.') : null;
+  const sub = md ? `${r.next}, ${md}까지` : r.next;
+  const todo = r.group === 'todo' || r.group === 'decide' || r.group === 'work';
+  const due = todo && md ? `${r.stage.replace(/\s*전$/, '')} ${md}까지` : undefined;
+  return { id: r.no, title: r.title, sub, status: DANCHU_LAB[r.group], when: r.stage, due, icon: iconOf(`${r.title} ${r.categories}`) };
 }

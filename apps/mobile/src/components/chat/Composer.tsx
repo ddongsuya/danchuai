@@ -1,6 +1,6 @@
 import { ArrowUp } from 'phosphor-react-native';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Press } from '@/components/ui/Press';
 import { fonts, space, tokens } from '@/constants/theme';
@@ -17,6 +17,8 @@ export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSe
         placeholderTextColor={tokens.faint}
         accessibilityLabel={placeholder}
         multiline
+        // 웹은 여러 줄 입력칸이 기본 두 줄 높이라 한 줄로 시작하게 한다(앱은 글 길이만큼 늘어남)
+        {...(Platform.OS === 'web' ? ({ rows: 1 } as object) : null)}
         style={styles.input}
         selectionColor={tokens.accent}
       />

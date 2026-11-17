@@ -1,6 +1,6 @@
 // 기관: 단추에서 받은 요청 한 건의 진행 (연동 2단계, 읽기만). 선정 전에는 의뢰자 회사 대신 단추가 준 표시만.
 // 참여·견적 제출은 연동 4단계에서 승인 카드로 연다. 지금은 단추에서 한다.
-import { ArrowClockwise, ArrowSquareOut, Check, CircleDashed, HourglassMedium, WarningCircle } from 'phosphor-react-native';
+import { ArrowClockwise, ArrowSquareOut, CheckCircle, CircleDashed, HourglassMedium, WarningCircle } from 'phosphor-react-native';
 import { useCallback } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -43,36 +43,53 @@ export function DanchuLab({ no }: { no: string }) {
 
 const ACT: DanchuLabItem['group'][] = ['todo', 'decide', 'work'];
 
+/** 할 일을 제목(질문형)과 버튼 이름으로. 참여 결정은 진단 문서 A12 반영안 문구, 나머지는 단추 진행판의 다음 할 일 그대로 */
+function task(it: DanchuLabItem) {
+  if (it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
+  return { title: it.next === '할 일 없음' ? it.stage : it.next, button: `단추에서 ${it.next}` };
+}
+
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
 export function DanchuLabView({ it }: { it: DanchuLabItem }) {
   const open = () => Linking.openURL(`${DANCHU_URL}/cro`);
   // 할 일이 있는 단계에서만 주 버튼 하나. 나머지는 단추로 가는 글자 버튼.
   const act = ACT.includes(it.group);
   const left = daysLeft(it.due);
+  const t = task(it);
   return (
     <ChatShell
       title={it.no}
       bottom={
         <View style={styles.bar}>
-          {act && <Button title={it.next} tall icon={<ArrowSquareOut size={16} color={tokens.onInk} />} onPress={open} />}
-          <Button title="단추에서 열기" kind={act ? 'text' : 'soft'} tall={!act} icon={act ? undefined : <ArrowSquareOut size={16} color={tokens.text} />} onPress={open} />
+          {act ? (
+            <Button title={t.button} tall icon={<ArrowSquareOut size={16} color={tokens.onInk} />} onPress={open} />
+          ) : (
+            <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={16} color={tokens.muted} />} onPress={open} />
+          )}
         </View>
       }
     >
       <View style={{ gap: space.xs }}>
         <Txt variant="small" color={tokens.muted} numberOfLines={2}>
-          {`${it.title}, ${it.client ?? it.clientHint}`}
+          {it.client ? `${it.title}, ${it.client}` : it.title}
         </Txt>
         <Txt variant="title" accessibilityRole="header">
-          {it.next === '할 일 없음' ? it.stage : it.next}
+          {t.title}
         </Txt>
       </View>
 
       {act && it.due && left != null && (
         <View style={{ gap: 2 }}>
-          <Txt variant="stat" tabular color={left < 0 ? tokens.danger : left <= 2 ? tokens.wait : tokens.text}>
-            {left < 0 ? '기한 지남' : left === 0 ? '오늘까지' : `${left}일 남음`}
-          </Txt>
+          <View style={styles.stat}>
+            <Txt variant="stat" tabular color={left < 0 ? tokens.danger : tokens.text}>
+              {left < 0 ? '기한 지남' : left === 0 ? '오늘까지' : `${left}일`}
+            </Txt>
+            {left > 0 && (
+              <Txt variant="label" style={{ fontFamily: fonts.semibold }}>
+                {' 남음'}
+              </Txt>
+            )}
+          </View>
           <Txt variant="small" color={tokens.muted} tabular>
             {`${shortDate(it.due)}까지`}
           </Txt>
@@ -83,29 +100,29 @@ export function DanchuLabView({ it }: { it: DanchuLabItem }) {
         {it.steps.map((s, i) => (
           <View key={s.label} style={[styles.tr, i > 0 && styles.line]} accessible accessibilityLabel={`${s.label}, ${s.state === 'done' ? '완료' : s.state === 'now' ? '진행 중' : '예정'}`}>
             {s.state === 'done' ? (
-              <Check size={16} weight="bold" color={tokens.accent} />
+              <CheckCircle size={18} weight="fill" color={tokens.muted} />
             ) : s.state === 'now' ? (
-              <HourglassMedium size={16} weight="bold" color={tokens.wait} />
+              <HourglassMedium size={18} color={tokens.wait} />
             ) : (
-              <CircleDashed size={16} color={tokens.faint} />
+              <CircleDashed size={18} color={tokens.faint} />
             )}
-            <Txt variant="small" style={[{ flex: 1 }, s.state === 'now' && { fontFamily: fonts.semibold }]} color={s.state === 'next' ? tokens.muted : tokens.text}>
+            <Txt variant="small" style={[{ flex: 1 }, s.state === 'now' && { fontFamily: fonts.semibold }]} color={s.state === 'now' ? tokens.wait : s.state === 'next' ? tokens.muted : tokens.text}>
               {s.label}
-            </Txt>
-            <Txt variant="caption" color={tokens.muted} tabular>
-              {s.at}
             </Txt>
           </View>
         ))}
       </View>
 
-      <View style={styles.facts}>
-        <Row k="단계" v={it.stage} />
-        {!act && it.due && <Row k="기한" v={shortDate(it.due)} />}
-        {it.money.map(([k, v]) => (
-          <Row key={k} k={k} v={v.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3')} />
-        ))}
-      </View>
+      {/* 할 일이 있을 때는 숫자와 단계만(진단 문서 A12 반영안). 제출 뒤에는 단계, 기한, 제출 금액 */}
+      {!act && (
+        <View style={styles.facts}>
+          <Row k="단계" v={it.stage} />
+          {it.due && <Row k="기한" v={shortDate(it.due)} />}
+          {it.money.map(([k, v]) => (
+            <Row key={k} k={k} v={v.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3')} />
+          ))}
+        </View>
+      )}
     </ChatShell>
   );
 }
@@ -127,6 +144,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, overflow: 'hidden' },
   bone: { height: 16, borderRadius: 8, backgroundColor: tokens.sunken },
   err: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stat: { flexDirection: 'row', alignItems: 'baseline' },
   tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, gap: space.md },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
   fact: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: space.md },

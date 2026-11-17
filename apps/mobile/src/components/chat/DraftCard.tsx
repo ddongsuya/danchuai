@@ -13,7 +13,10 @@ export function DraftCard({ title, body, dropped = 0, children, action, onAction
       <Txt variant="label" style={{ fontFamily: fonts.bold, marginBottom: space.sm }}>
         {title}
       </Txt>
-      <Txt variant="small">{body}</Txt>
+      {/* 본문 전체는 다음 카드(접수 확인)에서 펼쳐 본다. 여기서는 세 줄까지(진단 문서 A07 반영안) */}
+      <Txt variant="small" color={tokens.muted} numberOfLines={3}>
+        {body}
+      </Txt>
       {children}
       {dropped > 0 && (
         <Txt variant="caption" color={tokens.wait} style={{ marginTop: space.sm }} tabular>

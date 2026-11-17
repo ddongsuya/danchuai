@@ -41,7 +41,7 @@ export default function Welcome() {
         </>
       }
     >
-      <View style={{ gap: space.sm, marginTop: -space.xl }}>
+      <View style={styles.intro}>
         <Txt variant="title" accessibilityRole="header">
           견적 에이전트
         </Txt>
@@ -54,7 +54,9 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  mark: { width: 44, height: 44, borderRadius: 14, backgroundColor: tokens.ink, alignItems: 'center', justifyContent: 'center', marginTop: 40 },
+  mark: { width: 44, height: 44, borderRadius: 14, backgroundColor: tokens.ink, alignItems: 'center', justifyContent: 'center' },
+  // 시안 A01 오른쪽 안: 로고는 위, 제목은 로고와 버튼 사이 가운데
+  intro: { flex: 1, justifyContent: 'center', gap: space.sm, paddingBottom: space.xxl },
   legal: { flexDirection: 'row', justifyContent: 'center', gap: space.md },
   link: { textDecorationLine: 'underline' },
 });

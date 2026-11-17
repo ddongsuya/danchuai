@@ -26,7 +26,6 @@ export default function LabInbox() {
   return (
     <InboxScreen
       role="cro"
-      placeholder="가이드라인을 물어보세요"
       title="받은 요청"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}

@@ -8,12 +8,14 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccountView } from '@/app/account/index';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { ConsentBody } from '@/components/auth/ConsentBody';
 import { GateState, type GateKind } from '@/components/auth/GateState';
 import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
+import { DraftCard } from '@/components/chat/DraftCard';
 import { AgentText, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
@@ -43,7 +45,6 @@ const REQ_FILTERS = [
   { label: '전체', match: null },
   { label: '회신 도착', match: ['replied' as const] },
   { label: '승인 대기', match: ['waiting' as const] },
-  { label: '작성 중', match: ['drafting' as const] },
 ];
 const LAB_FILTERS = [
   { label: '전체', match: null },
@@ -53,15 +54,15 @@ const LAB_FILTERS = [
 ];
 
 const REQ_ITEMS: InboxItem[] = [
-  { id: 'RFQ-0003', title: '랫드 4주 반복투여 독성', sub: '3곳 중 3곳 회신, 비교표 열림', status: 'replied', when: '오늘', icon: 'flask' },
-  { id: 'RFQ-0002', title: '복귀돌연변이 시험', sub: '4곳 중 1곳 회신', status: 'sent', when: '어제', icon: 'dna' },
-  { id: 'c:demo', title: '비글견 단회 투여 PK', sub: '요청서 확인 전', status: 'waiting', when: '11월 12일', icon: 'drop' },
+  { id: 'RFQ-0003', title: '랫드 4주 반복투여 독성', sub: '비교표 열림', status: 'replied', when: '오늘', icon: 'flask' },
+  { id: 'c:demo', title: '복귀돌연변이 시험', sub: '요청서 확인 전', status: 'waiting', when: '어제', icon: 'dna' },
   { id: 'c:demo2', title: '피부 자극 시험', sub: '시험물질 묻는 중', status: 'drafting', when: '11월 10일', icon: 'flask' },
 ];
+const md = (n: number) => day(n).slice(5).replace('-', '.');
 const LAB_ITEMS: InboxItem[] = [
-  { id: 'RFQ-0005', title: '랫드 13주 반복투여 독성', sub: `참여할지 정하기, ${day(3).slice(5).replace('-', '.')}까지`, status: 'new', when: '참여 결정', icon: 'flask' },
-  { id: 'RFQ-0004', title: '소핵 시험', sub: `견적 쓰기, ${day(6).slice(5).replace('-', '.')}까지`, status: 'viewed', when: '견적 작성', icon: 'dna' },
-  { id: 'RFQ-0001', title: '마우스 PK', sub: '선정 기다리는 중', status: 'sent', when: '견적 제출', icon: 'drop' },
+  { id: 'RFQ-0005', title: '랫드 13주 반복투여 독성', sub: '참여할지 정하기', status: 'new', when: '참여 결정', due: `참여 결정 ${md(3)}까지`, icon: 'flask' },
+  { id: 'RFQ-0004', title: '소핵 시험', sub: '견적 쓰기', status: 'viewed', when: '견적 작성', due: `견적 제출 ${md(6)}까지`, icon: 'dna' },
+  { id: 'RFQ-0001', title: '마우스 PK', sub: '선정 기다리는 중', status: 'sent', when: md(-2), icon: 'drop' },
 ];
 
 const REQUEST: DanchuRequest = {
@@ -156,7 +157,9 @@ const VIEWS: View_[] = [
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
   { key: 'inbox-error', label: '요청함, 불러오기 실패', group: '요청함' },
   { key: 'chat', label: '새 요청 대화, 질문 카드', group: '새 요청' },
+  { key: 'draft', label: '요청 본문 초안', group: '새 요청' },
   { key: 'approve', label: '요청서 확인(승인 카드)', group: '새 요청' },
+  { key: 'approve-sending', label: '요청서 확인, 요청하는 중', group: '새 요청' },
   { key: 'done', label: '요청 완료', group: '새 요청' },
   { key: 'request', label: '진행, 회신 받는 중', group: '진행·비교' },
   { key: 'compare', label: '진행, 비교표 열림', group: '진행·비교' },
@@ -166,6 +169,7 @@ const VIEWS: View_[] = [
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
   { key: 'gate-other', label: '에이전트를 쓰지 않는 계정', group: '관문·계정' },
   { key: 'consent', label: '국외 이전 동의', group: '관문·계정' },
+  { key: 'account', label: '계정', group: '관문·계정' },
   { key: 'logout', label: '로그아웃 확인', group: '관문·계정' },
   { key: 'notfound', label: '찾을 수 없는 요청', group: '관문·계정' },
 ];
@@ -224,16 +228,15 @@ function PreviewView({ view }: { view: string }) {
 
   switch (view) {
     case 'inbox':
-      return <InboxScreen role="requester" placeholder="어떤 시험을 맡길까요?" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
     case 'inbox-lab':
-      return <InboxScreen role="cro" title="받은 요청" placeholder="가이드라인을 물어보세요" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} switchTo={toView('inbox')} switchLabel="의뢰자 화면으로 바꾸기" />;
+      return <InboxScreen role="cro" title="받은 요청" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} switchTo={toView('inbox')} switchLabel="의뢰자 화면으로 바꾸기" />;
     case 'inbox-empty':
-      return <InboxScreen role="requester" placeholder="어떤 시험을 맡길까요?" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
     case 'inbox-error':
       return (
         <InboxScreen
           role="requester"
-          placeholder="어떤 시험을 맡길까요?"
           items={[]}
           load="error"
           errorLabel={REMOTE_ERROR.network}
@@ -251,6 +254,23 @@ function PreviewView({ view }: { view: string }) {
           <QuestionCard title="투여 경로" questions={[{ id: 'route', label: '어떤 경로로 투여해요?', options: ['경구', '정맥', '피하'] }]} onSubmit={() => router.push(toView('approve'))} onSkip={noop} />
         </ChatShell>
       );
+    case 'draft':
+      return (
+        <ChatShell title="새 요청" bottom={<Composer onSend={noop} />}>
+          {CHAT_HEAD}
+          {CHAT_FILLED}
+          <DraftCard title="요청 본문 초안" body={BODY} action="요청서 확인" onAction={() => router.push(toView('approve'))} />
+        </ChatShell>
+      );
+    case 'approve-sending':
+      return (
+        <ChatShell title="새 요청" dim bottom={<DanchuApprovalCard sheet={SHEET} body={BODY} choices={{ ...CHOICES, purpose: '허가자료 제출용' }} onChange={noop} sending onClose={noop} onApprove={noop} />}>
+          {CHAT_HEAD}
+          {CHAT_FILLED}
+        </ChatShell>
+      );
+    case 'account':
+      return <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} onManage={noop} onLogout={() => router.push(toView('logout'))} />;
     case 'approve':
       return (
         <ChatShell
@@ -270,10 +290,7 @@ function PreviewView({ view }: { view: string }) {
           <ResultBlock
             title="단추에 요청했어요"
             meta="RFQ-0003"
-            rows={[
-              ['받는 곳', '분야가 맞는 참여 기관 전체'],
-              ['회신 기한', '7영업일 후'],
-            ]}
+            rows={[['회신 기한', '11.26(목)']]}
             action={<Button title="진행 보기" tall onPress={() => router.push(toView('request'))} />}
           />
         </ChatShell>
@@ -298,7 +315,7 @@ function PreviewView({ view }: { view: string }) {
           title={'에이전트를 쓰려면\n국외 이전 동의가 필요해요'}
           footer={
             <>
-              <Button title="동의하고 시작" tall onPress={() => router.back()} />
+              <Button title="필수 동의하고 시작" tall onPress={() => router.back()} />
               <Button title="로그아웃" kind="text" onPress={() => router.back()} />
             </>
           }
