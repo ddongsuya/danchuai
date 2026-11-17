@@ -302,7 +302,7 @@ function PreviewView({ view }: { view: string }) {
     case 'select':
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} initialSelecting />;
     case 'selected':
-      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: OPEN }} />;
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
     case 'lab-sent':

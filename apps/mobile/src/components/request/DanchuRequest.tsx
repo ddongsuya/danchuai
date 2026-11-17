@@ -8,6 +8,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { DanchuSelectSheet } from '@/components/request/DanchuSelectSheet';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
@@ -151,12 +152,15 @@ function CompareList({ columns, missing }: { columns: DanchuCompareColumn[]; mis
           key={`${c.lab}-${i}`}
           style={[styles.lab, i > 0 && styles.line]}
           accessible
-          accessibilityLabel={`${c.lab}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${monthDay(c.submittedAt)} 회신`}
+          accessibilityLabel={`${c.lab}${c.selected ? ', 선정' : ''}, 견적 총액 ${won(c.total)}, 소요 기간 ${c.weeks ? `${c.weeks}주` : '미기재'}, ${monthDay(c.submittedAt)} 회신`}
         >
           <View style={styles.labTop}>
-            <Txt variant="label" style={{ flex: 1, fontFamily: fonts.bold }} numberOfLines={1}>
-              {c.lab}
-            </Txt>
+            <View style={styles.labName}>
+              <Txt variant="label" style={{ flexShrink: 1, fontFamily: fonts.bold }} numberOfLines={1}>
+                {c.lab}
+              </Txt>
+              {c.selected && <Chip label="선정" kind="accent" />}
+            </View>
             <Txt variant="label" tabular style={{ fontFamily: fonts.bold }}>
               {c.total == null ? '미기재' : `${formatWonShort(c.total)} 원`}
             </Txt>
@@ -218,5 +222,6 @@ const styles = StyleSheet.create({
   facts: { paddingHorizontal: space.lg },
   lab: { paddingVertical: u(14), paddingHorizontal: space.lg, gap: u(4) },
   labTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  labName: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
 });
