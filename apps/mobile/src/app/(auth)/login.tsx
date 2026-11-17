@@ -7,7 +7,7 @@ import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { space } from '@/constants/theme';
-import { authErrorText, isEmail } from '@/lib/authRules';
+import { authErrorText, isEmail, loginEmails } from '@/lib/authRules';
 import { DANCHU_URL } from '@/lib/danchuLinks';
 import { supabase } from '@/lib/supabase';
 
@@ -25,7 +25,12 @@ export default function Login() {
     if (!supabase || !ready) return;
     setBusy(true);
     setError(null);
-    const { error: e } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    // 소문자로 먼저 시도하고, 계정 정보가 틀렸다고 나올 때만 입력 그대로 한 번 더 (authRules.loginEmails)
+    const [first, second] = loginEmails(email);
+    let { error: e } = await supabase.auth.signInWithPassword({ email: first, password });
+    if (e?.code === 'invalid_credentials' && second) {
+      ({ error: e } = await supabase.auth.signInWithPassword({ email: second, password }));
+    }
     setBusy(false);
     if (e?.code === 'email_not_confirmed') return setError('단추 가입 메일의 확인 링크를 먼저 눌러 주세요.');
     if (e) setError(authErrorText(e));

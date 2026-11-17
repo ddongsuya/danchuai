@@ -8,6 +8,16 @@ export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.tri
 export const passwordOk = (s: string) => s.length >= PASSWORD_MIN && s.length <= 72;
 export const digitsOnly = (s: string, max = OTP_LENGTH) => s.replace(/\D/g, '').slice(0, max);
 
+/**
+ * 로그인에 넣어 볼 메일 주소. 단추 웹은 가입·로그인 때 메일을 소문자로 바꿔 저장하므로 소문자를 먼저 쓴다.
+ * 입력에 대문자가 있었으면, 소문자로 바꾸기 전에 만든 계정을 위해 입력 그대로를 두 번째로 둔다.
+ */
+export function loginEmails(input: string): string[] {
+  const typed = input.trim();
+  const lower = typed.toLowerCase();
+  return typed === lower ? [lower] : [lower, typed];
+}
+
 /** 초대 코드 입력값을 XXXX-XXXX 모양으로. 서버가 다시 검사한다. */
 export function formatInviteInput(s: string): string {
   const raw = s.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 8);

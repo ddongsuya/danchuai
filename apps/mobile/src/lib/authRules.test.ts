@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { alreadySignedUp, authErrorText, digitsOnly, formatInviteInput, isEmail, joinErrorText, passwordOk } from './authRules';
+import { alreadySignedUp, authErrorText, digitsOnly, formatInviteInput, isEmail, joinErrorText, loginEmails, passwordOk } from './authRules';
 
 describe('로그인 규칙', () => {
   it('이메일·비밀번호·코드 입력', () => {
@@ -18,6 +18,11 @@ describe('로그인 규칙', () => {
     expect(authErrorText({ status: 429 })).toContain('잠시 뒤');
     expect(joinErrorText('expired')).toContain('새 코드');
     expect(joinErrorText('???')).toContain('다시');
+  });
+
+  it('로그인 메일은 소문자 먼저, 대문자가 있었으면 입력 그대로를 다음에', () => {
+    expect(loginEmails(' a@b.kr ')).toEqual(['a@b.kr']);
+    expect(loginEmails(' Limjm@Example.COM ')).toEqual(['limjm@example.com', 'Limjm@Example.COM']);
   });
 
   it('이미 가입한 메일로 다시 가입', () => {
