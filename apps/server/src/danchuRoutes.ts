@@ -17,6 +17,7 @@ const STATUS: Record<DanchuError, 401 | 403 | 404 | 429 | 503> = {
   unauthorized: 401,
   forbidden: 403,
   org_not_ready: 403,
+  plan_required: 403,
   not_found: 404,
   rate_limited: 429,
   unavailable: 503,

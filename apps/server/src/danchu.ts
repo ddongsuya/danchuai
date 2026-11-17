@@ -48,7 +48,8 @@ export type DanchuCompare =
   | { open: false; joined: number; submitted: number; replyBy: string | null }
   | { open: true; columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[] };
 
-export type DanchuError = "unauthorized" | "forbidden" | "org_not_ready" | "not_found" | "rate_limited" | "unavailable";
+/** plan_required: 기관 요금제가 Pro가 아니다(단추 정식 서비스 뒤에만, 시범 운영 중에는 나오지 않는다) */
+export type DanchuError = "unauthorized" | "forbidden" | "org_not_ready" | "plan_required" | "not_found" | "rate_limited" | "unavailable";
 
 export type DanchuResult<T> = { ok: true; data: T } | { ok: false; error: DanchuError };
 
@@ -64,7 +65,7 @@ export interface DanchuApi {
   act(token: string, a: { action: string; rfqNo: string | null; body: Record<string, unknown> }): Promise<{ status: number; body: unknown }>;
 }
 
-const ERRORS: DanchuError[] = ["unauthorized", "forbidden", "org_not_ready", "not_found", "rate_limited", "unavailable"];
+const ERRORS: DanchuError[] = ["unauthorized", "forbidden", "org_not_ready", "plan_required", "not_found", "rate_limited", "unavailable"];
 export const RFQ_NO = /^DC-\d{4}-\d{4,6}$/;
 
 /** 단추 주소. 운영은 https만 받는다. 없으면 danchu.kr */

@@ -176,6 +176,7 @@ const VIEWS: View_[] = [
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
+  { key: 'gate-plan', label: '기관 요금제 Pro 아님', group: '관문·계정' },
   { key: 'gate-other', label: '에이전트를 쓰지 않는 계정', group: '관문·계정' },
   { key: 'consent', label: '국외 이전 동의', group: '관문·계정' },
   { key: 'account', label: '계정', group: '관문·계정' },
@@ -323,8 +324,9 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuLabView it={LAB_SENT} />;
     case 'gate-error':
     case 'gate-wait':
+    case 'gate-plan':
     case 'gate-other': {
-      const kind: GateKind = view === 'gate-error' ? 'error' : view === 'gate-wait' ? 'org_not_ready' : 'unsupported';
+      const kind: GateKind = view === 'gate-error' ? 'error' : view === 'gate-wait' ? 'org_not_ready' : view === 'gate-plan' ? 'plan_required' : 'unsupported';
       return <GateState kind={kind} onRetry={() => new Promise((r) => setTimeout(r, 1200))} onSignOut={() => router.back()} />;
     }
     case 'consent':
