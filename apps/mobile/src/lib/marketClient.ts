@@ -123,6 +123,8 @@ export interface DanchuLabItem {
   due: string | null;
   steps: { label: string; at: string; state: 'done' | 'now' | 'next' }[];
   money: [string, string][];
+  /** 참여 결정 전에만: 단추 웹과 같은 동의 문장·이용 조건 판(join 동작에 그대로 넘긴다) */
+  join?: { terms: string; consent: string; termsUrl: string } | null;
 }
 
 export const fetchDanchuRequest = (no: string) => call<{ request: DanchuRequest; compare: DanchuCompare }>('requester', `/v1/requests/${id(no)}`);
