@@ -92,7 +92,11 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-const BANNED = [/추천/, /\d[\d,]*\s*(원|만원|억)/];
+// 실제 사용량 합계(비용 보고용). Sonnet 5.5 기준 단가($/1M): 입력 2, 출력 10, 캐시 읽기 0.1, 캐시 쓰기(5분) 2.5.
+const USAGE = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 };
+
+// "표 1 원문"처럼 숫자 뒤 "원문·원료"는 금액이 아니다.
+const BANNED = [/추천/, /\d[\d,]*\s*(만\s*원|억|원(?![문료본가칙]))/];
 
 interface TurnLog { user: string; text: string; question: { field: string; question: string; options: string[] } | null; sheet: Record<string, string | null> }
 
@@ -113,6 +117,11 @@ async function run(s: Scenario, provider: NonNullable<ReturnType<typeof provider
       tools: TOOLS.requester,
       maxTokens: 1200,
     });
+    USAGE.inputTokens += result.usage.inputTokens;
+    USAGE.outputTokens += result.usage.outputTokens;
+    USAGE.cacheReadTokens += result.usage.cacheReadTokens;
+    USAGE.cacheWriteTokens += result.usage.cacheWriteTokens;
+    USAGE.calls += 1;
     const out = interpret(conv, result.toolCalls);
     conv = out.conv;
     const asked = out.events.find((e) => e.event === "question");
@@ -132,6 +141,10 @@ function grade(s: Scenario, logs: TurnLog[]) {
   const all = logs.map((l) => [l.text, l.question?.question ?? "", ...(l.question?.options ?? [])].join(" ")).join(" ");
   checks.push(["추천·금액 표현 없음", !BANNED.some((r) => r.test(all))]);
   checks.push(["선택지 6개 이하", logs.every((l) => !l.question || l.question.options.length <= 6)]);
+  // 도구 호출을 답 글에 태그로 써 버리면 요청서·질문이 반영되지 않고 사용자에게 태그가 보인다.
+  checks.push(["답 글에 도구 태그 없음", logs.every((l) => !/<\/?(invoke|parameter|update_sheet|ask_question|draft_body|summarize_request)\b/.test(l.text))]);
+  // 빈 칸이 남았는데 질문이 없으면 사용자는 다음에 할 일을 모른다(마지막 턴 제외).
+  checks.push(["빈 칸 남은 턴마다 질문", logs.slice(0, -1).every((l) => !!l.question || missingFields(l.sheet as never).length === 0)]);
   const first = logs[0]!;
   if (s.firstAsk) checks.push([`첫 질문 칸 ∈ {${s.firstAsk.join(", ")}}`, !!first.question && s.firstAsk.includes(first.question.field as SheetField)]);
   if (s.cite) checks.push(["첫 두 턴 안에 (근거: …)", logs.slice(0, 2).some((l) => /\(근거:/.test(l.text))]);
@@ -179,6 +192,8 @@ async function main() {
     console.log(`요청서: ${filled || "(비어 있음)"} / 남은 필수 칸: ${missingFields(logs.at(-1)!.sheet as never).join(", ") || "없음"}\n`);
   }
   console.log(`\n합계: ${pass}/${total} 통과`);
+  const cost = (USAGE.inputTokens * 2 + USAGE.outputTokens * 10 + USAGE.cacheReadTokens * 0.1 + USAGE.cacheWriteTokens * 2.5) / 1e6;
+  console.log(`\n사용량: 호출 ${USAGE.calls}회, 입력 ${USAGE.inputTokens}, 출력 ${USAGE.outputTokens}, 캐시 읽기 ${USAGE.cacheReadTokens}, 캐시 쓰기 ${USAGE.cacheWriteTokens} 토큰 / 추정 비용 $${cost.toFixed(4)} (Sonnet 5.5 단가 기준)`);
 }
 
 main();
