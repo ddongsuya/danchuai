@@ -4,12 +4,13 @@
 import { EyeSlash, HourglassMedium, PaperPlaneTilt, Paperclip, ShieldCheck, User } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, motion, radius, space, tokens } from '@/constants/theme';
+import { fonts, radius, space, tokens } from '@/constants/theme';
+import { lineEnter } from '@/lib/motion';
 
 export interface Recipient {
   id: string;
@@ -28,11 +29,10 @@ interface Props {
   onApprove: () => void;
 }
 
-const enter = FadeInDown.duration(motion.approvalEnterMs).withInitialValues({ transform: [{ translateY: 16 }] }).reduceMotion(ReduceMotion.System);
-
 export function ApprovalCard({ title, recipients, body, attachment, hideRequester, guardPassed, onEdit, onApprove }: Props) {
+  const reduced = useReducedMotion();
   return (
-    <Animated.View entering={enter} style={styles.card} accessibilityViewIsModal>
+    <Animated.View entering={lineEnter(0, reduced)} style={styles.card} accessibilityViewIsModal>
       <View style={styles.head}>
         <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
           {title}

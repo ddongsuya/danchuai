@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { ArrowSquareOut, BookOpenText, CaretRight, ChatCircle, ClockCounterClockwise } from 'phosphor-react-native';
 import { useCallback, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatShell } from '@/components/chat/ChatShell';
@@ -12,6 +12,7 @@ import { Composer } from '@/components/chat/Composer';
 import { StepLog, UserMessage } from '@/components/chat/Messages';
 import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
+import { Sheet } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
@@ -165,10 +166,12 @@ function SourcesPill({ sources, onPress }: { sources: SourceRef[]; onPress: () =
 }
 
 function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClose: () => void }) {
+  // 닫히는 동안에도 마지막 목록을 그대로 보여 준다.
+  const [last, setLast] = useState<SourceRef[] | null>(sources);
+  if (sources && sources !== last) setLast(sources);
+  const shown = sources ?? last;
   return (
-    <Modal visible={!!sources} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.dim}>
-        <Press label="닫기" onPress={onClose} style={StyleSheet.absoluteFill} accessibilityRole="none" />
+    <Sheet visible={!!sources} onClose={onClose}>
         <SafeAreaView edges={['bottom']} style={styles.sheetWrap}>
           <View style={styles.sheet} accessibilityViewIsModal>
             <View style={styles.grab} />
@@ -176,7 +179,7 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
               근거 원문
             </Txt>
             <ScrollView style={{ maxHeight: 420, marginTop: space.md }}>
-              {(sources ?? []).map((s, i) => (
+              {(shown ?? []).map((s, i) => (
                 <Press
                   key={`${s.doc}-${s.section}`}
                   label={`${s.doc} ${s.section}${s.url ? ', 원문 열기' : ''}`}
@@ -199,8 +202,7 @@ function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClo
             </View>
           </View>
         </SafeAreaView>
-      </View>
-    </Modal>
+    </Sheet>
   );
 }
 
@@ -225,7 +227,6 @@ const styles = StyleSheet.create({
     borderColor: tokens.border,
   },
   next: { flexDirection: 'row' },
-  dim: { flex: 1, backgroundColor: 'rgba(30, 31, 34, 0.38)', justifyContent: 'flex-end' },
   sheetWrap: { paddingHorizontal: space.sm, paddingBottom: space.sm },
   sheet: { backgroundColor: tokens.surface, borderRadius: 32, paddingTop: 10, paddingHorizontal: space.xl, paddingBottom: 22 },
   grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: tokens.border, alignSelf: 'center', marginBottom: 18 },

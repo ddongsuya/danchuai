@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { fonts, radius, space, tokens } from '@/constants/theme';
 
 import { Press } from './Press';
+import { Spinner } from './Spinner';
 import { Txt } from './Txt';
 
 type Kind = 'ink' | 'line' | 'ghost';
@@ -25,7 +26,7 @@ export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disable
   return (
     <Press label={title} onPress={onPress} disabled={disabled || loading} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={[styles.base, styles[kind], tall && styles.tall, flex != null && { flex }]}>
       <View style={styles.row}>
-        {loading ? <ActivityIndicator size="small" color={color} /> : icon}
+        {loading ? <Spinner color={color} /> : icon}
         <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
           {title}
         </Txt>
