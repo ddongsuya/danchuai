@@ -8,7 +8,7 @@ import { AccountError, fetchMe, type AccountOrg } from './accountClient';
 import { supabase } from './supabase';
 
 export type AuthStatus = 'disabled' | 'loading' | 'signedOut' | 'recovery' | 'needsOrg' | 'needsConsent' | 'blocked' | 'ready' | 'error';
-export type BlockedReason = 'org_not_ready' | 'forbidden';
+export type BlockedReason = 'org_not_ready' | 'plan_required' | 'forbidden';
 
 interface AuthState {
   status: AuthStatus;
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!me.org) return setStatus('needsOrg');
       setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
     } catch (e) {
-      if (e instanceof AccountError && (e.code === 'org_not_ready' || e.code === 'forbidden')) {
+      if (e instanceof AccountError && (e.code === 'org_not_ready' || e.code === 'plan_required' || e.code === 'forbidden')) {
         setBlocked(e.code);
         return setStatus('blocked');
       }

@@ -42,7 +42,7 @@ function Gate() {
 
   if (status === 'loading') return null;
   if (status === 'error') return <GateState kind="error" onRetry={refresh} onSignOut={signOut} />;
-  if (status === 'blocked') return <GateState kind={blocked === 'org_not_ready' ? 'org_not_ready' : 'unsupported'} onRetry={refresh} onSignOut={signOut} />;
+  if (status === 'blocked') return <GateState kind={blocked === 'org_not_ready' || blocked === 'plan_required' ? blocked : 'unsupported'} onRetry={refresh} onSignOut={signOut} />;
   const inApp = status === 'ready' || status === 'disabled';
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tokens.bg } }}>
