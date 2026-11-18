@@ -1,7 +1,7 @@
 // 화면 미리보기. 예시 값만 쓰고 서버를 부르지 않는다. 로그인 없이 열린다(_layout).
 // /preview 는 목록, /preview?view=<이름> 은 그 화면 하나. 실제 화면과 같은 컴포넌트를 그대로 쓴다.
 // 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
-import type { RequestSheet } from '@danchuai/core';
+import { applyQuotePatch, quoteDraftFromBrief, type RequestSheet } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { CaretRight, X } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
@@ -21,6 +21,7 @@ import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
+import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
 import { DanchuRequestView } from '@/components/request/DanchuRequest';
 import { Button } from '@/components/ui/Button';
@@ -112,6 +113,52 @@ const LAB_TODO: DanchuLabItem = {
     termsUrl: '/terms/cro',
   },
 };
+// 견적 확인(말로 맡기는 견적 2단계). 단추가 주는 모양 그대로의 예시 값만, 실제 기관·의뢰자 값 없음
+const QUOTE = applyQuotePatch(
+  quoteDraftFromBrief({
+    no: 'DC-2026-0142',
+    state: 'open',
+    closedReason: null,
+    request: {
+      full: true, substance: '후보물질 A', categories: ['반복투여독성'], overview: [], common: [], situation: [], ask: [], replyBy: day(9), authorities: [], translation: false, files: [],
+      rows: [
+        { seq: 1, category: '반복투여독성', name: '랫드 4주 반복투여독성', cond: '경구' },
+        { seq: 2, category: '반복투여독성', name: 'TK 분석', cond: '' },
+        { seq: 3, category: '반복투여독성', name: '회복군 추가(4주)', cond: '' },
+        { seq: 4, category: '국소독성', name: '미니피그 피부자극', cond: '' },
+      ],
+    },
+    draft: {
+      status: 'draft', prefilled: true, note: '', steps: [], pdfName: '',
+      common: { validUntil: '', startDate: '', payTerms: '', substanceQty: '', reportLang: '', includes: [] },
+      items: [
+        { seq: 1, avail: '가능', amount: '48500000', weeks: '14', source: 'catalog' },
+        { seq: 2, avail: '가능', amount: '6200000', weeks: '6', source: 'catalog' },
+      ],
+    },
+  }),
+  {
+    items: [
+      { seq: 3, avail: '조건부 가능', weeks: '4', reason: '추가 단가 없음' },
+      { seq: 4, avail: '불가', reason: '시험 목록에 없음' },
+    ],
+    common: { startDate: day(21), validUntil: day(60), payTerms: '30, 40, 30' },
+  },
+).draft;
+
+const LAB_WORK: DanchuLabItem = {
+  ...LAB_TODO,
+  join: null,
+  group: 'work',
+  stage: '참여',
+  next: '견적 쓰기',
+  steps: [
+    { label: '요청 받음', at: '', state: 'done' },
+    { label: '참여', at: '', state: 'done' },
+    { label: '견적 제출', at: '', state: 'now' },
+  ],
+};
+
 const LAB_SENT: DanchuLabItem = {
   ...LAB_TODO,
   join: null,
@@ -173,6 +220,9 @@ const VIEWS: View_[] = [
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
+  { key: 'lab-work', label: '받은 요청, 참여 뒤(AI 견적)', group: '기관' },
+  { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
+  { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -320,6 +370,11 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuLabView it={LAB_TODO} initialSheet="join" />;
     case 'lab-decline':
       return <DanchuLabView it={LAB_TODO} initialSheet="decline" />;
+    case 'lab-work':
+      return <DanchuLabView it={LAB_WORK} />;
+    case 'lab-quote':
+    case 'lab-quote-ready':
+      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
     case 'gate-error':

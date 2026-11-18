@@ -1,6 +1,6 @@
 // 견적 에이전트 서버와 이야기하는 부분. API 키는 앱에 없다. 앱은 서버 세션 토큰만 쓴다.
 // EXPO_PUBLIC_AGENT_URL 이 없으면 시연 화면(데모 데이터)을 쓴다.
-import type { QuoteLine, RequestSheet } from '@danchuai/core';
+import type { DanchuQuoteDraft, QuoteLine, RequestSheet } from '@danchuai/core';
 import { fetch } from 'expo/fetch';
 
 import type { ChatErrorCode } from './chat';
@@ -28,6 +28,8 @@ const codeOf = (status: number, body: unknown): ChatErrorCode => {
   if (status === 503 || e === 'agent_unavailable') return 'agent_unavailable';
   if (status === 429 || e === 'turn_limit') return 'turn_limit';
   if (e === 'turn_in_progress') return 'turn_in_progress';
+  // 단추 견적 대화를 열 수 없음(quote_not_joined·quote_closed 등), 단추가 찾지 못함·막음
+  if ((typeof e === 'string' && e.startsWith('quote_')) || e === 'not_found' || e === 'plan_required' || e === 'forbidden') return 'quote_unavailable';
   return 'provider_error';
 };
 
@@ -61,6 +63,9 @@ export interface ConversationView {
   summary?: string[] | null;
   draft?: { body: string; dropped: number; version: number; sent: boolean } | null;
   messages?: { role: 'user' | 'assistant'; text: string; sources?: unknown }[];
+  /** 단추 연동: 대화가 다루는 단추 요청 번호와 기관 견적 초안 */
+  danchuNo?: string | null;
+  quote?: DanchuQuoteDraft | null;
 }
 
 export interface AskListItem {
@@ -153,13 +158,19 @@ export type DanchuActionName =
   | 'contract_result'
   | 'join'
   | 'decline'
+  | 'quote_draft'
+  | 'quote_upload'
   | 'quote_submit'
   | 'detail_reply'
   | 'contract_report'
   | 'crm_activity';
 
-export const draftDanchuAction = (role: AgentRole, action: DanchuActionName, body: Record<string, unknown>, rfqNo?: string) =>
-  call<DanchuActionDraft>(role, '/v1/danchu/actions', { action, body, ...(rfqNo ? { rfqNo } : {}) });
+/**
+ * conversationId: 이 동작을 만든 대화. 단추가 받으면 서버가 그 대화를 끝난 것으로 표시한다
+ * (의뢰자 요청 접수 → 요청함에 "작성 중"으로 남지 않게, 기관 견적 제출 → 제출한 판 기록). 단추로 보내는 본문에는 들어가지 않는다.
+ */
+export const draftDanchuAction = (role: AgentRole, action: DanchuActionName, body: Record<string, unknown>, rfqNo?: string, conversationId?: string) =>
+  call<DanchuActionDraft>(role, '/v1/danchu/actions', { action, body, ...(rfqNo ? { rfqNo } : {}), ...(conversationId ? { conversationId } : {}) });
 
 export type DanchuActionResult = { status: 'sent' | 'failed' | 'unknown'; result: Record<string, unknown> | null };
 

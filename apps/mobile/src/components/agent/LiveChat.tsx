@@ -37,6 +37,7 @@ export const ERROR_LABEL: Record<ChatErrorCode, string> = {
   provider_error: '답을 받지 못했어요',
   network: '연결이 끊겼어요',
   unauthorized: '로그인이 필요해요',
+  quote_unavailable: '지금은 이 요청의 견적을 쓸 수 없어요',
 };
 export const RETRYABLE: readonly ChatErrorCode[] = ['provider_error', 'network', 'truncated', 'turn_in_progress', 'agent_unavailable'];
 
@@ -111,7 +112,8 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
     try {
       // 같은 본문이면 만든 초안을 다시 쓴다(승인 한 건에 실행 한 번은 서버가 지킨다)
       const key = JSON.stringify(payload);
-      if (danchuMade.current?.key !== key) danchuMade.current = { key, d: await draftDanchuAction('requester', 'create', payload) };
+      // 대화 id 를 함께 넘겨 접수 뒤 서버가 이 대화를 끝난 것으로 표시한다(요청함에 "작성 중"으로 남지 않게)
+      if (danchuMade.current?.key !== key) danchuMade.current = { key, d: await draftDanchuAction('requester', 'create', payload, undefined, state.conversationId ?? undefined) };
       const r = await approveDanchuAction('requester', danchuMade.current.d);
       danchuMade.current = null;
       if (r.status === 'failed') {

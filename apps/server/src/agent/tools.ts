@@ -25,11 +25,43 @@ export const SummarizeRequest = z.object({ points: z.array(z.string().min(1).max
 
 export const DraftBody = z.object({ body: z.string().min(1).max(8000) }).strict();
 
+// 단추 기관 견적 초안 고치기(말로 맡기는 견적 2단계). 금액 칸은 없다: 금액은 단추 계산 또는 담당자가 확인 카드에서 넣는다.
+const ymdOrEmpty = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
+export const UpdateQuote = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            seq: z.number().int().min(1).max(999),
+            avail: z.enum(["가능", "조건부 가능", "불가"]).optional(),
+            weeks: z.union([z.string().regex(/^\d{0,3}$/), z.null()]).optional(),
+            reason: z.string().max(500).nullable().optional(),
+          })
+          .strict(),
+      )
+      .max(60)
+      .optional(),
+    common: z
+      .object({
+        startDate: ymdOrEmpty.optional(),
+        validUntil: ymdOrEmpty.optional(),
+        payTerms: z.string().max(60).optional(),
+        substanceQty: z.string().max(120).optional(),
+        reportLang: z.enum(["", "국문", "영문", "국문 + 영문 번역", "일문"]).optional(),
+      })
+      .strict()
+      .optional(),
+    note: z.string().max(2000).nullable().optional(),
+  })
+  .strict();
+
 export const SCHEMAS = {
   update_sheet: UpdateSheet,
   ask_question: AskQuestion,
   summarize_request: SummarizeRequest,
   draft_body: DraftBody,
+  update_quote: UpdateQuote,
 } as const;
 export type ToolName = keyof typeof SCHEMAS;
 
@@ -40,6 +72,8 @@ const DESCRIPTIONS: Record<ToolName, string> = {
   summarize_request: "기관 담당자를 위한 요청 요점 1~6개. 금액·의뢰자 신원은 넣지 않는다.",
   draft_body:
     "상대에게 보낼 본문 초안. 사람이 확인하고 승인해야 나간다. 금액 숫자·기관 비교·추천·연락처는 쓰지 않는다.",
+  update_quote:
+    "견적 초안에서 담당자 말로 확인된 칸만 고친다: 항목별 가능 여부·기간(주)·사유, 착수 가능일·견적 유효기간(YYYY-MM-DD)·결제 조건·시험물질 필요량·보고서 언어, 전달 사항. 금액은 넣지 않는다. 짐작으로 채우지 않는다.",
 };
 
 function spec(name: ToolName): AgentToolSpec {
@@ -60,5 +94,14 @@ export const TOOLS: Record<Role, AgentToolSpec[]> = {
   cro: TOOL_NAMES.cro.map(spec),
 };
 
+/** 단추 연동 기관 견적 대화. 회신 본문 대신 단추 견적 초안을 고친다(제출은 사람이 확인 카드에서) */
+export const CRO_DANCHU_TOOL_NAMES: readonly ToolName[] = ["summarize_request", "update_quote"];
+export const CRO_DANCHU_TOOLS: AgentToolSpec[] = CRO_DANCHU_TOOL_NAMES.map(spec);
+
+/** 이 대화에서 모델이 부를 수 있는 도구 이름 */
+export const toolNamesFor = (c: { role: Role; danchuNo: string | null }): readonly ToolName[] =>
+  c.role === "cro" && c.danchuNo ? CRO_DANCHU_TOOL_NAMES : TOOL_NAMES[c.role];
+export const toolsFor = (c: { role: Role; danchuNo: string | null }): AgentToolSpec[] => (c.role === "cro" && c.danchuNo ? CRO_DANCHU_TOOLS : TOOLS[c.role]);
+
 // 서버가 뜰 때 한 번 더 막는다.
-assertReadOnlyTools([...TOOLS.requester, ...TOOLS.cro]);
+assertReadOnlyTools([...TOOLS.requester, ...TOOLS.cro, ...CRO_DANCHU_TOOLS]);

@@ -1,5 +1,5 @@
-import { guardDraft, mergeSheet, missingFields, redactContacts, type RequestSheet, type ToolCall } from "@danchuai/core";
-import { SCHEMAS, TOOL_NAMES, type Role, type ToolName } from "./tools";
+import { applyQuotePatch, guardDraft, mergeSheet, missingFields, redactContacts, type DanchuQuoteDraft, type DanchuQuotePatch, type RequestSheet, type ToolCall } from "@danchuai/core";
+import { SCHEMAS, toolNamesFor, type ToolName } from "./tools";
 import type { Conversation, Question } from "./store";
 
 export type AgentEvent =
@@ -7,6 +7,7 @@ export type AgentEvent =
   | { event: "question"; data: Question }
   | { event: "summary"; data: { points: string[] } }
   | { event: "draft"; data: { body: string; dropped: number; version: number } }
+  | { event: "quote"; data: { quote: DanchuQuoteDraft; changed: number } }
   | { event: "notice"; data: { code: "draft_blocked" | "tool_rejected" } };
 
 /**
@@ -15,7 +16,7 @@ export type AgentEvent =
  * 같은 도구는 한 턴에 한 번만 받는다.
  */
 export function interpret(conv: Conversation, calls: readonly ToolCall[]): { conv: Conversation; events: AgentEvent[]; notes: string[] } {
-  const allowed = new Set<string>(TOOL_NAMES[conv.role as Role]);
+  const allowed = new Set<string>(toolNamesFor(conv));
   const seen = new Set<string>();
   const events: AgentEvent[] = [];
   const notes: string[] = [];
@@ -63,6 +64,18 @@ export function interpret(conv: Conversation, calls: readonly ToolCall[]): { con
         events.push({ event: "summary", data: { points } });
         notes.push("(요청 요약)");
       }
+    } else if (name === "update_quote") {
+      // 단추 견적 초안: 금액은 손대지 않는다(applyQuotePatch). 없는 항목·틀린 값은 버린다.
+      if (!next.quote) {
+        events.push({ event: "notice", data: { code: "tool_rejected" } });
+        continue;
+      }
+      const { draft, changed } = applyQuotePatch(next.quote, parsed.data as DanchuQuotePatch);
+      if (changed) {
+        next = { ...next, quote: draft };
+        events.push({ event: "quote", data: { quote: draft, changed } });
+        notes.push("(견적 초안 갱신)");
+      }
     } else if (name === "draft_body") {
       // 의뢰자는 빈 칸이 있는 동안 본문을 만들지 않는다.
       if (next.role === "requester" && missingFields(next.sheet).length) continue;
@@ -80,5 +93,5 @@ export function interpret(conv: Conversation, calls: readonly ToolCall[]): { con
   return { conv: next, events, notes };
 }
 
-const ORDER: Record<string, number> = { update_sheet: 0, summarize_request: 1, ask_question: 2, draft_body: 3 };
+const ORDER: Record<string, number> = { update_sheet: 0, update_quote: 0, summarize_request: 1, ask_question: 2, draft_body: 3 };
 const order = (n: string) => ORDER[n] ?? 9;

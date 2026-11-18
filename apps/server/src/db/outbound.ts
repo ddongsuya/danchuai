@@ -93,6 +93,12 @@ export class PgOutboundRepo implements OutboundRepo {
     await this.pool.query(`update outbound_drafts set result = $2, updated_at = now() where id = $1`, [draftId, JSON.stringify(result ?? null)]);
   }
 
+  async conversationOf(draftId: string): Promise<string | null> {
+    if (!UUID.test(draftId)) return null;
+    const { rows } = await this.pool.query<{ conversation_id: string | null }>(`select conversation_id from outbound_drafts where id = $1`, [draftId]);
+    return rows[0]?.conversation_id ?? null;
+  }
+
   async getResult(draftId: string): Promise<unknown> {
     if (!UUID.test(draftId)) return null;
     const { rows } = await this.pool.query<{ result: unknown }>(`select result from outbound_drafts where id = $1`, [draftId]);

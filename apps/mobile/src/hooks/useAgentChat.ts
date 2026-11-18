@@ -13,11 +13,23 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
     try {
       const c = conversationId ? await getConversation(role, conversationId) : await createConversation(role, requestId, mode);
       idRef.current = c.id;
-      dispatch({ type: 'opened', id: c.id, role: c.role, sheet: c.sheet, missing: c.missing, messages: c.messages, question: c.question, summary: c.summary, draft: c.draft });
+      dispatch({ type: 'opened', id: c.id, role: c.role, sheet: c.sheet, missing: c.missing, messages: c.messages, question: c.question, summary: c.summary, draft: c.draft, quote: c.quote });
     } catch (e) {
       dispatch({ type: 'open_failed', code: e instanceof AgentHttpError ? e.code : 'network' });
     }
   }, [role, requestId, conversationId, mode]);
+
+  /** 서버의 대화 상태를 다시 읽는다(단추에 제출한 뒤 제출한 판 등). 열려 있지 않으면 새로 연다 */
+  const refresh = useCallback(async () => {
+    const id = idRef.current;
+    if (!id) return open();
+    try {
+      const c = await getConversation(role, id);
+      dispatch({ type: 'opened', id: c.id, role: c.role, sheet: c.sheet, missing: c.missing, messages: c.messages, question: c.question, summary: c.summary, draft: c.draft, quote: c.quote });
+    } catch {
+      // 다시 읽지 못해도 화면은 그대로 둔다
+    }
+  }, [role, open]);
 
   useEffect(() => {
     void open();
@@ -48,5 +60,5 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
     if (state.lastText) void send(state.lastText);
   }, [open, send, state.lastText]);
 
-  return { state, send, retry };
+  return { state, send, retry, refresh };
 }

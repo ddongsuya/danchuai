@@ -1,14 +1,56 @@
+import type { CompletionRequest, CompletionResult, DanchuQuoteBrief, LlmProvider } from "@danchuai/core";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
+import { CRO_DANCHU_SYSTEM } from "../src/agent/prompts";
+import { DanchuRequestDirectory, MemoryConversationRepo } from "../src/agent/store";
 import { danchuApi, type DanchuApi, type DanchuMe } from "../src/danchu";
 import { CONSENT_VERSION, danchuIdentity, MemoryWorkspaceRepo, workspaceKey } from "../src/danchuAuth";
 import { MemoryOutboundRepo } from "../src/repo";
-import { canonical, checkAction, outcomeOf, parseActionText } from "../src/danchuActions";
+import { afterDanchuSent, canonical, checkAction, outcomeOf, parseActionText } from "../src/danchuActions";
 
 /* 단추 계정 연동(연동 2단계): 신원은 단추에서만, 동의 전 AI 금지, 읽기는 단추에서 */
 const T_REQ = "tok-requester-aaaaaaaaaaaa";
 const T_CRO = "tok-cro-bbbbbbbbbbbbbbbbbbbb";
 const T_PENDING = "tok-cro-pending-cccccccccccc";
+/** 단추 정식 서비스 뒤 Pro 가 아닌 기관(단추 입구가 plan_required) */
+const T_FREE = "tok-cro-free-dddddddddddddddd";
+
+/** 단추가 주는 받은 요청·회신 초안(단추 회신 구조, 부가세 별도) */
+const QUOTE_BRIEF = (no: string, state: DanchuQuoteBrief["state"] = "open"): DanchuQuoteBrief => ({
+  no,
+  state,
+  closedReason: null,
+  request: {
+    full: true, substance: "후보물질 A", categories: ["일반독성"], overview: [["의뢰 목적", "IND"]], common: [["시험 투여경로", "경구"]], situation: [], ask: [],
+    replyBy: "2026-11-30", authorities: ["식약처"], translation: false, files: [],
+    rows: [
+      { seq: 1, category: "일반독성", name: "랫드 4주 반복투여독성", cond: "경구" },
+      { seq: 2, category: "일반독성", name: "회복군 추가(4주)", cond: "" },
+    ],
+  },
+  draft:
+    state === "open"
+      ? {
+          status: "draft", prefilled: true, note: "", steps: [], pdfName: "",
+          common: { validUntil: "", startDate: "", payTerms: "", substanceQty: "", reportLang: "", includes: [] },
+          items: [{ seq: 1, avail: "가능", amount: "48500000", weeks: "14", source: "catalog", design: { route: "경구" } }],
+        }
+      : null,
+});
+
+/** 정해 둔 답을 돌려주는 가짜 AI. 받은 요청을 기록한다 */
+class FakeProvider implements LlmProvider {
+  readonly name = "anthropic" as const;
+  readonly model = "fake";
+  calls: CompletionRequest[] = [];
+  constructor(private script: Partial<CompletionResult>[] = []) {}
+  async complete(req: CompletionRequest): Promise<CompletionResult> {
+    this.calls.push(structuredClone({ ...req, onText: undefined, signal: undefined }));
+    const r = this.script.shift() ?? {};
+    if (r.text) req.onText?.(r.text);
+    return { text: r.text ?? "", toolCalls: r.toolCalls ?? [], usage: { inputTokens: 1, outputTokens: 1 }, stop: "done", provider: "anthropic", model: "fake" };
+  }
+}
 
 const ME: Record<string, DanchuMe> = {
   [T_REQ]: { id: "11111111-1111-4111-8111-111111111111", role: "requester", name: "가", email: "a@example.test", org: null },
@@ -21,6 +63,7 @@ function fakeApi(): Fake {
   const me = async (t: string) => {
     calls.push(`me:${t}`);
     if (t === T_PENDING) return { ok: false as const, error: "org_not_ready" as const };
+    if (t === T_FREE) return { ok: false as const, error: "plan_required" as const };
     return ME[t] ? { ok: true as const, data: ME[t]! } : { ok: false as const, error: "unauthorized" as const };
   };
   const api: Fake = {
@@ -45,9 +88,9 @@ function fakeApi(): Fake {
     croDetail: async () => ({ ok: false as const, error: "not_found" as const }),
     croQuote: async (t, no) => {
       calls.push(`quote:${t}:${no}`);
-      return no === "DC-2026-0142"
-        ? { ok: true as const, data: { no, state: "open" as const, closedReason: null, request: { full: true, substance: "후보물질 A", categories: ["일반독성"], overview: [], rows: [], common: [], situation: [], ask: [], replyBy: "2026-11-30", authorities: [], translation: false, files: [] }, draft: null } }
-        : { ok: false as const, error: "not_found" as const };
+      if (no === "DC-2026-0142") return { ok: true as const, data: QUOTE_BRIEF(no) };
+      if (no === "DC-2026-0143") return { ok: true as const, data: QUOTE_BRIEF(no, "not_joined") };
+      return { ok: false as const, error: "not_found" as const };
     },
     recordConsent: async (t: string, version: string) => {
       calls.push(`consent:${t}:${version}`);
@@ -57,18 +100,27 @@ function fakeApi(): Fake {
   return api;
 }
 
-function setup() {
+function setup(provider?: LlmProvider) {
   const api = fakeApi();
   const workspaces = new MemoryWorkspaceRepo();
   const id = danchuIdentity(api, workspaces);
-  const app = createApp({ auth: id.resolver, outbound: new MemoryOutboundRepo(), transport: { deliver: async () => "unknown" }, danchu: { api, lookup: id.lookup, workspaces } });
+  const conversations = new MemoryConversationRepo();
+  const app = createApp({
+    auth: id.resolver,
+    outbound: new MemoryOutboundRepo(),
+    transport: { deliver: async () => "unknown" },
+    danchu: { api, lookup: id.lookup, workspaces },
+    provider,
+    conversations,
+    requests: new DanchuRequestDirectory(api),
+  });
   const call = (method: string, path: string, token: string | null, body?: unknown) =>
     app.request(path, {
       method,
       headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  return { api, call, workspaces };
+  return { api, call, workspaces, conversations };
 }
 
 describe("단추 신원", () => {
@@ -269,5 +321,159 @@ describe("단추 동작 승인 (연동 4단계)", () => {
     api.actReply = { status: 0, body: null };
     expect((await go()).r.status).toBe("unknown");
     expect((await call("GET", `/v1/danchu/actions/${a.id}`, T_REQ)).status).toBe(404);
+  });
+});
+
+describe("말로 맡기는 견적 2단계", () => {
+  const consent = async (call: ReturnType<typeof setup>["call"], t: string) => call("POST", "/account/consent", t, { version: CONSENT_VERSION });
+  const json = async (r: Response) => (await r.json()) as Record<string, any>;
+  const QUOTE_BODY = {
+    items: [
+      { seq: 1, avail: "가능", amount: "48500000", weeks: "14", source: "catalog", design: { route: "경구" } },
+      { seq: 2, avail: "조건부 가능", amount: "32000000", weeks: "4", reason: "회복군 4주" },
+    ],
+    note: "회복군은 4주 운영해요.",
+    common: { validUntil: "2026-12-31", startDate: "2026-12-01", payTerms: "30, 40, 30", substanceQty: "", reportLang: "국문", includes: [] },
+    steps: [],
+  };
+  const approveAndDispatch = async (call: ReturnType<typeof setup>["call"], t: string, made: Record<string, any>) => {
+    expect((await call("POST", `/v1/outbound/${made.id}/decision`, t, { decision: "approve", epoch: 1, textHash: made.textHash })).status).toBe(200);
+    return json(await call("POST", `/v1/outbound/${made.id}/dispatch`, t));
+  };
+
+  it("역할·요금제 위반은 403: 의뢰자는 견적 동작, 기관은 요청 접수, Pro 아닌 기관은 plan_required", async () => {
+    const { call } = setup();
+    await consent(call, T_REQ);
+    await consent(call, T_CRO);
+    for (const action of ["quote_draft", "quote_upload", "quote_submit"]) {
+      expect((await call("POST", "/v1/danchu/actions", T_REQ, { action, rfqNo: "DC-2026-0142", body: QUOTE_BODY })).status).toBe(403);
+    }
+    expect((await call("POST", "/v1/danchu/actions", T_CRO, { action: "create", body: { substance: "A" } })).status).toBe(403);
+    // 단추가 기관 요금제로 막으면 계정 확인에서 plan_required, AI·동작 경로는 들어가지 못한다
+    const me = await call("GET", "/account/me", T_FREE);
+    expect(me.status).toBe(403);
+    expect(await json(me)).toEqual({ error: "plan_required" });
+    expect((await call("POST", "/v1/danchu/actions", T_FREE, { action: "quote_submit", rfqNo: "DC-2026-0142", body: QUOTE_BODY })).status).toBe(401);
+    expect((await call("POST", "/v1/agent/conversations", T_FREE, { requestId: "DC-2026-0142" })).status).toBe(401);
+  });
+
+  it("quote_draft·quote_upload·quote_submit: 단추 회신 구조만 받고, 승인 뒤 그대로 단추 /act 로 보낸다", async () => {
+    const { call, api } = setup();
+    await consent(call, T_CRO);
+    const upload = { name: "견적서.pdf", size: 1024, type: "application/pdf" };
+    for (const [action, body] of [["quote_draft", QUOTE_BODY], ["quote_upload", upload], ["quote_submit", QUOTE_BODY]] as const) {
+      const made = await json(await call("POST", "/v1/danchu/actions", T_CRO, { action, rfqNo: "DC-2026-0142", body }));
+      expect(made.status).toBe("drafted");
+      expect(await approveAndDispatch(call, T_CRO, made)).toMatchObject({ status: "sent" });
+      expect(api.acted.at(-1)).toEqual({ token: T_CRO, a: { action, rfqNo: "DC-2026-0142", body } });
+    }
+    // 레거시 견적(부가세 포함 총액 줄)·쉼표 금액·요청 번호 없음은 받지 않는다
+    const bad = [
+      { action: "quote_submit", rfqNo: "DC-2026-0142", body: { quoteLines: [{ label: "독성", amountWon: 1 }] } },
+      { action: "quote_submit", rfqNo: "DC-2026-0142", body: { ...QUOTE_BODY, items: [{ ...QUOTE_BODY.items[0], amount: "48,500,000" }] } },
+      { action: "quote_submit", body: QUOTE_BODY },
+      { action: "quote_upload", rfqNo: "DC-2026-0142", body: { name: "a.pdf" } },
+    ];
+    for (const b of bad) expect((await call("POST", "/v1/danchu/actions", T_CRO, b)).status).toBe(400);
+    expect(api.acted).toHaveLength(3);
+  });
+
+  it("단추 요청 번호로 기관 견적 대화를 열고(요청서·초안은 단추에서), 다시 열면 이어 쓴다. 참여 전이면 409", async () => {
+    const { call, api } = setup();
+    await consent(call, T_CRO);
+    const first = await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-0142" });
+    expect(first.status).toBe(201);
+    const conv = await json(first);
+    expect(conv).toMatchObject({ role: "cro", danchuNo: "DC-2026-0142", quote: { no: "DC-2026-0142", priced: [1], submittedVersion: null } });
+    expect(conv.quote.items.map((i: { seq: number }) => i.seq)).toEqual([1, 2]);
+    expect(api.calls).toContain(`quote:${T_CRO}:DC-2026-0142`);
+    const again = await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-0142" });
+    expect(again.status).toBe(200);
+    expect((await json(again)).id).toBe(conv.id);
+    const notJoined = await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-0143" });
+    expect(notJoined.status).toBe(409);
+    expect(await json(notJoined)).toEqual({ error: "quote_not_joined" });
+    expect((await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-9999" })).status).toBe(404);
+    // 기관 견적 대화는 레거시 회신 장부로 보내지 않는다
+    expect((await call("POST", `/v1/agent/conversations/${conv.id}/outbound`, T_CRO, { version: 1 })).status).toBe(409);
+  });
+
+  it("턴: 모델에는 견적 도구와 받은 요청·초안(금액 숫자 없음)만, update_quote 는 금액 없이 반영하고 금액 칸이 든 호출은 버린다", async () => {
+    const provider = new FakeProvider([
+      {
+        text: "회복군은 조건부로 적었어요.",
+        toolCalls: [{ id: "t1", name: "update_quote", input: { items: [{ seq: 2, avail: "조건부 가능", weeks: "4", reason: "회복군 4주 운영" }], common: { startDate: "2026-12-01" } } }],
+      },
+      { text: "금액도 넣었어요.", toolCalls: [{ id: "t2", name: "update_quote", input: { items: [{ seq: 1, amount: "1" }] } }] },
+    ]);
+    const { call } = setup(provider);
+    await consent(call, T_CRO);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-0142" }));
+    const sse = await (await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "회복군은 4주로 할 수 있어요. 착수는 12월 1일." })).text();
+    expect(sse).toContain("event: quote");
+    const req = provider.calls[0]!;
+    expect(req.system).toBe(CRO_DANCHU_SYSTEM);
+    expect(req.tools?.map((t) => t.name)).toEqual(["summarize_request", "update_quote"]);
+    const last = String(req.messages.at(-1)?.content);
+    expect(last).toContain("<견적 초안>");
+    expect(last).toContain("2. 회복군 추가(4주) | 가능 여부: 미정");
+    expect(last).not.toMatch(/48500000|48,500,000/);
+    const after = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
+    expect(after.quote.items[1]).toMatchObject({ seq: 2, avail: "조건부 가능", weeks: "4", reason: "회복군 4주 운영", amount: "" });
+    expect(after.quote.common.startDate).toBe("2026-12-01");
+    expect(after.quote.version).toBe(2);
+    // 금액 칸이 든 도구 호출은 통째로 버린다(스키마에 금액이 없다)
+    const sse2 = await (await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "금액도 넣어 줘" })).text();
+    expect(sse2).toContain("tool_rejected");
+    const after2 = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
+    expect(after2.quote.items[0].amount).toBe("48500000");
+    expect(after2.quote.version).toBe(2);
+  });
+
+  it("승인 뒤 상태: 견적 제출이 단추에 들어가면 그 대화에 제출한 판을 남긴다. 거절되면 그대로, 다른 요청·조직 대화는 붙이지 못한다", async () => {
+    const { call, api } = setup();
+    await consent(call, T_CRO);
+    await consent(call, T_REQ);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_CRO, { requestId: "DC-2026-0142" }));
+    const submit = (extra: Record<string, unknown> = {}) =>
+      call("POST", "/v1/danchu/actions", T_CRO, { action: "quote_submit", rfqNo: "DC-2026-0142", body: QUOTE_BODY, conversationId: conv.id, ...extra });
+    // 단추가 거절하면 대화는 그대로
+    api.actReply = { status: 409, body: { error: "회신 기한이 지났어요." } };
+    expect((await approveAndDispatch(call, T_CRO, await json(await submit()))).status).toBe("failed");
+    expect((await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO))).quote.submittedVersion).toBeNull();
+    // 받으면 지금 판을 제출한 판으로
+    api.actReply = { status: 200, body: { ok: true } };
+    expect((await approveAndDispatch(call, T_CRO, await json(await submit()))).status).toBe("sent");
+    const done = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
+    expect(done.quote.submittedVersion).toBe(done.quote.version);
+    // 대화 id 는 단추로 보내는 본문에 들어가지 않는다
+    expect(JSON.stringify(api.acted.at(-1))).not.toContain(String(conv.id));
+    // 다른 요청 번호로는 이 대화를 붙일 수 없고, 다른 역할(의뢰자)도 못 붙인다
+    expect((await submit({ rfqNo: "DC-2026-0010" })).status).toBe(404);
+    expect((await call("POST", "/v1/danchu/actions", T_REQ, { action: "create", body: { substance: "A" }, conversationId: conv.id })).status).toBe(404);
+    expect((await submit({ conversationId: "not-a-uuid" })).status).toBe(400);
+  });
+
+  it("의뢰자 요청 접수가 단추에 들어가면 대화를 보낸 것으로 표시하고 단추 번호를 남긴다(요청함에 작성 중으로 다시 보이지 않게)", async () => {
+    const { call } = setup();
+    await consent(call, T_REQ);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_REQ, {}));
+    const made = await json(await call("POST", "/v1/danchu/actions", T_REQ, { action: "create", body: { substance: "물질 B" }, conversationId: conv.id }));
+    expect((await approveAndDispatch(call, T_REQ, made)).status).toBe("sent");
+    const after = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_REQ));
+    expect(after.danchuNo).toBe("DC-2026-0011");
+  });
+
+  it("afterDanchuSent: 접수는 본문 초안을 보낸 것으로, 임시 저장·PDF 주소는 상태를 바꾸지 않는다", () => {
+    const base = {
+      id: "c", orgId: "o", createdBy: "u", role: "requester" as const, mode: "request" as const, requestId: null, danchuNo: null, quote: null,
+      sheet: {} as never, messages: [], question: null, summary: null, draft: { body: "본문", dropped: 0, version: 2, outboundCreated: false }, turns: 1,
+      usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+    };
+    const next = afterDanchuSent(base, { action: "create", rfqNo: null, body: {} }, { rfqNo: "DC-2026-0011" });
+    expect(next).toMatchObject({ danchuNo: "DC-2026-0011", draft: { outboundCreated: true, version: 2 } });
+    expect(afterDanchuSent(base, { action: "create", rfqNo: null, body: {} }, { rfqNo: "../x" })?.danchuNo).toBeNull();
+    expect(afterDanchuSent(base, { action: "quote_draft", rfqNo: "DC-2026-0142", body: {} }, null)).toBeNull();
+    expect(afterDanchuSent(base, { action: "quote_upload", rfqNo: "DC-2026-0142", body: {} }, null)).toBeNull();
   });
 });

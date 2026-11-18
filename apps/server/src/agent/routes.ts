@@ -3,6 +3,8 @@ import {
   amountBlock,
   EMPTY_SHEET,
   missingFields,
+  quoteContext,
+  quoteDraftFromBrief,
   redactContacts,
   retrievalQuery,
   sheetContext,
@@ -20,9 +22,21 @@ import type { MarketRepo } from "../db/market";
 import type { OutboundRepo } from "../repo";
 import type { AgentEvent } from "./interpret";
 import { runToolTurn } from "./repair";
-import { ASK_SYSTEM, SYSTEM } from "./prompts";
-import { TOOLS } from "./tools";
-import type { Conversation, ConversationRepo, RequestDirectory, StoredMessage } from "./store";
+import { ASK_SYSTEM, CRO_DANCHU_SYSTEM, SYSTEM } from "./prompts";
+import { toolsFor } from "./tools";
+import type { Conversation, ConversationRepo, DanchuLookupError, RequestDirectory, StoredMessage } from "./store";
+
+/** 단추 요청 번호 */
+const RFQ_NO = /^DC-\d{4}-\d{4,6}$/;
+const LOOKUP_STATUS: Record<DanchuLookupError, 401 | 403 | 404 | 429 | 503> = {
+  unauthorized: 401,
+  forbidden: 403,
+  org_not_ready: 403,
+  plan_required: 403,
+  not_found: 404,
+  rate_limited: 429,
+  unavailable: 503,
+};
 
 export const LIMITS = {
   textChars: 2000,
@@ -76,6 +90,9 @@ const view = (c: Conversation) => ({
   question: c.question,
   summary: c.summary,
   draft: c.draft && { body: c.draft.body, dropped: c.draft.dropped, version: c.draft.version, sent: c.draft.outboundCreated },
+  // 단추 연동: 다루는 단추 요청 번호와 기관 견적 초안(금액은 단추 계산값, 사람에게만 보인다)
+  danchuNo: c.danchuNo,
+  quote: c.quote,
   turns: c.turns,
   // 이어서 보기용. 같은 조직의 대화 기록만 돌려준다(load가 조직을 확인한다).
   messages: c.messages
@@ -87,7 +104,7 @@ const view = (c: Conversation) => ({
 const stripNotes = (t: string) =>
   t
     .split("\n")
-    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|응답 없음|질문: .*)\)$/.test(l.trim()))
+    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*)\)$/.test(l.trim()))
     .join("\n")
     .trim();
 
@@ -115,14 +132,30 @@ export function agentRoutes(deps: AgentDeps) {
     const mode = parsed.data.mode ?? "request";
     let sheet = { ...EMPTY_SHEET };
     let requestId: string | null = null;
+    let danchuNo: string | null = null;
+    let quote: Conversation["quote"] = null;
     // 질문 대화는 요청과 묶이지 않는다(의뢰자·기관 모두 바로 연다).
     if (mode === "ask" && parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
     if (mode === "request" && s.role === "cro") {
       if (!parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
-      const r = await deps.requests.forCro(parsed.data.requestId, s.orgId);
-      if (!r) return c.json({ error: "not_found" }, 404);
-      sheet = r.sheet;
-      requestId = parsed.data.requestId;
+      if (RFQ_NO.test(parsed.data.requestId)) {
+        // 단추 연동 기관 견적 대화(말로 맡기는 견적 2단계): 단추에서 요청서 전체와 회신 초안을 사용자 토큰으로 읽는다
+        if (!deps.requests.forDanchu) return c.json({ error: "not_found" }, 404);
+        const r = await deps.requests.forDanchu(parsed.data.requestId, c.req.header("authorization"));
+        if (!r.ok) return c.json({ error: r.error }, LOOKUP_STATUS[r.error]);
+        // 참여한 뒤, 회신이 열려 있을 때만 견적을 쓴다. 참여·불참은 받은 요청 화면에서 한다
+        if (r.brief.state !== "open") return c.json({ error: `quote_${r.brief.state}` }, 409);
+        // 이 사용자가 이 요청으로 연 대화가 있으면 이어서 쓴다(대화로 고친 초안을 잃지 않게)
+        const prev = await deps.conversations.findDanchu(s.orgId, s.userId, r.brief.no);
+        if (prev) return c.json(view(prev));
+        danchuNo = r.brief.no;
+        quote = quoteDraftFromBrief(r.brief);
+      } else {
+        const r = await deps.requests.forCro(parsed.data.requestId, s.orgId);
+        if (!r) return c.json({ error: "not_found" }, 404);
+        sheet = r.sheet;
+        requestId = parsed.data.requestId;
+      }
     }
     const conv: Conversation = {
       id: randomUUID(),
@@ -131,6 +164,8 @@ export function agentRoutes(deps: AgentDeps) {
       role: s.role,
       mode,
       requestId,
+      danchuNo,
+      quote,
       sheet,
       messages: [],
       question: null,
@@ -178,13 +213,18 @@ export function agentRoutes(deps: AgentDeps) {
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
     // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
-    const evidence = retrieve(ask ? userText : retrievalQuery(userText, conv.sheet));
+    // 단추 연동 기관 견적 대화: 요청서 칸(sheet) 대신 받은 요청과 견적 초안을 붙인다(금액 숫자는 넣지 않는다)
+    const danchuQuote = conv.role === "cro" && conv.danchuNo && conv.quote ? conv.quote : null;
+    const evidence = retrieve(
+      ask ? userText : danchuQuote ? `${userText} ${danchuQuote.request.categories.join(" ")} ${danchuQuote.rows.map((r) => r.name).join(" ")}` : retrievalQuery(userText, conv.sheet),
+    );
+    const stateBlock = danchuQuote ? quoteContext(danchuQuote) : sheetContext(conv.sheet);
     const messages: AgentMessage[] = [
       ...history,
       // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.
       {
         role: "user",
-        content: ask ? `${userText}\n\n${contextBlock(evidence)}` : `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}`,
+        content: ask ? `${userText}\n\n${contextBlock(evidence)}` : `${userText}\n\n${stateBlock}\n\n${contextBlock(evidence)}`,
       },
     ];
 
@@ -194,7 +234,7 @@ export function agentRoutes(deps: AgentDeps) {
       const abort = new AbortController();
       stream.onAbort(() => abort.abort());
       try {
-        await send("step", { label: ask ? "원문 찾기" : conv.role === "cro" ? "요청 확인" : "요청서 확인" });
+        await send("step", { label: ask ? "원문 찾기" : danchuQuote ? "견적 초안 확인" : conv.role === "cro" ? "요청 확인" : "요청서 확인" });
         const onText = (delta: string) => {
           writes = writes.then(() => send("text", { delta }));
         };
@@ -207,7 +247,7 @@ export function agentRoutes(deps: AgentDeps) {
           : await runToolTurn({
               provider,
               conv,
-              request: { system: SYSTEM[conv.role], messages, tools: TOOLS[conv.role], maxTokens: LIMITS.maxTokens, signal: abort.signal },
+              request: { system: danchuQuote ? CRO_DANCHU_SYSTEM : SYSTEM[conv.role], messages, tools: toolsFor(conv), maxTokens: LIMITS.maxTokens, signal: abort.signal },
               onText,
             });
         await writes;
@@ -259,6 +299,8 @@ export function agentRoutes(deps: AgentDeps) {
     const parsed = OutboundBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
     if (conv.mode === "ask") return c.json({ error: "no_draft" }, 409);
+    // 단추 연동 기관 견적은 이 장부 경로가 아니라 단추 동작(/v1/danchu/actions quote_submit)으로 제출한다
+    if (conv.danchuNo && conv.role === "cro") return c.json({ error: "use_danchu_actions" }, 409);
     const d = conv.draft;
     if (!d) return c.json({ error: "no_draft" }, 409);
     // 사람이 본 판이 지금 판과 같아야 하고, 한 판에서 한 번만 만든다.

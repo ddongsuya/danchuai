@@ -9,7 +9,8 @@ import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from
 import { RFQ_NO, type DanchuApi, type DanchuError } from "./danchu";
 import type { MarketRepo, RequesterListItem } from "./db/market";
 import { randomUUID } from "node:crypto";
-import { checkAction } from "./danchuActions";
+import { canLinkConversation, checkAction } from "./danchuActions";
+import type { ConversationRepo } from "./agent/store";
 import { sha256 } from "./hash";
 import type { OutboundRepo } from "./repo";
 
@@ -151,15 +152,24 @@ export function danchuMarketRoutes(deps: { api: DanchuApi; market?: MarketRepo }
  * POST /danchu/actions { action, rfqNo?, body } → 초안(drafted). 보내기는 기존 장부 흐름(decision → dispatch)을 그대로 쓴다.
  * GET /danchu/actions/:id → 상태와 단추 응답
  */
-export function danchuActionRoutes(deps: { outbound: OutboundRepo }) {
+export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations?: ConversationRepo }) {
   const app = new Hono<{ Variables: { session: Session } }>();
   app.post("/actions", async (c) => {
     const s = c.get("session");
     if (s.role !== "requester" && s.role !== "cro") return c.json({ error: "forbidden" }, 403);
-    const r = checkAction(s.role, await c.req.json().catch(() => null));
+    // conversationId 는 이 동작을 만든 대화(승인 뒤 상태를 맞춘다). 단추로 보내는 본문(text)에는 넣지 않는다.
+    const raw = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+    const { conversationId, ...input } = raw && typeof raw === "object" ? raw : { conversationId: undefined };
+    if (conversationId !== undefined && (typeof conversationId !== "string" || !/^[0-9a-f-]{36}$/.test(conversationId))) return c.json({ error: "bad_request" }, 400);
+    const r = checkAction(s.role, raw ? input : null);
     if (!r.ok) return c.json({ error: r.error }, r.error === "forbidden" ? 403 : r.error === "too_long" ? 413 : 400);
+    if (conversationId) {
+      const conv = deps.conversations ? await deps.conversations.get(conversationId) : null;
+      // 다른 조직·다른 요청의 대화는 있는지 없는지 알리지 않는다
+      if (!canLinkConversation(conv, s, r.action)) return c.json({ error: "not_found" }, 404);
+    }
     const draft = { id: randomUUID(), orgId: s.orgId, counterpartyOrgId: s.orgId, kind: "danchu" as const, text: r.text, textHash: sha256(r.text), epoch: 1, status: "drafted" as const };
-    await deps.outbound.insertBatch([draft]);
+    await deps.outbound.insertBatch([draft], conversationId ? { conversationId } : undefined);
     return c.json({ id: draft.id, action: r.action, text: draft.text, textHash: draft.textHash, epoch: draft.epoch, status: draft.status }, 201);
   });
   app.get("/actions/:id", async (c) => {

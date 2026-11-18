@@ -20,7 +20,7 @@ import type { DanchuApi } from "./danchu";
 import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
 import type { DanchuError } from "./danchu";
 import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
-import { outcomeOf, parseActionText } from "./danchuActions";
+import { afterDanchuSent, outcomeOf, parseActionText } from "./danchuActions";
 
 export interface Deps {
   auth: AuthResolver;
@@ -61,6 +61,8 @@ const STATUS_BY_CODE: Record<ApprovalError["code"], 403 | 409> = {
 
 export function createApp(deps: Deps) {
   const app = new Hono<Env>();
+  // 대화 저장소는 에이전트 대화와 단추 동작(승인 뒤 상태 맞추기)이 같이 쓴다
+  const conversations = deps.conversations ?? new MemoryConversationRepo();
 
   app.get("/health", (c) => c.json({ ok: true }));
 
@@ -141,6 +143,17 @@ export function createApp(deps: Deps) {
     }
     const done = finishDispatch(dispatching, outcome);
     await deps.outbound.saveIf(done, { epoch: dispatching.epoch, status: "dispatching" });
+    // 단추가 받았으면 이 동작을 만든 대화의 상태를 맞춘다(요청함 중복 노출·다시 보내기 막기). 실패해도 전송 결과는 그대로 돌려준다
+    if (action && done.status === "sent") {
+      try {
+        const convId = await deps.outbound.conversationOf(draft.id);
+        const conv = convId ? await conversations.get(convId) : null;
+        const next = conv && conv.orgId === s.orgId ? afterDanchuSent(conv, action, result) : null;
+        if (next) await conversations.save(next);
+      } catch (err) {
+        console.error("danchu_after_sent_failed", err instanceof Error ? err.name : "unknown");
+      }
+    }
     return c.json(action ? { status: done.status, result: result ?? null } : { status: done.status });
   });
 
@@ -148,7 +161,7 @@ export function createApp(deps: Deps) {
     "/v1/agent",
     agentRoutes({
       provider: deps.provider,
-      conversations: deps.conversations ?? new MemoryConversationRepo(),
+      conversations,
       requests: deps.requests ?? new MemoryRequestDirectory(),
       outbound: deps.outbound,
       market: deps.market,
@@ -156,7 +169,7 @@ export function createApp(deps: Deps) {
   );
 
   if (deps.danchu) {
-    app.route("/v1/danchu", danchuActionRoutes({ outbound: deps.outbound }));
+    app.route("/v1/danchu", danchuActionRoutes({ outbound: deps.outbound, conversations }));
     app.route("/v1", danchuMarketRoutes({ api: deps.danchu.api, market: deps.market }));
   } else if (deps.market) {
     app.route("/v1", marketRoutes(deps.market));

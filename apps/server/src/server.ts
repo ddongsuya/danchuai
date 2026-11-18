@@ -4,7 +4,7 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { createApp } from "./app";
 import { devAuthFromEnv } from "./auth";
-import { MemoryConversationRepo, MemoryRequestDirectory } from "./agent/store";
+import { DanchuRequestDirectory, MemoryConversationRepo, MemoryRequestDirectory } from "./agent/store";
 import { PgConversationRepo, PgRequestDirectory } from "./db/conversations";
 import { PgOutboundRepo } from "./db/outbound";
 import { createPool } from "./db/pool";
@@ -61,7 +61,12 @@ export function buildServer(env: Env): Hono {
     transport: pool ? new InAppTransport(pool) : { deliver: async () => "unknown" },
     provider,
     conversations: pool ? new PgConversationRepo(pool) : new MemoryConversationRepo(),
-    requests: pool ? new PgRequestDirectory(pool) : memoryRequests,
+    // 단추 연동 모드: 기관 견적 대화는 단추 요청 번호(DC-...)로 열고, 요청서·초안은 단추에서 사용자 토큰으로 읽는다
+    requests: danchu
+      ? new DanchuRequestDirectory(danchu.api, pool ? new PgRequestDirectory(pool) : memoryRequests)
+      : pool
+        ? new PgRequestDirectory(pool)
+        : memoryRequests,
     identity: supaKey ? supabaseIdentity(supaKey) : undefined,
     accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
     market: pool ? new PgMarketRepo(pool) : undefined,
