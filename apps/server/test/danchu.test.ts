@@ -43,6 +43,12 @@ function fakeApi(): Fake {
         : { ok: false, error: "not_found" },
     croList: async () => ({ ok: true, data: [] }),
     croDetail: async () => ({ ok: false as const, error: "not_found" as const }),
+    croQuote: async (t, no) => {
+      calls.push(`quote:${t}:${no}`);
+      return no === "DC-2026-0142"
+        ? { ok: true as const, data: { no, state: "open" as const, closedReason: null, request: { full: true, substance: "후보물질 A", categories: ["일반독성"], overview: [], rows: [], common: [], situation: [], ask: [], replyBy: "2026-11-30", authorities: [], translation: false, files: [] }, draft: null } }
+        : { ok: false as const, error: "not_found" as const };
+    },
     recordConsent: async (t: string, version: string) => {
       calls.push(`consent:${t}:${version}`);
       return api.consentDown ? { ok: false as const, error: "unavailable" as const } : { ok: true as const, data: { version } };
@@ -135,6 +141,16 @@ describe("단추에서 읽기", () => {
     expect(r.items[0]).toMatchObject({ requestId: "DC-2026-0010", status: "sent", recipients: 3, replies: 1 });
     expect((await call("GET", "/v1/lab/requests", T_REQ)).status).toBe(403);
     expect((await call("GET", "/v1/requests", T_CRO)).status).toBe(403);
+  });
+
+  it("기관 견적 읽기: 기관만, 사용자 토큰으로 단추에서, 번호 형식·없는 요청은 404", async () => {
+    const { call, api } = setup();
+    expect((await call("GET", "/v1/lab/requests/DC-2026-0142/quote", T_REQ)).status).toBe(403);
+    expect((await call("GET", "/v1/lab/requests/x/quote", T_CRO)).status).toBe(404);
+    expect((await call("GET", "/v1/lab/requests/DC-2026-9999/quote", T_CRO)).status).toBe(404);
+    const ok = (await (await call("GET", "/v1/lab/requests/DC-2026-0142/quote", T_CRO)).json()) as { source: string; quote: { state: string } };
+    expect(ok).toMatchObject({ source: "danchu", quote: { state: "open" } });
+    expect(api.calls).toContain(`quote:${T_CRO}:DC-2026-0142`);
   });
 
   it("요청 하나: 번호 형식이 아니면 404, 단추가 못 찾으면 404", async () => {
