@@ -128,6 +128,17 @@ export function danchuMarketRoutes(deps: { api: DanchuApi; market?: MarketRepo }
     return c.json({ source: "danchu", item: r.data });
   });
 
+  // 기관: 요청서 전체와 회신 초안(말로 맡기는 견적 1단계). 단추가 공개 규칙을 적용해 보낸다
+  app.get("/lab/requests/:no/quote", async (c) => {
+    const s = c.get("session");
+    if (s.role !== "cro") return c.json({ error: "forbidden" }, 403);
+    const no = c.req.param("no");
+    if (!RFQ_NO.test(no)) return c.json({ error: "not_found" }, 404);
+    const r = await deps.api.croQuote(token(c.req.header("authorization")), no);
+    if (!r.ok) return c.json({ error: r.error }, STATUS[r.error]);
+    return c.json({ source: "danchu", quote: r.data });
+  });
+
   // 받는 기관 고르기·선정은 단추 규칙(단추가 기관에 보냄, 비교표 연 뒤 선정)으로 바뀐다. 선정은 5단계에서 단추 입구로 연다.
   app.all("/labs", (c) => c.json({ error: "gone" }, 410));
   app.all("/lab/requests/:id/viewed", (c) => c.body(null, 204));

@@ -44,6 +44,40 @@ export interface DanchuCroItem {
   join?: { terms: string; consent: string; termsUrl: string } | null;
 }
 
+/**
+ * 받은 요청 한 건의 요청서 전체와 회신 초안(단추 /api/agent/requests/[no]/quote, 말로 맡기는 견적 1단계).
+ * 단추가 웹 회신 화면과 같은 공개 규칙으로 준다: 의뢰자 회사명·연락처·토큰 없음, 참여 전에는 요약만.
+ * 초안 금액은 단추가 기관 시험 목록 단가로 계산한 값이다.
+ */
+export interface DanchuQuoteBrief {
+  no: string;
+  state: "not_joined" | "open" | "locked" | "closed" | "declined" | "expired";
+  closedReason: string | null;
+  request: {
+    full: boolean;
+    substance: string;
+    categories: string[];
+    overview: [string, string][];
+    rows: { seq: number; category: string; name: string; cond: string }[];
+    common: [string, string][];
+    situation: string[];
+    ask: string[];
+    replyBy: string;
+    authorities: string[];
+    translation: boolean;
+    files: string[];
+  };
+  draft: {
+    status: "draft" | "submitted";
+    prefilled: boolean;
+    items: { seq: number; avail: "" | "가능" | "조건부 가능" | "불가"; amount: string; weeks: string; reason?: string; source?: string; checks?: string[] }[];
+    note: string;
+    common: { validUntil: string; startDate: string; payTerms: string; substanceQty: string; reportLang: string; includes: string[] };
+    steps: { seq: number; name: string; weeks: string; after: number[] }[];
+    pdfName: string;
+  } | null;
+}
+
 export type DanchuCompare =
   | { open: false; joined: number; submitted: number; replyBy: string | null }
   | { open: true; columns: { lab: string; total: number | null; weeks: number | null; submittedAt: string | null }[] };
@@ -59,6 +93,8 @@ export interface DanchuApi {
   requesterDetail(token: string, no: string): Promise<DanchuResult<{ request: DanchuRequesterItem; compare: DanchuCompare }>>;
   croList(token: string): Promise<DanchuResult<DanchuCroItem[]>>;
   croDetail(token: string, no: string): Promise<DanchuResult<DanchuCroItem>>;
+  /** 기관: 받은 요청의 요청서 전체와 회신 초안(읽기만) */
+  croQuote(token: string, no: string): Promise<DanchuResult<DanchuQuoteBrief>>;
   /** 단추에도 동의 기록을 남긴다(연동 3단계, 단추 /api/agent/consent) */
   recordConsent(token: string, version: string): Promise<DanchuResult<{ version: string }>>;
   /** 승인된 동작 실행(연동 4·5단계). 응답 상태와 본문을 그대로. 연결 실패·시간 초과는 status 0 */
@@ -103,6 +139,7 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     requesterDetail: (t, no) => get(t, `/api/agent/requests/${encodeURIComponent(no)}`),
     croList: async (t) => pick(await get<{ requests: DanchuCroItem[] }>(t, "/api/agent/requests"), "requests"),
     croDetail: async (t, no) => pick(await get<{ request: DanchuCroItem }>(t, `/api/agent/requests/${encodeURIComponent(no)}`), "request"),
+    croQuote: async (t, no) => pick(await get<{ quote: DanchuQuoteBrief }>(t, `/api/agent/requests/${encodeURIComponent(no)}/quote`), "quote"),
     act: async (t, a) => {
       const path =
         a.action === "create" ? "/api/agent/requests" : a.action === "crm_activity" ? "/api/agent/crm" : `/api/agent/requests/${encodeURIComponent(a.rfqNo ?? "")}/act`;
