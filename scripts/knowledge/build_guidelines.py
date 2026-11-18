@@ -254,6 +254,68 @@ def split_long(txt, size=MAX_CHUNK):
     return out
 
 
+
+# ---------- 식약처 민원인 안내서 ----------
+# mfds.go.kr은 해외 접속을 끊어서 사용자 PC 크롬으로 받아 텍스트로 바꾼 것을 읽는다
+# (브랜치 claude/mfds-guides-text 의 data-staging/mfds-guides/text). 목록·이름은 mfds-guides.json.
+MFDS_VIEW = "https://www.mfds.go.kr/brd/m_1060/view.do?seq="
+GUIDE_TOP = re.compile(r"^\s*(제\s*\d+\s*[장편]\s*\S.*|[IVXⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]{1,4}\s*\.\s*\S.*|부\s*록.*|별\s*첨.*|참고\s*문헌.*)$")
+GUIDE_SUB = re.compile(r"^\s*(제\s*\d+\s*절\s*\S.*|제\d+조(의\d+)?\(.+?\).*|\d{1,2}(\.\d{1,2}){0,2}\.?\s+[^\d\s].*|Q\s*\d+[.):]?\s*\S.*)$")
+GUIDE_TOC = re.compile(r"(·{3,}|\.{4,}|…{2,}|-{4,})|\s\d{1,3}\s*$")
+def head_label(line, n=40):
+    line = re.sub(r"\s+", " ", line.strip())
+    m = re.match(r"^(\S+\s+[^.。]{0,%d}?)(?=\s[가-힣A-Za-z(]+\s.*(다\.|요\.|한다|이다)|$)" % n, line)
+    s = line[:n]
+    if len(line) > n:
+        cut = s.rfind(" ")
+        s = s[:cut] if cut > 10 else s
+    return s
+def guide_chunks(text, size=MAX_CHUNK):
+    """민원인 안내서: 장(로마 숫자·제N장)과 절(N., N.N, 제N조, Q)로 나눈다. 목차 줄은 제목으로 보지 않는다."""
+    lines = text.replace("\f", "\n").split("\n")
+    top, segs, cur_label, buf = "", [], "앞부분", []
+    def flush():
+        t = "\n".join(l for l in buf if l.strip()).strip()
+        if t:
+            segs.append([cur_label, t])
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            buf.append(""); continue
+        is_toc = bool(re.search(r"·{3,}|\.{4,}|…{2,}", s)) or (bool(GUIDE_TOC.search(s)) and len(s) < 90)
+        if not is_toc and GUIDE_TOP.match(s) and len(s) < 60:
+            flush(); buf = [s]; top = head_label(s, 30); cur_label = top; continue
+        if not is_toc and GUIDE_SUB.match(s):
+            flush(); buf = [s]; sub = head_label(s); cur_label = f"{top} {sub}".strip() if top and not sub.startswith(top) else sub; continue
+        buf.append(s)
+    flush()
+    # 짧은 절은 앞 절에 붙인다(정의 목록 1. 2. 3. 이 조각마다 갈라지지 않게)
+    merged = []
+    for lab, t in segs:
+        if merged and len(t) < 300 and len(merged[-1][1]) + len(t) < 1200:
+            merged[-1][1] += "\n" + t
+        else:
+            merged.append([lab, t])
+    out = []
+    for lab, t in merged:
+        for p in split_long(t, size):
+            out.append((lab, p))
+    return out
+
+
+def mfds_guides(text_dir):
+    lst = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mfds-guides.json"), encoding="utf-8"))
+    docs = []
+    for e in lst:
+        path = os.path.join(text_dir, e["file"])
+        txt = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+        m = re.search(r"(20\d\d)\s*[.년]\s*(\d{1,2})", txt[:3000])
+        version = f"{m.group(1)}.{int(m.group(2)):02d}" if m else ""
+        got = guide_chunks(txt) if len(re.sub(r"\s", "", txt)) > 2000 else []
+        docs.append((e, version, got))
+    return docs
+
+
 # ---------- 국가법령정보센터 ----------
 
 def law_doc(url, cache):
@@ -472,6 +534,20 @@ def main():
         for i, (label, text) in enumerate(got):
             chunks.append({"id": f"{key(short)}-{i}", "doc": short, "section": label[:80], "text": text})
         print(f"{short:28} {len(got):4} 조각 {version}", file=sys.stderr)
+    guide_dir = os.environ.get("MFDS_GUIDES_DIR")
+    if guide_dir:
+        for e, version, got in mfds_guides(guide_dir):
+            short = "식약처 " + e["name"]
+            meta = {"short": short, "name": e["name"], "by": "식품의약품안전처", "about": "민원인 안내서 (" + e["group"] + ")", "url": MFDS_VIEW + str(e["seq"]),
+                    "topic": "guide", "products": [], "lang": "ko", "version": version, "chunks": len(got),
+                    "license": "공공저작물(저작권법 제24조의2). 식약처 민원인 안내서 원문을 조항 단위로 나눈 것이며 내용은 바꾸지 않았다."}
+            if not got:
+                meta["license"] = "원문 미수록(스캔본 또는 암호화 문서). 공식 주소만 연결"
+                gaps.append(e["name"])
+            docs.append(meta)
+            for i, (label, text) in enumerate(got):
+                chunks.append({"id": f"{key(short + e['file'])}-{i}", "doc": short, "section": label[:80], "text": text})
+            print(f"{short:28} {len(got):4} 조각 {version}", file=sys.stderr)
     out = {"builtAt": time.strftime("%Y-%m-%d"), "source": exp["source"], "docs": docs, "chunks": chunks, "gaps": gaps}
     json.dump(out, open(os.path.join(DATA, "guidelines.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print("완료", len(docs), "문서", len(chunks), "조각", "원문 없음:", gaps, file=sys.stderr)

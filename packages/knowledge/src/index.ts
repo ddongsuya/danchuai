@@ -32,11 +32,13 @@ const NOTE_PASSAGES = notes.chunks as Passage[];
 
 /**
  * 조각 배율. 제출 서류 작성방법 별표(CTD 작성 예시 표)는 시험 이름만 빽빽해 거의 모든 질문에 걸리므로 낮춘다.
- * 공식 Q&A는 본 가이드라인보다 조금 낮춰 본문이 먼저 나오게 한다. 내용은 그대로 두고 순서만 바꾼다.
+ * 공식 Q&A와 식약처 민원인 안내서(해설·설명)는 본 가이드라인·고시보다 조금 낮춰 본문이 먼저 나오게 한다. 내용은 그대로 두고 순서만 바꾼다.
  */
+const GUIDE_DOCS = new Set(DOCS.filter((d) => d.url.includes("mfds.go.kr/brd/")).map((d) => d.short));
+
 export function passageWeight(p: Passage): number {
   if (/^별표\S*\s.*(작성방법|작성요령)/.test(p.section)) return 0.5;
-  if (/ Q&A$/.test(p.doc)) return 0.8;
+  if (/ Q&A$/.test(p.doc) || GUIDE_DOCS.has(p.doc)) return 0.8;
   return 1;
 }
 
