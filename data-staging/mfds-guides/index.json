@@ -1,0 +1,418 @@
+{
+  "files": [
+    {
+      "source": "8.+지지체를+포함하는+세포치료제+평가+가이드라인(2020).pdf",
+      "text": "text/8.+지지체를+포함하는+세포치료제+평가+가이드라인(2020).pdf.txt",
+      "bytes": 535868,
+      "pages": 28,
+      "chars": 19864,
+      "method": "pdftotext"
+    },
+    {
+      "source": "[안내서]세포유전자치료제_초기_임상시험_디자인_가이드라인.pdf",
+      "text": "text/[안내서]세포유전자치료제_초기_임상시험_디자인_가이드라인.pdf.txt",
+      "bytes": 20976668,
+      "pages": 39,
+      "chars": 1459,
+      "method": "pdftotext",
+      "likely_scanned": true
+    },
+    {
+      "source": "G-CSF+동등생물의약품+비임상+및+임상+평가+가이드라인_최종.pdf",
+      "text": "text/G-CSF+동등생물의약품+비임상+및+임상+평가+가이드라인_최종.pdf.txt",
+      "bytes": 510343,
+      "pages": 13,
+      "chars": 8415,
+      "method": "pdftotext"
+    },
+    {
+      "source": "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf",
+      "text": "text/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf.txt",
+      "bytes": 29401249,
+      "pages": 66,
+      "chars": 0,
+      "method": "pdftotext",
+      "likely_scanned": true
+    },
+    {
+      "source": "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU) 가이드라인 개정.pdf",
+      "text": "text/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU) 가이드라인 개정.pdf.txt",
+      "bytes": 1950737,
+      "pages": 56,
+      "chars": 27880,
+      "method": "pdftotext"
+    },
+    {
+      "source": "「의약품+불순물+유전독성+평가+가이드라인(민원인+안내서)」.pdf",
+      "text": "text/「의약품+불순물+유전독성+평가+가이드라인(민원인+안내서)」.pdf.txt",
+      "bytes": 1501019,
+      "pages": 191,
+      "chars": 184877,
+      "method": "pdftotext"
+    },
+    {
+      "source": "「의약품+중+유전독성+불순물+평가+및+관리+질의응답집(민원인안내서)」.pdf",
+      "text": "text/「의약품+중+유전독성+불순물+평가+및+관리+질의응답집(민원인안내서)」.pdf.txt",
+      "bytes": 437413,
+      "pages": 29,
+      "chars": 14559,
+      "method": "pdftotext"
+    },
+    {
+      "source": "「의약품+중+유전독성+불순물+평가+사례집(민원인안내서)」.pdf",
+      "text": "text/「의약품+중+유전독성+불순물+평가+사례집(민원인안내서)」.pdf.txt",
+      "bytes": 782628,
+      "pages": 70,
+      "chars": 39075,
+      "method": "pdftotext"
+    },
+    {
+      "source": "「의약품등의+독성시험기준」+해설서+책자.pdf",
+      "text": "text/「의약품등의+독성시험기준」+해설서+책자.pdf.txt",
+      "bytes": 104552430,
+      "pages": 209,
+      "chars": 0,
+      "method": "pdftotext",
+      "likely_scanned": true
+    },
+    {
+      "source": "독성동태시험+가이드라인&질의응답집+(민원인+안내서).pdf",
+      "text": "text/독성동태시험+가이드라인&질의응답집+(민원인+안내서).pdf.txt",
+      "bytes": 551399,
+      "pages": 22,
+      "chars": 18861,
+      "method": "pdftotext"
+    },
+    {
+      "source": "동종줄기세포치료제+면역원성+평가+가이드라인(민원인+안내서).pdf",
+      "text": "text/동종줄기세포치료제+면역원성+평가+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 344313,
+      "pages": 17,
+      "chars": 9938,
+      "method": "pdftotext"
+    },
+    {
+      "source": "마이크로도즈+진단용+방사성의약품+비임상시험+가이드라인(민원인+안내서).pdf",
+      "text": "text/마이크로도즈+진단용+방사성의약품+비임상시험+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 762787,
+      "pages": 11,
+      "chars": 4377,
+      "method": "pdftotext"
+    },
+    {
+      "source": "박테리오파지+치료제의+임상시험+시+품질+및+비임상+평가+가이드라인(민원인+안내서).pdf",
+      "text": "text/박테리오파지+치료제의+임상시험+시+품질+및+비임상+평가+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 645534,
+      "pages": 39,
+      "chars": 25901,
+      "method": "pdftotext"
+    },
+    {
+      "source": "붙임.+의약품의+심실+재분극+지연(QT간격+연장)+비임상+평가+가이드라인+개정.hwpx",
+      "text": "text/붙임.+의약품의+심실+재분극+지연(QT간격+연장)+비임상+평가+가이드라인+개정.hwpx.txt",
+      "bytes": 227861,
+      "pages": null,
+      "chars": 23794,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "비임상+연구용+영장류+사육관리+가이드라인(민원인안내서).pdf",
+      "text": "text/비임상+연구용+영장류+사육관리+가이드라인(민원인안내서).pdf.txt",
+      "bytes": 2061606,
+      "pages": 50,
+      "chars": 16842,
+      "method": "pdftotext"
+    },
+    {
+      "source": "비임상시험관리기준+해설서(최종본).pdf",
+      "text": "text/비임상시험관리기준+해설서(최종본).pdf.txt",
+      "bytes": 2597434,
+      "pages": 182,
+      "chars": 79859,
+      "method": "pdftotext"
+    },
+    {
+      "source": "생균치료제의+임상시험+시+품질+비임상+평가+가이드라인(민원인+안내서).hwpx",
+      "text": "text/생균치료제의+임상시험+시+품질+비임상+평가+가이드라인(민원인+안내서).hwpx.txt",
+      "bytes": 234794,
+      "pages": null,
+      "chars": 14254,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "소아용의약품+비임상+안전성+가이드라인+(민원인안내서)+개정.pdf",
+      "text": "text/소아용의약품+비임상+안전성+가이드라인+(민원인안내서)+개정.pdf.txt",
+      "bytes": 923757,
+      "pages": 51,
+      "chars": 40786,
+      "method": "pdftotext"
+    },
+    {
+      "source": "심혈관계+안전성약리+평가법+해설서(최종).pdf",
+      "text": "text/심혈관계+안전성약리+평가법+해설서(최종).pdf.txt",
+      "bytes": 5454907,
+      "pages": 50,
+      "chars": 27268,
+      "method": "pdftotext"
+    },
+    {
+      "source": "안내서-0186-01+의약품+안전성약리시험+가이드라인_순환계약품과.pdf",
+      "text": "text/안내서-0186-01+의약품+안전성약리시험+가이드라인_순환계약품과.pdf.txt",
+      "bytes": 358539,
+      "pages": 4,
+      "chars": 9752,
+      "method": "pdftotext"
+    },
+    {
+      "source": "안내서-0189-01+의약품의+면역독성시험+가이드라인_순환계약품과.pdf",
+      "text": "text/안내서-0189-01+의약품의+면역독성시험+가이드라인_순환계약품과.pdf.txt",
+      "bytes": 388859,
+      "pages": 6,
+      "chars": 13651,
+      "method": "pdftotext"
+    },
+    {
+      "source": "암+치료용+방사성의약품+비임상시험+가이드라인.pdf",
+      "text": "text/암+치료용+방사성의약품+비임상시험+가이드라인.pdf.txt",
+      "bytes": 861607,
+      "pages": 22,
+      "chars": 13828,
+      "method": "pdftotext"
+    },
+    {
+      "source": "암치료를+위한+수지상+세포치료제+평가+시+고려사항[민원인+안내서].pdf",
+      "text": "text/암치료를+위한+수지상+세포치료제+평가+시+고려사항[민원인+안내서].pdf.txt",
+      "bytes": 274042,
+      "pages": 18,
+      "chars": 9852,
+      "method": "pdftotext"
+    },
+    {
+      "source": "오가노이드+기반+세포치료제의+임상시험+시+품질+및+비임상+평가+가이드라인(민원인+안내서).pdf",
+      "text": "text/오가노이드+기반+세포치료제의+임상시험+시+품질+및+비임상+평가+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 647334,
+      "pages": 37,
+      "chars": 26128,
+      "method": "pdftotext"
+    },
+    {
+      "source": "위험관리+기반+의료기기+생물학적+평가+가이드라인+개정(민원인안내서).pdf",
+      "text": "text/위험관리+기반+의료기기+생물학적+평가+가이드라인+개정(민원인안내서).pdf.txt",
+      "bytes": 1276396,
+      "pages": 82,
+      "chars": 35956,
+      "method": "pdftotext"
+    },
+    {
+      "source": "유전자치료제+비임상+생체분포시험+가이드라인(민원인+안내서).pdf",
+      "text": "text/유전자치료제+비임상+생체분포시험+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 353274,
+      "pages": 23,
+      "chars": 12136,
+      "method": "pdftotext"
+    },
+    {
+      "source": "유전자치료제+비임상시험+평가+가이드라인+개정(민원인안내서).pdf",
+      "text": "text/유전자치료제+비임상시험+평가+가이드라인+개정(민원인안내서).pdf.txt",
+      "bytes": 359561,
+      "pages": 26,
+      "chars": 14311,
+      "method": "pdftotext"
+    },
+    {
+      "source": "유전자편집기술을+이용한+유전자치료제의+품질,+비임상+및+임상+평가+가이드라인[민원인+안내서].pdf",
+      "text": "text/유전자편집기술을+이용한+유전자치료제의+품질,+비임상+및+임상+평가+가이드라인[민원인+안내서].pdf.txt",
+      "bytes": 412126,
+      "pages": 26,
+      "chars": 18343,
+      "method": "pdftotext"
+    },
+    {
+      "source": "의료기기+비임상시험분야+자주묻는+질의응답집(민원인안내서)+개정.pdf",
+      "text": "text/의료기기+비임상시험분야+자주묻는+질의응답집(민원인안내서)+개정.pdf.txt",
+      "bytes": 1586076,
+      "pages": 91,
+      "chars": 47594,
+      "method": "pdftotext"
+    },
+    {
+      "source": "의료기기+생물학적+안전성+통합+가이드라인(2019.10.).pdf",
+      "text": "text/의료기기+생물학적+안전성+통합+가이드라인(2019.10.).pdf.txt",
+      "bytes": 4917579,
+      "pages": 114,
+      "chars": 27107,
+      "method": "pdftotext"
+    },
+    {
+      "source": "의약품+비임상시험+가이드라인+질의응답집_안내서.pdf",
+      "text": "text/의약품+비임상시험+가이드라인+질의응답집_안내서.pdf.txt",
+      "bytes": 530651,
+      "pages": 30,
+      "chars": 21219,
+      "method": "pdftotext"
+    },
+    {
+      "source": "인터페론+베타+동등생물의약품의+비임상+및+임상+평가+가이드라인(민원인+안내서).pdf",
+      "text": "text/인터페론+베타+동등생물의약품의+비임상+및+임상+평가+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 328547,
+      "pages": 15,
+      "chars": 10238,
+      "method": "pdftotext"
+    },
+    {
+      "source": "재조합+인간난포자극호르몬(r-hFSH)+동등생물의약품의+비임상+및+임상+평가+가이드라인+최종.pdf",
+      "text": "text/재조합+인간난포자극호르몬(r-hFSH)+동등생물의약품의+비임상+및+임상+평가+가이드라인+최종.pdf.txt",
+      "bytes": 366033,
+      "pages": 14,
+      "chars": 8858,
+      "method": "pdftotext"
+    },
+    {
+      "source": "줄기세포치료제+종양원성+평가+가이드라인(민원인+안내서).hwpx",
+      "text": "text/줄기세포치료제+종양원성+평가+가이드라인(민원인+안내서).hwpx.txt",
+      "bytes": 183474,
+      "pages": null,
+      "chars": 13492,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "줄기세포치료제+체내분포+평가+가이드라인-정량+PCR+중심으로(민원인+안내서).pdf",
+      "text": "text/줄기세포치료제+체내분포+평가+가이드라인-정량+PCR+중심으로(민원인+안내서).pdf.txt",
+      "bytes": 359533,
+      "pages": 23,
+      "chars": 12651,
+      "method": "pdftotext"
+    },
+    {
+      "source": "줄기세포치료제+품질,+비임상+및+임상+평가+가이드라인[민원인+안내서].hwpx",
+      "text": "text/줄기세포치료제+품질,+비임상+및+임상+평가+가이드라인[민원인+안내서].hwpx.txt",
+      "bytes": 187012,
+      "pages": null,
+      "chars": 16318,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "플라스미드+DNA+기반+치료제의+품질+및+비임상시험+평가+가이드라인(민원인안내서).hwpx",
+      "text": "text/플라스미드+DNA+기반+치료제의+품질+및+비임상시험+평가+가이드라인(민원인안내서).hwpx.txt",
+      "bytes": 914653,
+      "pages": null,
+      "chars": 20444,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "한약(생약)제제+비임상시험+가이드라인(민원인+안내서)_최종.hwpx",
+      "text": "text/한약(생약)제제+비임상시험+가이드라인(민원인+안내서)_최종.hwpx.txt",
+      "bytes": 190755,
+      "pages": null,
+      "chars": 17739,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "합성+올리고뉴클레오티드+의약품의+임상시험+시+비임상시험+가이드라인(민원인+안내서).pdf",
+      "text": "text/합성+올리고뉴클레오티드+의약품의+임상시험+시+비임상시험+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 417271,
+      "pages": 34,
+      "chars": 27688,
+      "method": "pdftotext"
+    },
+    {
+      "source": "합성+올리고뉴클레오티드+임상+가이드라인(최종).hwpx",
+      "text": "text/합성+올리고뉴클레오티드+임상+가이드라인(최종).hwpx.txt",
+      "bytes": 210184,
+      "pages": null,
+      "chars": 11080,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "항암제+비임상시험+가이드라인+질의응답집.pdf",
+      "text": "text/항암제+비임상시험+가이드라인+질의응답집.pdf.txt",
+      "bytes": 416409,
+      "pages": 28,
+      "chars": 12337,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품+광독성+동물대체시험법(활성산소종을+이용한+광독성+시험법)+가이드라인.pdf",
+      "text": "text/화장품+광독성+동물대체시험법(활성산소종을+이용한+광독성+시험법)+가이드라인.pdf.txt",
+      "bytes": 4501697,
+      "pages": 36,
+      "chars": 12506,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품+등+광독성+동물대체시험법(인체피부모델을+이용한+광독성시험법)+가이드라인(민원인+안내서).pdf",
+      "text": "text/화장품+등+광독성+동물대체시험법(인체피부모델을+이용한+광독성시험법)+가이드라인(민원인+안내서).pdf.txt",
+      "bytes": 23096204,
+      "pages": 94,
+      "chars": 52057,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품+등+피부감작성+동물대체시험법(인체+세포주+활성화+방법,+h-CLAT)+가이드라인(민원인+안내서).hwpx",
+      "text": "text/화장품+등+피부감작성+동물대체시험법(인체+세포주+활성화+방법,+h-CLAT)+가이드라인(민원인+안내서).hwpx.txt",
+      "bytes": 17082446,
+      "pages": null,
+      "chars": 38705,
+      "method": "hwpx-xml"
+    },
+    {
+      "source": "화장품+등+피부부식+동물대체시험법(인체피부모델을+이용한+피부부식시험법)+가이드라인.pdf",
+      "text": "text/화장품+등+피부부식+동물대체시험법(인체피부모델을+이용한+피부부식시험법)+가이드라인.pdf.txt",
+      "bytes": 4289537,
+      "pages": 73,
+      "chars": 45778,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품+등+피부자극+동물대체시험법(인체피부모델을+이용한+피부자극시험법)+가이드라인.pdf",
+      "text": "text/화장품+등+피부자극+동물대체시험법(인체피부모델을+이용한+피부자극시험법)+가이드라인.pdf.txt",
+      "bytes": 20853451,
+      "pages": 72,
+      "chars": 44221,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품+피부부식성+동물대체시험법(장벽막을+이용한+피부부식+시험법+가이드라인).pdf",
+      "text": "text/화장품+피부부식성+동물대체시험법(장벽막을+이용한+피부부식+시험법+가이드라인).pdf.txt",
+      "bytes": 1585977,
+      "pages": 40,
+      "chars": 16798,
+      "method": "pdftotext"
+    },
+    {
+      "source": "화장품_단회투여독성(용량고저법)+동물대체시험법.pdf",
+      "text": "text/화장품_단회투여독성(용량고저법)+동물대체시험법.pdf.txt",
+      "bytes": 7552005,
+      "pages": 34,
+      "chars": 29515,
+      "method": "pdftotext"
+    },
+    {
+      "source": "환자+맞춤형+3D+바이오프린팅+기술적용+융복합제제+비임상+평가+가이드라인.pdf",
+      "text": "text/환자+맞춤형+3D+바이오프린팅+기술적용+융복합제제+비임상+평가+가이드라인.pdf.txt",
+      "bytes": 707143,
+      "pages": 13,
+      "chars": 4530,
+      "method": "pdftotext"
+    },
+    {
+      "source": "희귀질환+대상+유전자치료제+개발+시+품질,+비임상+및+임상+평가+고려사항(민원인+안내서).pdf",
+      "text": "text/희귀질환+대상+유전자치료제+개발+시+품질,+비임상+및+임상+평가+고려사항(민원인+안내서).pdf.txt",
+      "bytes": 635163,
+      "pages": 37,
+      "chars": 25581,
+      "method": "pdftotext"
+    }
+  ],
+  "scanned": [
+    "[안내서]세포유전자치료제_초기_임상시험_디자인_가이드라인.pdf",
+    "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf",
+    "「의약품등의+독성시험기준」+해설서+책자.pdf"
+  ],
+  "failed": [
+    {
+      "file": "감염병+예방+및+치료용+단클론항체의약품+비임상+임상+평가+가이드라인.hwpx",
+      "error": "'utf-8' codec can't decode byte 0xf7 in position 0: invalid start byte"
+    }
+  ]
+}

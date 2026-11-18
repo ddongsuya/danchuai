@@ -1,0 +1,482 @@
+지침서ㆍ안내서 제ㆍ개정 점검표
+명칭
+화장품 등 피부감작성 동물대체시험법(인체 세포주 활성화 방법, h-CLAT) 가이드라인(민원인 안내서)
+아래에 해당하는 사항에 체크하여 주시기 바랍니다.
+등록대상
+여부
+□ 이미 등록된 지침서ㆍ안내서 중 동일ㆍ유사한 내용의 지침서ㆍ안내서가 있습니까? 
+□ 예
+■ 아니오
+☞ 상기 질문에 ‘예’라고 답하신 경우 기존의 지침서ㆍ안내서의 개정을 우선적으로 고려하시기 바랍니다. 그럼에도 불구하고 동 지침서ㆍ안내서의 제정이 필요한 경우 그 사유를 아래에 기재해 주시기 바랍니다.
+   (사유 :                                                             )
+□ 법령(법ㆍ시행령ㆍ시행규칙) 또는 행정규칙(고시ㆍ훈령ㆍ예규)의 내용을 단순 편집 또는 나열한 것입니까? 
+□ 예
+■ 아니오
+□ 단순한 사실을 대외적으로 알리는 공고의 내용입니까?
+□ 예
+■ 아니오
+□ 1년 이내 한시적 적용 또는 일회성 지시ㆍ명령에 해당하는 내용입니까?
+□ 예
+■ 아니오
+□ 외국 규정을 번역하거나 설명하는 내용입니까?
+□ 예
+■ 아니오
+□ 신규 직원 교육을 위해 법령 또는 행정규칙을 알기 쉽게 정리한 자료입니까? 
+□ 예
+■ 아니오
+☞ 상기 사항 중 어느 하나라도 ‘예’에 해당되는 경우에 지침서ㆍ안내서 등록 대상이 아닙니다. 
+   지침서ㆍ안내서 제ㆍ개정 절차를 적용하실 필요는 없습니다.
+지침서ㆍ안내서 구분
+□ 내부적으로 행정사무의 통일을 기하기 위하여 반복적으로 행정사무의 세부기준이나 절차를 제시하는 것입니까? (공무원용)
+□ 예(☞지침서) 
+■ 아니오
+□ 대내외적으로 법령 또는 고시ㆍ훈령ㆍ예규 등을 알기 쉽게 풀어서 설명하거나 특정한 사안에 대하여 식품의약품안전처의 입장을 기술하는 것입니까? (민원인용)
+■ 예(☞안내서) 
+□ 아니오
+기타 
+확인사항
+□ 상위 법령을 일탈하여 새로운 규제를 신설ㆍ강화하거나 민원인을 구속하는 내용이 있습니까?
+□ 예 
+■ 아니오
+☞ 상기 질문에 ‘예’라고 답하신 경우 상위법령 일탈 내용을 삭제하시고 지침서ㆍ안내서 제ㆍ개정 절차를 진행하시기 바랍니다.
+상기 사항에 대하여 확인하였음.
+     2026년     7월    31일
+담당자
+확  인(부서장)
+김 봉 섭
+이 이 다
+  이 안내서는 화장품 등 피부감작성 동물대체시험법(인체 세포주 활성화 방법, h-CLAT)에 대하여 알기 쉽게 설명하거나 식품의약품안전처의 입장을 기술한 것입니다.
+  본 안내서는 대외적으로 법적 효력을 가지는 것이 아니므로 본문의 기술방식(‘∼하여야 한다’ 등)에도 불구하고 참고로만 활용하시기 바랍니다. 또한, 본 안내서는 2026년 7월 현재의 과학적ㆍ기술적 사실 및 유효한 법규를 토대로 작성되었으므로 이후 최신 개정 법규 내용 및 구체적인 사실관계 등에 따라 달리 적용될 수 있음을 알려드립니다. 
+ ※ “민원인 안내서”란 민원인들의 이해를 돕기 위하여 법령 또는 행정규칙을 알기 쉽게 설명하거나 특정 민원업무에 대한 행정기관의 대외적인 입장을 기술하는 것(식품의약품안전처 지침서등의 관리에 관한 규정 제2조)
+※ 본 안내서에 대한 의견이나 문의사항이 있을 경우 식품의약품안전평가원 독성평가연구부 비임상자원연구과 및 한국동물대체시험법검증센터(KoCVAM)에 문의하시기 바랍니다.
+전화번호: 043-719-5509, 5502
+제·개정 이력
+연번
+제·개정번호
+승인일자
+주요내용
+1
+안내서-0788-01
+2017. 9.
+화장품 피부감작성 동물대체시험법(인체 세포주 활성화 방법, h-CLAT) 가이드라인 제정
+2
+안내서-0788-02
+2026. 7.
+화장품 피부감작성 동물대체시험법(인체 세포주 활성화 방법, h-CLAT) 가이드라인 개정
+- 피부감작성 판정기준 양성·음성 기준 2가지에서 “경계” 기준 추가
+Ⅰ. 요약문 1 
+  1. 개요 1 
+  2. 시험원리 2 
+  3. 제한점 및 고려사항 2 
+  4. 시험방법 3 
+  5. 인정기준 6 
+  6. 시험결과 및 보고 7 
+Ⅱ. 번역문 10 
+Ⅲ. 원문 41 
+화장품 등 피부감작성 동물대체시험법
+(인체 세포주 활성화 시험, h-CLAT) 가이드라인 
+Ⅰ
+요약문
+1
+개요
+본 시험법은 UN GHS 기준에 따른 피부감작성물질(Category 1)과 비감작성물질(No category)을 구별하는데 사용되는 체외 피부감작성 평가 시험법(인체 세포주 활성화를 이용한 피부감작성 시험법)[영문명 : human Cell Line Activation Test (h-CLAT)]으로 피부감작성 독성발현경로(Adverse Outcome Pathway, AOP)의 세 번째 단계인 수지상세포의 활성화를 특정 세포 표면 표지자(Cell surface marker)의 발현으로 평가하는 방법이다. Ⅰ. 요약문
+인체 단핵구 백혈병 세포주인 THP-1에 시험물질을 노출시킨 후 단핵구와 수지상세포의 활성화와 관련된 세포 표면 표지자인 CD86과 CD54의 발현을 정량화하여 피부감작성물질과 비감작성물질을 구별할 수 있다. 본 시험법은 다양한 유기 작용기, 반응기전, 피부감작성 역가(체내 시험결과), 물리·화학적 성질을 가지는 시험물질에 적용할 수 있다. 그러나 본 시험법 결과는 안전성 평가를 위한 독립시험으로 사용하기보다 독성발현경로의 다른 핵심단계(Key Event)를 다루는 다른 시험법 결과와 조합하여 통합독성평가(Integrated Approaches to Testing and Assessment, IATA)와 같은 통합독성평가의 일부로 사용되어야 한다. UN GHS에 따른 화학물질의 위험성 분류와 표시의 목적으로 피부감작성물질과 비감작성물질 구분에 사용되지만 본 시험법만으로는 Category 1A, 1B의 하위기준으로 세분화 할 수 없다.
+본 시험법을 일상적으로 사용하는 실험실은 시험가이드라인(부록 1의 부속서 2)에서 제시된 10종의 숙련도 물질을 사용하여 기술적 숙련도를 입증해야 하고, 시험가이드라인에서 제시하고 있는 인정기준 모두를 만족시키는 결과 값만이 유효한 것으로 인정된다. 
+시험 방법은 크게 두 단계로 나눠진다. 첫 번째는 최고 농도를 설정하기 위해 PI 염색을 통한 THP-1 세포의 세포 생존율(CV75값)을 구하기 위한 단계이며, 그 이후는 세포 표면 표지자를 형광색소 항체로 염색하고 유세포 분석을 통해 발현 정도를 측정하여 피부감작성물질과 비감작성물질을 구별하는 단계이다. 시험결과는 세포 표면 표지자인 CD86 및 CD54의 상대적 형광강도(Relative Fluorescence Intensity, RFI)를 이용하여 평가하며, 최종 결과는 시험가이드라인에서 제시한 예측모델에 따라 독립적인 반복시험 결과를 종합하여 판정한다.
+2
+시험원리
+인체 세포주 활성화를 이용한 피부감작성 시험법은 시험물질에 24시간 동안 노출된 인체 단핵구 백혈병 세포주(THP-1 세포)의 세포 표면 표지자(CD86과 CD54) 발현 수준을 정량화하는 체외 분석법이다. 세포 표면 표지자의 발현 정도는 형광색소 항체를 세포에 염색한 후 유세포 분석을 통해 측정한다. 결과 평가는 피부감작성물질과 비감작성물질을 구별하기 위해 용매/부형제 대조군과 비교한 시험물질의 표면 표지자의 상대적인 형광 강도를 이용한다.
+3
+제한점 및 고려사항
+피부감작성은 수지상세포 활성화와 관련된 세포막 표지자의 발현과 생물학적 상관성이 있다고 알려져 있다. 단, 수지상세포 활성화가 피부감작성 독성발현 기전 중 하나의 단계에 불과하여, 본 시험법의 정보만으로 화학물질이 피부감작성이 있다는 결론을 내기 어렵기 때문에 통합독성평가를 사용하여야 한다. 본 시험법으로 UN GHS에 따른 피부감작성물질과 비감작성물질 구별이 가능하지만 Category 1A, 1B 하위 분류기준으로는 구분할 수 없다.
+본 시험법의 실험실 내 및 실험실 간 재현성은 대략 80 % 수준이다. 또한 본 시험법은 국소림프절시험(LLNA) 결과와 비교하였을 때 피부감작성과 비감작성을 구분하는 정확도 85 %(N=142), 민감도 93 %(94/101), 특이도 66 %(27/41)를 나타낸다. 그리고 본 시험법에서는 높은 수준의 피부감작성 역가를 보이는 화학물질(UN GHS subcategory 1A)보다 피부감작성 역가가 낮거나 중간 수준을 나타내는 화학물질의 경우(UN GHS subcategory 1B), h-CLAT 시험법에서 위음성 예측이 나오기 쉽다. 결론적으로 본 시험법은 피부감작 위험성 여부를 식별하는 데 유용하며, 독립적 시험법보다 통합독성평가의 맥락에서 다른 정보와의 조합을 고려해야 한다.
+본 시험법에서 Log Kow가 3.5를 초과하는 시험물질(낮은 용해도를 갖는 시험 물질)은 위음성 결과가 도출되는 경향이 있으므로, 이러한 시험물질의 음성 결과는 신뢰하지 않는다. 다만, 동일한 시험물질에서 얻어진 양성 결과는 피부감작성물질로 판단하는 근거로 활용할 수 있다. 또한, 본 시험법에서 사용되는 세포주의 제한적인 대사능력 및 실험적 조건 때문에 프로합텐(pro-hapten, P450 효소 등을 통한 효소적 활성화가 필요한 물질)과, 특히 산화 속도가 느린 프리합텐(pre-hapten, 산화에 의해 활성화되는 물질)은 음성 결과가 도출될 수 있다. 형광 시험물질인 경우 본 시험법으로 평가할 수 있지만, 형광색소 항체(FITC) 또는 세포사멸 표지자(PI)와 유사한 파장을 방출하는 강한 형광 시험물질의 경우에는 파장의 감지를 방해하므로 유세포분석으로 정확한 평가가 어렵다. 그러한 경우 다른 형광색소 항체 또는 세포독성 표지자를 숙련도물질(Proficiency substances)을 이용하여 유사한 결과를 보이는지 확인한 후 사용할 수 있다.
+4
+시험방법
+4.1. 세포배양
+THP-1 세포는 10 % Foetal bovine serum (FBS), 0.05 mM 2-mercaptoethanol, 100 units/mL  Penicillin, 100 µg/mL Streptomycin이 첨가된 RPMI-1640 세포배양배지에서 37 ℃, 5 % CO2를 함유하는 가습조건에서 배양된다. 세포는 해동 후 최대 2개월까지 계대배양이 가능하며, 계대 수(Passage number)는 30을 초과할 수 없다. THP-1 세포는 일상적으로 0.1~0.2×106 cells/mL의 밀도로 2-3일마다 계대하며, 0.1~1.0×106 cells/mL 밀도를 유지한다. 시험 전에 THP-1세포는 0.1×106 cells/mL 또는 0.2×106 cells/mL의 밀도로 각각 72시간 또는 48시간 동안 배양 플라스크에서 전배양 한다. 시험 당일은 배양 플라스크에서 수확한 세포는 2×106 cells/mL의 농도로 새로운 세포배양배지에 재현탁하여 24-well 플레이트 플레이트로 표기된 경우 평평한 바닥(flat-bottom) 플레이트를 의미하며 그 외에는 둥근 바닥 플레이트 표기 
+에 500 µL (1×106 cells/well)의 세포 용액을 분주하거나 96-well 플레이트에 80 µL (1.6×105 cells/well)의 세포 용액을 분주한다.
+4.2. 세포반응성시험
+시험 전에, THP-1 세포에 대한 반응성 확인은 세포를 녹인 후 2주간 양성대조군인 2,4-Dinitrochlorobenzene (DNCB) 및 Nickel sulfate (NiSO4)과 음성대조군, Lactic acid (LA)을 이용하여 수행한다. 반응성 확인을 통과한 세포만 시험에 이용될 수 있다.
+4.3. 시험물질 및 대조물질 조제
+시험물질은 첫 번째 용매/부형제로 생리식염수나 세포배양배지를 선택하거나, 만약 시험물질이 이 두 용매/부형제에 녹지 않거나 안정적으로 분산되지 않을 경우 두 번째 용매/부형제로 Dimethylsulfoxide (DMSO)를 선택한다. 저장용액(Stock solution)은 생리식염수 또는 세포배양배지의 경우는 100 mg/mL, DMSO의 경우는 500 mg/mL로 준비한다. 시험물질은 해당 용매/부형제를 이용하여 2배 연속 희석하여 8개의 표준원액(8가지 농도)을 조제하고, 이를 세포배양배지에 희석한다(생리식염수 또는 세포배양배지:50배, DMSO:250배). 생리식염수나 세포배양배지의 경우, 플레이트의 최고 최종농도인 1000 µg/mL에서 독성이 없을 경우, 세포독성시험을 실시하여 최대농도를 재결정해야 하며, 최종적으로 5000 µg/mL을 초과해서는 안 된다. DMSO의 경우, 독성이 없어도 플레이트에서의 최종농도는 1000 µg/mL를 초과해서는 안 된다.
+4.4. 시험물질 및 대조물질 적용
+세포배양배지 또는 희석된 시험용액(Working solution)은 24-well 또는 96-well 플레이트에 준비된 세포 현탁액과 1:1(v/v)로 혼합한다. 처리된 플레이트는 37 ℃, 5 % CO2 환경에서 24 ± 0.5시간 동안 배양한다. 24 ± 0.5시간 동안 노출한 후, 세포는 샘플 튜브로 옮겨져 원심분리로 수집된 후 염색 완충액으로 두 번 세척한다(필요 시 세척과정이 추가될 수 있다).
+4.5. 용량설정시험(PI 염색, 세포생존율 측정)
+시험물질을 8가지 농도로 24 ± 0.5시간 처리한 세포를 PI 용액으로 염색하여 세포 생존율을 계산한다. 염색방법은 세포를 세척 후 염색 완충액(400 µL)으로 재현탁하고, PI 용액(20 µL)을 첨가한다(예, 최종 PI 농도는 0.625 µg/mL 이다). PI 염색은 유세포분석기의 획득 채널(acquisition channel) FL-3을 활용하여 분석된다. 75 %의 THP-1 세포 생존율을 나타내는 농도인 CV75 값(25 %의 세포독성)을 측정하여, 본시험 최고 농도를 설정한다(그림 1 참고).
+4.6. 본시험(CD86/CD54 발현 측정)
+시험물질은 먼저 용량설정시험에서 확인한 1.2×CV75의 100배(식염수나 세포배양배지의 경우) 또는 500배(DMSO의 경우)에 상응하는 농도로 희석한다. CV75를 결정할 수 없는 경우(독성이 관찰되지 않을 경우), 식염수나 세포배양배지의 경우는 5000 µg/mL, DMSO의 경우는 1000 µg/mL를 초과해서는 안 된다. 그 다음, 해당 용매/부형제로 1.2배 연속 희석을 하여 표준원액[100×1.2×CV75~100×0.335×CV75(생리식염수나 세포배양배지의 경우) 또는 500×1.2×CV75~500×0.335×CV75(DMSO의 경우)]의 8가지 농도를 확보한다. CD86/CD54 발현을 측정하기 위해서는 24-well 플레이트만 이용해야 한다. 각 시험은 최소한 두 번의 독립적인 반복시험을 수행해야 한다. 양성대조군은 DNCB(일반적으로 최종농도 4.0 µg/mL)를 사용한다.
+시험물질을 8가지 농도로 24 ± 0.5시간 처리한 세포를 CD86/CD54의 세포 표면 표지자로 염색한다. 염색방법은 세포를 세척 후 비특이적 항체결합 차단용액으로 처리하고 4 ℃ 에서 15분 동안 배양한다. 이후, 세포는 180 µL의 3개의 시료 분취액으로 나누어 96-well 둥근 바닥 플레이트나 마이크로 튜브로 분주한다. 원심분리 후 세포는 50 µL의 FITC-labelled anti-CD86, anti-CD54 또는 마우스 IgG1 (Isotype) 항체로 4 ℃ 에서 30분 동안 염색한다. 염색 완충액으로 세척한 후 세포를 염색 완충액(400 µL)에 다시 부유시키고, PI 용액 또는 다른 세포독성 표지자의 용액을 첨가한다. CD86/CD54의 발현을 유세포 분석기로 측정한다(그림 1 참고).
+그림 1. h-CLAT 시험방법
+5
+인정기준
+배지 및 용매/부형제 대조군의 세포생존율이 90 % 이상이어야 하고 용매/부형제 대조군에서 CD86 및 CD54의 상대적 형광 강도(RFI) 값은 양성기준(CD86 RFI ≥ 150 % 및  CD54 RFI ≥ 200 %)을 초과하지 않아야 한다. 반면 배지 및 용매/부형제 대조군 모두 동형(Isotype) 대조군에 대한 CD86 및 CD54의 각 기하평균 형광 강도(Mean fluorescence intensity, MFI) 비율은 105 %를 초과해야 한다.  양성대조군(DNCB)에서는 CD86 및 CD54의 RFI 값이 양성 판정 역치를 충족하고, 세포생존율이 50 % 이상이어야 한다. 시험물질의 경우, 매 시험마다 최소 4가지 시험 농도에서 세포생존율이 50 % 이상이어야 한다. 음성 결과는 원칙적으로 최고 시험농도(Highest concentration tested)에서 세포생존율이 90 % 미만인 경우에만 인정된다. 다만, 규정된 최대 시험농도(Maximal test concentration) (생리식염수 등 5000 μg/mL, DMSO 1000 μg/mL 또는 최대 용해농도)까지 시험한 경우에는 세포생존율이 90 % 이상이더라도 음성 결과를 인정할 수 있다.
+6
+시험결과 및 보고
+MFI를 기반으로 양성대조군과 시험물질 처리 세포에 대한 CD86과 CD54의 RFI는 다음 등식에 따라 계산할 수 있다.
+CD86/CD54 발현 측정을 위해 각 시험물질은 최소한 두 번의 독립적인 반복시험을 통해 단일 예측(양성, 음성 또는 경계)을 도출한다. 단일 시험의 판정 조건으로, 세포생존율이 50 % 이상인 최소 하나의 시험 농도에서 CD86의 RFI가 184 %를 초과하거나 그리고/또는 CD54의 RFI가 255 %를 초과하는 경우 결과는 양성으로 판정한다. 반면, CD86의 최대 RFI가 122 % 이하이고 CD54의 최대 RFI가 157 % 이하인 경우에는 음성으로 판정한다. 또한, 역치(CD86 122 %, CD54 157 %)를 초과하더라도 해당 용량에서 세포생존율이 50 % 미만인 경우 역시 음성으로 판정할 수 있다. 양성 및 음성 기준을 모두 충족하지 않고, 세포생존율이 50 % 이상인 농도에서 CD86의 최대 RFI가 122 % 초과 184 % 이하이거나 그리고/또는 CD54의 최대 RFI가 157 % 초과 255 % 이하인 경우에는 단일 시험 결과를 경계(Borderline)로 판정한다. 
+최종 h-CLAT 예측은 이러한 독립적인 반복시험 결과를 종합하여 결정한다. 처음 두 번의 반복시험 결과가 모두 양성이거나 모두 음성인 경우, h-CLAT의 최종 예측은 각각 양성 또는 음성으로 간주하며 세 번째 시험은 수행할 필요가 없다. 이와 마찬가지로 상기 양성 및 음성 조건을 충족하지 않고 두 번의 시험 결과가 모두 경계범위에 해당하는 경우에는 최종 예측 결과를 경계(Borderline)로 판정한다.
+그러나 처음 두 번의 반복시험에서 두 표지자(CD86 또는 CD54)에 대한 예측 결과가 서로 일치하지 않으면 세 번째 시험이 필요하며, 최종 예측은 세 번의 반복시험 중 다수결과(3번 중 2번)를 기반으로 한다. 이와 관련하여, 두 번의 반복시험을 실시하여 한 시험에서는 CD86에만 양성(이하 P1)이고 다른 시험에서는 CD54에만 양성(이하 P2)인 경우처럼 결과가 어긋나면 세 번째 시험이 필요하다는 점에 유의해야 한다. 만약 세 번째 시험에서 두 표지자 모두 음성(이하 N)으로 나오면 다수결에 따라 h-CLAT 최종 예측은 음성으로 간주한다. 반면 세 번째 시험에서 두 표지자 중 하나(P1 또는 P2) 또는 두 표지자 모두(이하 P12)에 대해 양성이 나오면 최종 예측은 양성으로 간주한다. 마지막으로, 세 번의 시험 결과가 각각 양성 1회, 음성 1회 및 경계 1회로 모두 다르게 나타나는 경우에는 최종 결과를 경계로 판정한다(그림 2 참고).
+※ 참고문헌
+DB-ALM protocol No. 158에 제시된 엑셀 템플릿을 사용하여 결과 계산이 가능하다.
+[DB-ALM(INVITTOX) (2014), Protocol 158: human Cell Line Activation Test (h-CLAT), 23pp. 웹주소 http://ecvam-dbalm.jrc.ec.europa.eu/]
+그림 2. 경계범위(borderline ranges) 및 경계값(borderline results) 결과 판정을 위해 다중 시험(multiple runs)을 고려한 h-CLAT 예측 모델의 흐름도 
+양성 분류(positive classification)를 위한 기존 역치는 CD86의 경우 150 % 유도(induction)이며, 이 역치(threshold)를 중심으로 통계적으로 도출된 경계범위는 122 ~ 184 % 이다. CD54의 경우 기존 역치는 200 % 유도이며, 이 역치를 중심으로 통계적으로 도출된 경계범위는 157 ~ 255 % 이다.
+Ⅱ
+번역문(OECD TG442E)
+◉
+일반 소개
+수지상세포 활성화 주요 현상 기반 시험가이드라인 Ⅱ. 번역문(OECD TG442E)
+1.피부감작성물질은 UN 화학물질의 분류 및 표시에 관한 세계 조화 시스템(United Nations Globally Harmonized System of Classification and Labelling of Chemicals, UN GHS)에서 정의한 바와 같이 피부 접촉 후 알레르기 반응을 유발하는 물질을 의미한다(1). 피부감작성을 유발하는 주요 생물학적 기전에 대해서는 폭넓은 합의가 이루어져 있다. 피부감작성과 관련된 화학적·생물학적 기전에 대한 현재까지의 지식은 독성발현경로(Adverse Outcome Pathway, AOP)(2)로 정리되어 있으며, 이는 분자수준의 초기현상에서 시작하여 중간 단계를 거쳐 알레르기성 접촉 피부염이라는 독성반응에 이르는 과정을 설명한다. 여기에서 분자적 개시 현상(즉, 첫 번째 핵심단계(Key event 1, KE 1))은 친전자성 물질(Electrophile substances)이 피부 단백질 내 친핵성 중심(Nucleophilic centre)과 공유결합하는 것이다. 두 번째 핵심단계(Key event 2, KE 2)는 각질세포에서 발생하며 염증반응과 항산화/친전자체 반응 요소(Antioxidant/electrophile response element, ARE) 의존 경로 등의 특정 세포 신호전달 경로와 관련된 유전자 발현 변화를 포함한다. 세 번째 핵심단계(Key event 3, KE 3)는 수지상세포(Dendritic Cells, DC)의 활성화로, 일반적으로 특정 세포 표면 표지자, 유전자 전사체, 케모카인(Chemokines) 및 사이토카인(Cytokines)의 발현을 통해 평가된다. 네 번째 핵심단계(Key event 4, KE 4)는 T 세포 활성화 및 확산으로 이는 마우스를 이용한 국소 림프절 시험법(Local Lymph Node Assay, LLNA)을 이용하여 간접적으로 평가한다(3). 
+2.본 시험가이드라인(Test Guideline, TG)은 피부감작성 AOP의 주요 현상인 수지상세포 활성화와 관련된 기전을 다루는 생체외(in vitro) 시험법을 기술한다(2). 본 TG는 UN GHS(1)에 따라 피부감작성물질과 비감작성물질의 구분을 뒷받침하기 위해 사용되는 시험법으로 구성되어 있다. 
+본 TG에 기술된 시험법은 다음과 같다. 
+• 인체세포주 활성화 시험법(h-CLAT)
+• U937 세포주 활성화 시험법(U-SENS™)
+• IL-8 루시퍼라아제 시험법
+• GARD™Skin 피부감작성시험법
+주요 현상에 기반한 본 시험법에 포함된 시험법들의 배경 및 원칙 
+3.피부감작성 평가는 전통적으로 실험동물을 이용하여 수행되어 왔다. 마그누손-클리그만(Magnusson and Kligman)의 기니피그 최대화 시험(GPMT, Guinea Pig Maximisation Test)과 뷰엘러 시험(Buehler Test)(TG406)(4)과 같이 기니피그를 사용하는 기존의 시험법은 피부감작성 유도(induction) 및 유발(elicitation) 단계 모두를 평가한다. 마우스를 사용하는 시험법인 LLNA(TG429) 및 LLNA를 변형한 두 가지 비방사성 시험법인 LLNA: DA(TG442A)(5) 및 LLNA: BrdU-ELISA(TG442B)(6)는 모두 유도 반응만을 평가하는데, 동물복지 측면에서 기니피그 시험보다 개선된 장점을 가질 뿐만아니라 피부감작성 유도 단계의 객관적 측정이 가능하다는 점에서 널리 수용되어 왔다. 
+4.피부감작성 AOP의 첫 번째 주요 현상[OECD TG442C (7)] 및 두 번째 주요 현상[OECD TG442D (8)]을 다루는 기전 기반 in chemico 및 생체외(in vitro) 시험법이 채택되어 화학물질의 피부감작성 유해성 가능성 평가에 기여하고 있다. 
+5.피부감작성물질은 수지상세포(DC) 활성화와 관련된 CD40, CD54, CD80, CD83 및 CD86과 같은 세포막 표지자의 발현 및 IL-1β 및 TNF-α와 같은 전염증성 사이토카인(Proinflammatory cytokines)과 IL-8(CXCL8) 및 CCL3을 포함한 여러 케모카인(Chemokines)의 발현도 유도하는 것으로 보고되었다(2)(9)(10)(11)(12). 본 TG에 기술된 시험법은 피부감작성물질에 노출된 후 세포 표면 표지자 CD54 및 CD86, 사이토카인 IL-8, 또는 단핵구(Monocytes) 및 수지상세포의 활성화 과정과 관련된 일련의 유전자 발현(Genomic biomarker signature)의 변화를 정량화한다.
+6.그러나 수지상세포(DC) 활성화는 피부감작성 AOP에서 하나의 주요 현상만을 대표하므로(2)(13), 수지상세포(DC) 활성화 표지자만을 측정하는 시험법으로 생산한 정보는 화학물질의 피부감작에 대한 가능성의 유무를 결정하는 단독 시험법으로 충분하지 않을 수 있다. 따라서 본 시험가이드라인에 기술된 시험법으로 생산한 데이터는 다른 피부감작성 AOP의 주요 현상을 다루는 생체외(in vitro) 시험법 및 화학물질 아날로그에 대한 in silico 모델링과 Read-across를 포함한 비시험법(13) 등 관련 보완 정보와 함께 통합독성평가(IATA) 내에서 사용되는 경우, 감작성물질(즉, UN GHS Category 1)과 비감작성물질의 구분을 지원하기 위한 목적으로 제안된다. 사용되는 정보 출처의 구성과 예측 도출을 위한 데이터 처리 절차를 모두 표준화한 접근법인 정의된 접근법(Defined Approaches, DA) 내에서 이들 방법으로 생산한 데이터를 활용한 사례는 이미 문헌으로 보고되었으며(13), 피부감작성 정의된 접근법에 대한 OECD TG(14)에 반영되어 있다. 이들 방법으로 얻은 데이터를 피부감작성 정의된 접근법(Defined Approach)에 활용하려는 경우 경계 기준 적용 또는 기타 데이터 해석절차에 대해서는 TG 497(14)을 참조해야 한다. 경계 기준 적용에 관한 세부사항은 부속서 1의 그림 1을 참조한다. 
+7.본 시험가이드라인에 포함된 시험법들은 절차, 적용 범위 및 제한점 측면에서 서로 다를 수 있으나, 각각의 시험법은 피부감작성 AOP에서 수지상세포 활성화에 해당하는 주요 현상에 대한 시험결과에 대해 각국의 요구사항을 충족하는 데 활용될 수 있으며, OECD 데이터 상호인정(Mutual Acceptance of Data, MAD)의 적용을 받을 수 있다. 정의된 접근법의 맥락에서는 이러한 시험법들이 자동적으로 상호 대체 가능한 것은 아니며, 어떤 시험법 또는 시험법 조합을 사용해야 하는지는 TG 497에 명시되어 있다. 
+8.본 시험가이드라인에 기술된 시험법은 피부감작성물질을 UN GHS (1)에 정의된 subcategory 1A 및 1B(이들 두 가지 하위분류를 적용하는 규제당국의 경우)로 하위분류하기 위한 목적으로 단독으로 사용될 수 없으며, 안전성 평가 결정을 위한 성능(potency)를 예측하는 데에도 단독으로 사용될 수 없다. 그러나, 규제 체계에 따라 이들 시험법으로 생산한 양성 결과는 화학물질을 UN GHS Category 1로 분류하는 데 단독으로 사용될 수 있다. 
+9.본 시험가이드라인에 사용되는 ‘시험물질’이라는 용어는 시험의 대상이 되는 물질을 지칭하는 것으로, 단일성분물질, 다성분물질 및(또는) 혼합물의 시험에 대한 시험법의 적용 가능성과는 관련이 없다. 현재 이들 시험법의 다성분물질 및 혼합물에 대한 적용가능성에 대해서는 제한적인 정보만이 있다(15)(16). 그럼에도 불구하고 이들 시험법은 기술적으로 다성분물질과 혼합물에 적용가능하다. 혼합물, 시험하기 어려운 화학물질(예: 불안정한 물질) 또는 본 시험가이드라인에 기술된 적용 범위에 명확히 해당하지 않는 시험물질을 시험하고자 하는 경우, 이러한 시험이 과학적으로 유의미한 결과를 도출할 수 있는지에 대해 사전에 검토하여야 한다. 또한 다성분물질 또는 혼합물을 시험하려는 경우에는, 세포독성 성분이 관찰된 반응을 간섭할 가능성에 대해서도 고려해 보아야 한다. 
+참고문헌
+(1) United Nations UN (2015), Globally Harmonized System of Classification and Labelling of Chemicals (GHS). Sixth revised edition. New York & Geneva: United Nations Publications. ISBN: 978-92-1-117006-1. Available at: [https://www.unece.org/trans/danger/publi/ghs/ghs_rev06/06files_e.html].
+(2) OECD (2012), The Adverse Outcome Pathway for Skin Sensitisation Initiated by Covalent Binding to Proteins. Part 1: Scientific Evidence. Series on Testing and Assessment No. 168. Available at: http://www.oecd.org/officialdocuments/publicdisplaydocumentpdf/?cote=ENV/JM/MONO(2012)1 0/PART1&docLanguage=En
+(3) OECD (2010), The Local Lymph Node Assay. OECD Guideline for the Testing of Chemicals No.429, Organisation for Economic Cooperation and Development, Paris. Available at: http://www.oecd.org/env/testguidelines
+(4) OECD (1992), Skin Sensitisation. OECD Guideline for the Testing of Chemicals No. 406, Organisation for Economic Cooperation and Development, Paris. Available at: http://www.oecd.org/env/testguidelines
+(5) OECD (2010), Skin Sensitisation: Local Lymph Node Assay: DA. OECD Guideline for the Testing of Chemicals No. 442A, Organisation for Economic Cooperation and Development, Paris. Available at: http://www.oecd.org/env/testguidelines
+(6) OECD (2010), Skin sensitisation: Local Lymph Node Assay: BrdU-ELISA. OECD Guideline for the Testing of Chemicals No. 442B, Organisation for Economic Cooperation and Development, Paris. Available at: http://www.oecd.org/env/testguidelines
+(7) OECD (2015), OECD Guideline for the Testing of Chemicals No. 442C: In Chemico Skin Sensitisation: Direct Peptide Reactivity Assay (DPRA). Paris, France: Organisation for Economic Cooperation and Development. Available at: http://www.oecd.org/env/testguidelines
+(8) OECD (2015), OECD Guideline for the Testing of Chemicals No. 442D: In Vitro Skin Sensitisation: ARE-Nrf2 Luciferase Test Method. Paris, France: Organisation for Economic Cooperation and Development. Available at: http://www.oecd.org/env/testguidelines
+(9) Steinman RM. 1991. The dendritic cell system and its role in immunogenicity. Annu Rev Immunol 9:271-96.
+(10) Caux C, Vanbervliet B, Massacrier C, Azuma M, Okumura K, Lanier LL, and Banchereau J. 1994. B70/B7-2 is identical to CD86 and is the major functional ligand for CD28 expressed on human dendritic cells. J Exp Med 180:1841-7.
+(11) Aiba S, Terunuma A, Manome H, and Tagami H. 1997. Dendritic cells differently respond to haptens and irritants by their production of cytokines and expression of co-stimulatory molecules. Eur J Immunol 27:3031-8.
+(12) Aiba S, Manome H, Nakagawa S, Mollah ZU, Mizuashi M, Ohtani T, Yoshino Y, and Tagami. H. 2003. p38 mitogen-activated protein kinase and extracellular signal-regulated kinases play distinct roles in the activation of dendritic cells by two representative haptens, NiCl2 and DNCB. J Invest Dermatol 120:390-8.
+(13) OECD (2016). Series on Testing & Assessment No. 256: Guidance Document On The Reporting Of Defined Approaches And Individual Information Sources To Be Used Within Integrated Approaches To Testing And Assessment (IATA) For Skin Sensitisation, Annex 1 and Annex 2. ENV/JM/MONO(2016)29. Organisation for Economic Cooperation and Development, Paris. Available at: [https://community.oecd.org/community/iatass].
+(14) OECD. (2022). Guideline No. 497: Guideline on Defined Approaches for Skin Sensitisation. Organisation for Economic Cooperation and Development, Paris. Available at: http://www.oecd.org/env/testguidelines
+(15) Ashikaga T, Sakaguchi H, Sono S, Kosaka N, Ishikawa M, Nukada Y, Miyazawa M, Ito Y, NishiyamaN, Itagaki H. (2010), A comparative evaluation of in vitro skin sensitisation tests: the human cell-line activation test (h-CLAT) versus the local lymph node assay (LLNA). Altern. Lab. Anim. 38, 275-284.
+(16) Piroird, C., Ovigne, J.M., Rousset, F., Martinozzi-Teissier, S., Gomes, C., Cotovio, J., Alépée, N. (2015). The Myeloid U937 Skin Sensitization Test (U-SENS) addresses the activation of dendritic cell event in the adverse outcome pathway for skin sensitization. Toxicol. In Vitro 29, 901-916.
+부속서 1: 생체외 피부감작성: 인체 세포주 활성화 시험(h-CLAT)
+ANNEX 1: In Vitro Skin Sensitisation: human Cell Line Activation Test (h-CLAT)
+◉
+초기 고려사항과 제한점 
+1.h-CLAT은 감작성물질에 노출된 인체 단핵구성 백혈병 세포주인 THP-1에서 단핵구 및 수지상세포(DC)의 활성화 과정과 관련된 세포 표면 표지자(즉, CD86 및 CD54)의 발현의 변화를 정량화하는 방법이다(1)(2). 이렇게 측정된 CD86 및 CD54 세포 표면 표지자의 발현 수준은 피부감작성물질과 비감작성물질을 구별하는 것을 지원하는 데 사용된다. 
+2.h-CLAT 시험법은 EURL ECVAM(European Union Reference Laboratory for Alternatives to Animal Testing)이 조율한 검증연구 및 이후 EURL ECVAM 과학자문위원회 ESAC에 의해 수행된 독립적인 전문평가(peer review)를 통해 평가되었다. 이용 가능한 모든 과학적 증거 및 규제당국과 이해관계자의 의견을 종합적으로 고려한 결과, EURL ECVAM은 h-CLAT을 유해성 분류 및 표지 목적에서 감작성물질과 비감작성물질의 구별을 지원하기 위해 통합독성평가(Integrated Approaches to Testing and Assessment, IATA)의 구성요소로 사용할 것을 권고하였다. h-CLAT 시험결과를 다른 정보와 조합하여 활용한 사례는 문헌에 보고되어 있다(4)(5)(6)(7)(8)(9)(10)(11).
+3.h-CLAT 시험법은 세포 배양 기술과 유세포 분석(flow cytometry analysis)에 숙련된 실험실로 전수가 가능하다. 본 시험법으로 예측할 수 있는 실험실 내 재현성과 실험실 간의 재현성은 모두 약 80 % 수준이다(3)(12). 검증연구(13)와 보고된 다른 연구(14) 결과를 종합해보면 LLNA 결과와 비교하였을 때 피부감작성(UN GHS Category 1)과 비감작성(No category)을 구분하는 정확도가 85 %이며(N=142), 93 %의 민감도(94/101)와 66 %의 특이도(27/41)를 나타낸다(이 계산은 EURL ECVAM(12)이 기존의 모든 데이터를 고려하여 재분석한 결과에 근거한 것으로, 4단락에서 기술한 대로 로그 옥탄올-물 분배계수(Log Kow)가 3.5를 초과하는 화학물질에 대한 음성 결과는 고려하지 않고 산출되었다). 높은 수준의 피부감작성 역가를 보이는 화학물질(UN GHS subcategory 1A)(4)(13)(15)보다 피부감작성 역가가 낮거나 중간 수준을 나타내는 화학물질의 경우(UN GHS subcategory 1B), h-CLAT 시험법에서 위음성 예측이 나오기 쉽다. 종합하면 이러한 정보는 h-CLAT이 피부감작 위험성을 식별하는 데 유용하다는 점을 나타낸다. 그러나 여기에서 제시된 독립적 시험법(Stand-alone)으로서 h-CLAT의 정확도 값은 단순한 지표일 뿐이다. 왜냐하면 이 시험법은 통합독성평가의 맥락에서 다른 정보와의 조합을 고려해야 하며, 일반 소개의 6단락 및 8단락에서 제시된 항목과도 일치되어야 하기 때문이다. 또한, 피부감작성을 평가하기 위해 비동물 시험법을 활용할 때, LLNA 시험법뿐만 아니라 다른 동물 시험법도 인체의 상황을 완벽하게 반영하지 못한다는 사실을 염두에 두어야 한다. 
+4.현재 이용 가능한 데이터에 따르면 h-CLAT 시험법은 다양한 유기 작용기, 반응기전, 피부감작성 역가(체내 시험에서 확인한 바와 같이), 물리·화학적 성질을 가지는 시험물질들에 적용할 수 있다(3)(14)(15). 
+h-CLAT 시험법은 적절한 용매/부형제에서 용해되거나 시험물질이 침전하거나 상분리되지 않고 안정적인 분산 상태(즉, 콜로이드 또는 현탁액)을 형성하는 시험물질에 적용할 수 있다(14단락 참고). Log Kow가 3.5보다 큰 시험물질은 위음성 결과를 도출하는 경향이 있다(14). 그러므로 Log Kow가 3.5보다 큰 시험물질의 음성결과는 고려하지 않도록 한다. 그러나 Log Kow가 3.5보다 큰 시험물질에서 나온 양성결과는 시험물질이 피부감작성물질인지를 파악하는 데 사용될 수 있다. 더욱이 사용된 세포주의 제한적인 대사능력과(16) 시험 조건 때문에 특히 산화율이 더딘 프로합텐(pro-hapten, P450 효소를 통해 효소 활성화가 필요한 물질)과 프리합텐(pre-hapten, 산화에 의해 활성화되는 물질)의 경우도 h-CLAT 시험법에서 음성결과를 생성할 수 있다(15). 형광 시험물질은 h-CLAT 시험법으로 평가될 수 있다(17). 그럼에도 불구하고 플루오레세인 이소티오시아네이트(Fluorescein isothiocyanate (FITC)나 Propidium iodide (PI)처럼 파장을 방출하는 강한 형광 시험물질은 유세포 분석을 통한 감지를 방해하기 때문에 FITC 연결 항체나 PI를 사용하여 정확히 평가하기 어렵다. 그러한 경우, 부록 2에 제시된 숙련도 확인을 위한 물질(Proficiency substances)로 시험하여 형광색소 항체나 세포독성 표지자가 FITC 표지 항체(24단락 참고)나 PI(18단락 참고)와 유사한 결과를 제공할 수 있다면 형광색소 항체나 세포독성 표지자를 각각 사용할 수 있다. 위에서 언급한 바와 같이, 음성 결과는 앞서 설명한 시험법의 한계를 감안하고, 통합독성평가의 맥락에서 다른 시험법의 정보와 연관하여 해석해야 한다. 기타 특정한 범주의 시험물질에 h-CLAT 시험법을 적용할 수 없다는 것을 입증하는 근거가 있을 경우 특정 범주에 대해서는 본 시험법을 사용해서는 안 된다. 
+5.앞서 기술한 바와 같이 h-CLAT 시험법은 피부 감작성물질과 비감작성물질 구별을 지원한다. 그러나 본 시험법은 정의된 접근법(DA)(14) 또는 통합독성평가(IATA)와 같은 통합적 전략 내에서 사용되는 경우, 잠재적으로 감작능 역가(potency)의 평가에 기여할 수 있다(4)(5)(9).
+6.용어 정의는 부록 1에 제시되어 있다. 
+◉
+시험원리
+7.h-CLAT 시험법은 시험물질에 24시간 동안 노출한 후 인체 단핵구 백혈병 세포주인 THP-1 세포에서 세포 표면 표지자(CD86과 CD54)의 발현 수준을 정량화하는 체외 분석법이다. 이러한 표면 분자는 단핵구 THP-1 활성화의 전형적인 표지자이며 T 세포 초기반응에 중요한 역할을 하는 수지상세포 활성을 모방할 수 있다. 표면 표지자의 발현 정도는 형광색소 항체에 세포를 염색한 후 유세포 분석을 통해 측정한다. 표면 표지자 발현의 상향조절이 세포에 독성을 유발하지 않는 저농도에서 발생하는지를 평가하기 위해 세포독성시험도 병행하여 측정한다. 용매/부형제 대조군과 비교하여 표면표지자의 상대적인 형광 강도는 피부감작성물질과 비감작성물질을 구별하기 위한 예측모델(27~30단락 참고)에서 산출되고 이용된다. 
+◉
+숙련도 확인
+8.본 시험가이드라인 TG442E 부속서에 설명된 시험법을 일상적으로 사용하기 전에 실험실은 부록 2에 수록한 10종의 숙련도 물질을 이용하여 기술적 숙련도를 입증해야 한다. 또한, 시험법 사용자는 반응성 확인(11단락 참고)과 양성대조군 및 용매/부형제 대조군(20~22단락 참고)을 통해 생성된 데이터의 과거 데이터베이스를 관리해야 하며, 이러한 데이터를 활용하여 실험실에서 시험법의 재현성이 지속적으로 유지된다는 점을 확인해야 한다. 
+◉
+시험방법
+9.본 시험가이드라인은 EURL ECVAM이 주관한 검증연구에서 사용된 시험법을 나타내는 h-CLAT (DataBase service on Alternative Methods to animal experimentation, DB-ALM) 시험법 no. 158(18)에 바탕을 두고 있다. 이 시험법은 실험실에서 h-CLAT 시험법이 운용되는 경우 사용하도록 권장된다. 다음은 h-CLAT 방법의 주요 구성과 절차에 대한 설명이다. h-CLAT 방법은 용량설정시험과 CD86/CD54의 발현 측정이라는 두 단계로 이루어진다. 
+◉
+세포 준비
+10.h-CLAT 시험법을 수행하기 위해서는 인간 단핵구 백혈병 세포주인 THP-1을 이용해야 한다. 세포는(TIB-202TM) ATCC (American Type Culture Collection)와 같이 충분히 검증된 세포은행을 통해 확보하도록 권장된다.
+11.THP-1 세포는 10 % Foetal bovine serum (FBS), 0.05 mM 2-mercaptoethanol, 100 units/mL Penicillin, 100 µg/mL Streptomycin이 첨가된 RPMI-1640 세포배양배지에서 37 ℃, 5 % CO2를 함유하는 가습조건에서 배양된다. 세포배양배지에 Penicillin과 Streptomycin을 사용하지 않을 수도 있다. 그러나 이러한 경우 세포배양배지에 항생제를 사용하지 않는 것이 결과에 아무 영향을 주지 않는다는 것을 사용자가 부록 2에 기술된 숙련도 확인을 위한 물질을 시험하여 입증해야 한다. 어떤 경우에도, 오염 위험을 최소화하기 위해 세포배양배지의 항생제 유무 여부에 관계없이 우수 세포 배양기준(Good cell culture practice)을 따라야 한다. THP-1 세포는 일상적으로 0.1~0.2x106 cells/mL의 밀도로 2-3일마다 계대한다. 이 세포들은 0.1~1.0x106 cells/mL의 밀도로 유지되어야 한다. 시험하기 전에, 이 세포들에 대한 반응성 여부를 확인하여 정량화해야 한다. THP-1 세포에 대한 반응성 확인은 세포를 녹인 후 2주간 양성대조군인 2,4-Dinitrochlorobenzene (DNCB)(CASN. 97-00-7, ≥ 99 % 순도) 및 Nickel sulfate(NiSO4)(CASN. 10101-97-0, ≥ 99 % 순도)과 음성대조군, Lactic acid (LA)(CASN. 50-21-5, ≥ 85 % 순도)을 이용하여 수행한다. DNCB와 NiSO4는 CD86과 CD54 세포 표면 표지자 모두에 대한 양성반응 결과를 도출해야 하며, LA는 CD86과 CD54 세포 표면 표지자 모두에 대한 음성반응 결과를 도출해야 한다. 반응성 확인을 통과한 세포만 분석에 이용될 수 있다. 세포는 해동 후 최대 2개월까지 계대배양이 가능하다. 계대 수(Passage number)는 30을 초과할 수 없다. 반응성 시험은 20~24단락에 기술된 절차에 따라 수행되어야 한다.
+12.시험을 위해 THP-1 세포는 0.1×106 cells/mL 또는 0.2×106 cells/mL의 밀도로 배양해야 하며, 각각 72시간 또는 48시간 동안 배양 플라스크에서 전배양 한다. 각 시험마다 전배양 직후 배양 플라스크 안의 세포 밀도가 최대한 균일하게 유지하는 것이 중요하며(위에서 기술한 두 가지의 전배양 조건 중 한 가지 방법을 이용하여), 전배양 직후 배양 플라스크 안의 세포 밀도가 알레르기 유발 항원에 의해 유도된 CD86/CD54 발현에 영향을 줄 수 있기 때문이다(19). 시험 당일, 배양 플라스크에서 수확한 세포는 2×106 cells/mL의 농도로 새로운 세포배양배지에 재현탁 한다. 그런 다음, 24-well 플레이트에 500 µL (1×106 cells/well)의 세포 용액을 분주하거나 96-well 플레이트에 80 µL (1.6×105 cells/well)의 세포 용액을 분주한다.
+용량설정시험
+13.용량설정시험은 용매/부형제 대조군과 비교하여 75 %의 세포 생존율(CV)을 계산하기 위해 수행된다. CV75 값은 CD86/CD54 발현 측정을 위한 시험물질의 농도를 측정하기 위해 사용된다(20~24단락 참고). 
+시험물질과 대조물질 조제
+14.시험물질과 대조물질은 시험 당일에 조제한다. h-CLAT 시험법에서 시험물질은 최종 농도 100 mg/mL(생리식염수나 세포배양배지의 경우) 또는 500 mg/mL(DMSO일 경우)가 되도록 용해하거나 분산시켜야 하는데(4단락 참고), 첫 번째 용매/부형제로 생리식염수나 세포배양배지를 선택하거나, 만약 시험물질이 이 두 용매/부형제에 녹지 않거나 안정적으로 분산되지 않을 경우 두 번째 용매/부형제로 (DMSO, 99 % 순도)를 선택한다. 위에서 설명한 것 이외의 다른 용매/부형제를 사용하는 경우 충분히 과학적이고 합리적인 근거를 제공해야 한다. 최종 용매/부형제에서의 시험물질의 안정성이 고려되어야 한다.
+15.시험물질에 대한 100 mg/mL(생리식염수나 세포배양배지) 또는 500 mg/mL (DMSO)의 저장용액(Stock solution)에서 시작하며, 다음과 같은 희석절차를 따라야 한다. 
+- 생리식염수나 세포배양배지가 용매/부형제인 경우: 해당 용매/부형제를 이용하여 2배 연속 희석하여 8개의 표준원액(8가지 농도)을 조제한다. 그 다음, 이 표준원액을 세포배양배지(시험용액, Working solution)에 50배 희석한다. 플레이트의 최고 최종농도인 1000 µg/mL에서 독성이 없을 경우, 새로운 세포독성시험을 실시하여 최대농도를 재결정해야 한다. 생리식염수나 세포배양배지에 용해되거나 안정적으로 분산된 시험물질의 플레이트에서의 최종 농도는 5000 µg/mL을 초과해서는 안 된다. 
+- DMSO가 용매/부형제인 경우: 해당 용매/부형제를 이용하여 2배 연속 희석하여 8개의 표준원액(8가지 농도)을 조제한다. 그 다음, 이 원액을 세포배양배지(시험용액)에 250배 희석한다. 독성이 없어도 플레이트에서의 최종농도는 1000 µg/mL를 초과해서는 안 된다. 
+시험용액은 최종적으로 플레이트에 있는 THP-1 세포 현탁액에 동일한 용량의 시험용액을 부어 2배로 희석되어 노출하도록 사용한다(17단락 참고, 일반적으로 플레이트의 최종 농도범위는 7.81~1000 µg/mL 이다).
+16.h-CLAT 시험법에서 사용된 용매/부형제 대조군은 세포배양배지[세포배양배지나 생리식염수에 용해되거나 안정적으로 분산된 시험물질의 경우(4단락 참고)] 또는 플레이트에서 시험된 단일 최종 농도, 즉 0.2 %의 DMSO(DMSO에 용해되거나 안정적으로 분산된 시험물질의 경우)을 사용한다. 이 용매/부형제 대조군은 위 15단락에서 시험용액에 대해 설명한 것과 마찬가지로 동일한 희석과정을 거친다.
+시험물질과 대조물질의 적용
+17.15~16단락에서 기술한 세포배양배지 또는 시험용액은 24-well 또는 96-well 플레이트에 준비된 세포 현탁액을 이용하여 1:1(v/v)로 혼합한다(12단락 참고). 처리된 플레이트는 37 ℃, 5 % CO2 환경에서 24 ± 0.5시간 동안 배양한다. 시험물질을 배양하기 전 플레이트를 밀봉 처리(예: 마이크로 플레이트 밀봉 테이프)하여 휘발성 시험물질의 증발로 인해 well 간에 시험물질에 의한 교차오염이 발생하지 않도록 주의해야 한다(20). 
+Propidium iodide (PI) 염색
+18.24 ± 0.5시간 동안 세포를 시험물질에 노출한 뒤 샘플 튜브로 옮기고 원심분리하여 세포를 모은다. 상층액은 버리고 나머지 세포는 0.1 %의 소혈청알부민(염색 완충액)이 함유된 200 µL(96-well의 경우) 나 600 µL(24-well의 경우)의 인산 완충 생리식염수(PBS)로 재현탁한다. 200 µL의 세포 현탁액을 96-well 둥근 바닥 플레이트(96-well의 경우) 또는 마이크로 튜브(24-well의 경우)로 옮겨 200 µL(96-well의 경우) 또는 600 µL(24-well의 경우)의 염색 완충액으로 두 번 세척한다. 마지막으로, 세포는 염색 완충액 (400 µL)으로 재현탁하고 PI 용액(20 µL)을 첨가한다 (예를 들어, 최종 PI 농도는 0.625 µg/mL 이다). 부록 2에 기술된 숙련도 확인용 시험물질 시험 등을 통하여 다른 염색제로도 PI와 유사한 결과를 얻을 수 있음을 입증할 수 있을 경우 7-AminoactinomycinD (7-AAD), Trypan blue 등의 다른 세포독성 표지자를 사용할 수 있다. 
+유세포 분석과 CV75값 산정을 통한 세포독성 측정
+19.PI 흡수는 유세포 분석기의 획득 채널(Acquisition channel) FL-3을 활용하여 분석된다. 총 10,000개의 살아있는 세포를(PI 음성) 얻는다. 유세포 분석 프로그램을 이용하여 아래의 등식으로 세포 생존율을 계산할 수 있다. 세포 생존율이 낮은 경우, 사멸된 세포를 포함하여 최대 30,000개의 세포를 얻어야 한다. 또는, 유세포 분석을 시작한 후 1분 동안 데이터를 얻을 수 있다. 
+75 %의 THP-1 세포 생존율을 나타내는 농도인 CV75 값(25 %의 세포독성)은(13단락 참고) 아래의 등식을 이용하여 로그-선형 보간법(Log-linear interpolation)으로 계산된다. 
+a : 75 % 이상 세포 생존율의 최소값
+c : 75 % 이상 세포 생존율의 최대값
+b, d : 각각의 세포 생존율 a와 c값을 나타내는 농도
+CV75를 도출하기 위한 숙련도물질을 시험하여 결과에 영향을 주지 않는다는 것이 입증된다면 다른 접근법도 이용할 수 있다.
+◉
+CD86/CD54 발현 측정
+시험물질과 대조물질의 조제
+20.시험물질을 용해하거나 안정적으로 분산시키기 위해 적절한 용매/부형제를(생리식염수, 세포배양배지 또는 DMSO, 14단락 참고) 사용한다. 시험물질은 먼저 용량설정시험에서 확인한 1.2×CV75의 100배(생리식염수나 세포배양배지의 경우) 또는 500배 (DMSO의 경우)에 상응하는 농도로 희석한다(19단락 참고). CV75를 확인할 수 없을 경우(용량설정시험에서 충분한 독성이 관찰되지 않을 경우), 각 용매/부형제로 조제한 시험물질을 최대한 용해할 수 있거나 안정적으로 분산시킬 수 있는 농도를 시작 농도로 사용해야 한다. 주목할 점은 플레이트에서의 최종 농도가 5000 µg/mL(생리식염수나 세포배양배지의 경우) 또는 1000 µg/mL(DMSO의 경우)를 초과해서는 안 된다는 것이다. 그 다음, h-CLAT 시험법에서 사용되는 해당 용매/부형제로 1.2배 연속 희석을 하여 표준원액(100×1.2×CV75 ~ 100×0.335×CV75(생리식염수나 세포배양배지의 경우) 또는 500×1.2×CV75 ~ 500×0.335×CV75(DMSO의 경우)의 8가지 농도)을 확보한다(투여방법의 예에 대해서는 DB-ALM 시험법 NO. 158 참고). 그런 다음, 이 표준원액은 세포배양배지(시험용액)에 50배(생리식염수나 세포배양배지) 또는 250배(DMSO)로 더 희석한다. 이 시험용액은 플레이트에서 최종적으로 2배 희석배율로 더 희석되어 노출을 위해 최종 사용된다. 결과가 세포 생존율에 대해 26과 28단락에서 기술된 시험 인정기준을 충족하지 못하는 경우, 보다 정확한 CV75를 결정하기 위해 용량설정시험을 반복한다. CD86/CD54 발현을 측정하기 위해서는 24-well 플레이트만 이용해야 한다는 점을 유의해야 한다. 
+21.16단락에 기술된 대로 용매/부형제 대조군을 조제한다. h-CLAT 시험법에 사용되는 양성대조군은 DNCB이다(11단락 참고). DNCB를 위해 DMSO로 표준원액을 조제하여 20단락에서 기술된 대로 이 원액을 희석한다. DNCB는 플레이트의 최종 농도(일반적으로 4.0 µg/mL)에서 CD86/CD54의 발현 정도를 측정하기 위한 양성대조군으로 이용한다. 플레이트에서 DNCB의 4.0 µg/mL 농도를 얻으려면, 2 mg/mL의 DNCB 표준원액을 DMSO에서 조제하여 세포배양배지로 250배 희석하여 8 µg/mL의 시험용액으로 만들어야 한다. 또는, 각 실험실(test facility)에서 결정된 DNCB의 CV75가 양성대조군 농도로 이용될 수 있다. 만일 시험인정기준을 충족하는 과거 데이터가 있다면 다른 적당한 양성대조군을 이용할 수 있다. 양성대조군의 경우, 플레이트의 최종 농도가 5000 µg/mL(생리식염수나 세포배양배지의 경우) 또는 1000 µg/mL(DMSO의 경우)를 초과해서는 안 된다. 시험 인정기준은 시험물질에 대해 기술된 바와 동일하다 (26단락 참고). 그러나 양성대조군이 단일 농도에서 시험되기 때문에 마지막 시험인정기준은 예외이다. 
+시험물질과 대조물질의 적용
+22.각각의 시험물질과 대조물질에 대해 예측하기 위해 한 번의 시험이 필요하다. CD86/CD54의 발현정도를 측정하기 위해 각 시험은 최소한 두 번의 독립적인 반복시험(run)이 필요하다(26~28단락 참고). 반복시험은 각각 다른 날 또는 같은 날이라도 다음조건을 만족하면 실시할 수 있다: a) 시험물질과 항체용액에 대해 새로 신선한 표준원액과 시험용액이 당일 별도로 준비된 경우, b) 동일 계대 세포라 하더라도 다른 배양 플라스크에서 채취된 세포주 사용할 경우, 시험용액(500 µL)으로 준비된 시험물질과 대조물질은 500 µL의 부유세포(1x106 세포)에 1:1의 비율로 혼합하고 세포는 20~21단락에서 기술한 것처럼 24 ± 0.5시간 동안 배양한다. 최소한 두 번의 독립적인 반복시험을 통해 예측이 확보되기 때문에 각 반복시험에서 시험물질과 대조물질의 각 농도는 단일시료 측정으로 충분하다. 
+세포 염색과 분석
+23.24 ± 0.5시간 동안 노출한 후, 세포는 24-well 플레이트에서 샘플 튜브로 옮겨져 원심분리로 수집된 후 1 mL의 염색 완충액으로(필요 시 세척과정이 추가될 수 있다) 두 번 세척한다. 세척 후에 세포는 600 µL의 비특이적 항체결합 차단용액(blocking solution)[0.01 % (w/v)의 글로불린(Cohn fraction II, III, 휴먼: SIGMA, #G2388-10G)을 함유한 염색 완충액]으로 처리되어 4 ℃에서 15분 동안 배양된다. Blocking 처리 후, 세포는 180 µL의 3개의 시료 분취액으로 나누어 96-well 둥근 바닥 플레이트나 마이크로 튜브로 분주한다. 
+24.원심분리 후 세포는 50 µL의 FITC-labelled anti-CD86, anti-CD54 또는 마우스 IgG1 (isotype) 항체로 4 ℃에서 30분 동안 염색한다. h-CLAT DB-ALM 시험법 no. 158(18)에서 기술된 항체는 염색 완충액으로 3:25(v/v, CD86의 경우 [BD-PharMingen, #555657; Clone: Fun-1))나 3:50(v/v, CD54의 경우 (DAKO, #F7143; Clone: 6.5B5) 그리고 IgG1 [DAKO, #X0927)]를 희석하여 사용한다. 이러한 항체 희석 배율은 최대 신호 대 잡음비(Signal-to-noise ratio)를 제공하는 배율로 시험법 개발자들에 의해 정의되었다. 시험법 개발자의 경험을 근거로 할 때, 항체의 형광 강도는 보통 3개의 서로 다른 lot 간 일치한다. 그러나 사용자는 가장 적합한 사용농도를 규정하기 위해 자신의 실험실 조건에서 항체를 적정하는 것을 고려할 수 있다. 부록 2에 기술된 숙련도 물질로 시험하여 FITC 연결 항체와 유사한 결과를 제공할 수 있음을 입증할 수 있다면 다른 형광색소가 표지된 anti-CD86 및 anti-CD54 항체를 사용할 수 있다. 주목할 점은 h-CLAT DB-ALM 시험법 no. 158(18)에서 기술한 것처럼 클론이나 항체의 공급자를 바꾸면 결과에 영향을 줄 수 있다는 것이다. 150 µL 또는 그 이상의 염색 완충액으로 2회 이상 세척한 후 세포는 염색 완충액(400 µL)에 다시 부유시키고, PI 용액(0.625 µg/mL의 최종농도를 확보하기 위해 20 µL) 또는 다른 세포독성 표지자의 용액(18단락 참고)이 첨가된다. CD86과 CD54의 발현 정도와 세포 생존율은 유세포 분석기를 이용해 분석한다. 
+◉
+시험결과 및 보고
+데이터 분석
+25.CD86과 CD54의 발현은 유세포 분석기의 FL-1 채널을 사용하여 결정한다. 기하평균 형광 강도(Geometric Mean Fluorescence Intensity, MFI)를 기반으로 양성대조군과 시험물질 처리 세포에 대한 CD86과 CD54의 상대적 형광 강도(Relative Fluorescence Intensity, RFI)는 다음 등식에 따라 계산한다. 
+ 동형대조군(Isotype control) 세포 [mouse IgG1 (isotype) 항체로 염색된]에서 얻은 세포생존율 역시 19단락에서 설명한 등식으로 계산한다.
+인정기준
+26.h-CLAT 시험법을 사용할 때, 시험(run)을 유효한 것으로 판정하기 위해서는 다음의 인정기준을 충족해야 한다(22)(27).
+- 배지 및 용매/부형제 대조군의 세포생존율은 90 % 이상이어야 한다. 
+-용매/부형제 대조군에서 CD86 및 CD54의 RFI 값은 양성 판정을 위한 역치(threshold)(CD86 RFI ≥ 150 % 및 CD54 RFI ≥ 200 %)을 초과하지 않아야 한다. 용매/부형제 대조군의 RFI 값은 단락 25에 기술된 공식을 사용하여 계산한다 (“시험물질의 MFI”는 “용매/부형제의 MFI”로 대체되어야 하며, “용매/부형제의 MFI”는 “(배지)대조군의 MFI”로 대체되어야 한다).
+-배지 및 용매/부형제 대조군 모두에서 동형(isotype) 대조군에 대한 CD86 및 CD54의 MFI 비율은 > 105 %이어야 한다.
+-양성대조군(DNCB)에서 CD86 및 CD54의 RFI 값은 양성 판정 역치를 넘어야 하며(CD86 RFI ≥ 150 % 및 CD54 RFI ≥ 200 %) 세포생존율은 50 % 이상이어야 한다.
+-시험물질의 경우 매 시험마다 최소 4가지 시험 농도에서 세포생존율은 50 % 이상이어야 한다.
+27.최고 시험 농도(Highest concentration tested)에서 90 % 미만의 세포생존율을 나타내는 시험물질에 대해서만 음성 결과가 인정된다(즉, 20단락에서 설명한 연속 희석법에 따라 1.2×CV75). 1.2×CV75에서 세포생존율이 90 % 이상인 경우 음성 결과는 폐기해야 한다. 이러한 경우, 용량 선택을 조정하여 시험할 것을 권장한다. CV75 결정을 위한 시험을 재수행 하는 것도 고려할 수 있다. 생리식염수 농도 5000 µg/mL (세포배양배지 또는 기타 용매/부형제), DMSO 농도 1000 µg/mL, 또는 최대 용해 농도를 시험물질의 최대 시험 농도(Maximal test concentration)로 사용할 경우 세포생존율이 90 % 이상이더라도 음성 결과를 인정할 수 있다는 점을 주목해야 한다.
+예측 모델
+28.CD86/CD54 발현 측정을 바탕으로 각 시험물질은 최소한 두 번의 독립적인 반복시험을 통해 단일 예측(양성, 음성, 또는 경계(Borderline))을 도출한다. 
+ 독립적인 h-CLAT 시험의 예측 결과는 다음의 경우 양성으로 간주한다:
+최소 하나의 시험 농도에서 CD86의 RFI가 184 % 초과(세포생존율 ≥ 50 %); 그리고/또는
+최소 하나의 시험 농도에서 CD54의 RFI가 255 % 초과(세포생존율 ≥ 50 %)
+제 28항에 기술된 기준을 충족하고 다음의 경우에 해당하면, 독립적인 h-CLAT 시험의 예측 결과는 음성으로 간주한다:
+CD86의 최대 RFI가 122 % 이하이고, 그리고 
+CD54의 최대 RFI가 157 % 이하인 경우
+ 다음 조건 중 어느 하나라도 충족되는 경우에도 h-CLAT 시험의 예측 결과를 음성으로 간주할 수 있다:
+CD86의 RFI가 122 % 초과 184 % 이하이면서, 해당 RFI 범위에 해당하는 CD86 용량에서 세포생존율이 50 % 미만인 경우, 또는
+CD86의 RFI가 184 % 초과이면서, 해당 CD86 용량에서 세포생존율이 50 % 미만인 경우 그리고
+CD54의 RFI가 157 % 초과 255 % 이하이면서 해당 RFI 범위에 해당하는 CD54 용량에서 세포생존율이 50 % 미만인 경우, 또는
+CD54의 RFI가 255 % 초과이면서, 해당 CD54 용량에서 세포생존율이 50 % 미만인 경우
+ 시험 결과가 예측 역치에 가까워질수록 예측에 대한 신뢰도가 감소하기 때문에 CD86 및 CD54 표지자에 대한 RFI를 평가하기 위해 통계적으로 도출된 경계범위가 설정되었다. 위의 양성 또는 음성 예측 기준을 둘다 충족하지 않고 다음의 두 조건을 모두 충족하는 경우, 독립적인 h-CLAT 시험의 예측 결과는 경계(borderline)로 간주한다. 
+CD86의 최대 RFI가 122 % 초과 184 % 이하인 경우(단, 해당 CD86 용량에서 세포생존율은 50 % 이상이어야 함). 그리고 
+CD54의 최대 RFI가 157 % 초과 255 % 이하인 경우(단, 해당 CD54 용량에서 세포생존율은 50 % 이상이어야 함).
+29.위의 내용을 토대로, 처음 두 번의 반복시험에서 CD86 또는 CD54에 모두 양성인 경우 h-CLAT 예측은 양성으로 간주하고 세 번째 시험은 수행할 필요가 없다. 이와 마찬가지로, 두 번의 반복시험에서 두 표지자 모두에 대해 음성이면 h-CLAT 예측은 음성으로 간주하고(단락 28에 따라) 세 번째 시험은 수행할 필요가 없다. 
+ 상기 두 가지 조건 중 어느 것도 충족되지 않고, 두 번의 시험 결과가 모두 경계범위에 해당하는 경우에는 h-CLAT의 예측 결과를 경계(Borderline)으로 판정한다. 그러나 처음 두 번의 반복시험에서 두 표지자 중 최소한 하나(CD54 또는 CD86)에 대해 일치하지 않으면 세 번째 시험이 필요하며 최종 예측은 세 번의 반복시험 중 다수결과를 기반으로 한다(즉, 3번 중 2번). 이와 관련하여, 두 번의 반복시험을 실시하여 한 시험에서는 CD86(이하 P1)에만 양성이고 다른 시험에서는 CD54(이하 P2)에만 양성인 경우 세 번째 시험이 필요하다는 점에 유의해야 한다. 만약 세 번째 시험에서 두 표지자(이하 N)에 대해 음성이면 h-CLAT 예측은 음성으로 간주한다. 반면 세 번째 시험에서 두 표지자 중 하나 (P1또는 P2)또는 두 표지자 모두(이하 P12)에 대해 양성이면 h-CLAT 예측은 양성으로 간주한다. 마지막으로, 세 번의 시험 결과가 각각 양성 1회, 음성 1회 및 경계 1회인 경우에는 최종 결과를 경계로 판정한다.
+그림 1. 경계범위(borderline ranges) 및 경계값(borderline results) 결과 판정을 위해 다중 시험(multiple runs)을 고려한 h-CLAT 예측 모델의 흐름도  
+ 양성 분류(positive classification)를 위한 기존 역치는 CD86의 경우 150 % 유도(induction)이며, 이 역치(threshold)를 중심으로 통계적으로 도출된 경계범위는 122 ~ 184 % 이다. CD54의 경우 기존 역치는 200 % 유도이며, 이 역치를 중심으로 통계적으로 도출된 경계범위는 157 ~ 255 % 이다.
+30.h-CLAT 시험법에서 양성으로 예측되는 시험물질의 경우, 선택적으로 두 가지 유효농도(Effective Concentration, EC) 값인 CD86에 대한 EC150과 CD54에 대한 EC200을 결정할 수 있다. 이 유효농도란 시험물질이 150 또는 200의 RFI 값을 유도하는 농도를 말한다. 이 유효농도 값은 정의된 접근법(14) 또는 통합독성평가(4)(5)(6)(7)(8)와 같은 방식으로 사용할 경우 감작능(9)을 평가하는데도 유용하다. 이는 다음 등식으로 계산된다.
+EC150 (for CD86) = Bconcentration + [(150 - BRFI) / (ARFI - BRFI) × (Aconcentration – Bconcentration)] 
+Aconcentration은 RFI > 150 (CD86) 또는 200 (CD54)의 가장 낮은 농도(µg/mL)
+Bconcentration은 RFI < 150 (CD86) 또는 200 (CD54)의 가장 높은 농도(µg/mL)
+ARFI는 RFI > 150 (CD86) 또는 200 (CD54)의 가장 낮은 농도에서 측정한 RFI
+BRFI는 RFI < 150 (CD86) 또는 200 (CD54)의 가장 높은 농도에서 측정한 RFI
+ EC150 및 EC200 값을 보다 정확하게 유도하기 위해 CD86/CD54 발현 측정을 위한 세 번의 독립적인 반복시험이 필요하다. 최종 EC150 및 EC200 값은 세 번의 반복시험으로 계산된 EC의 중앙값으로 결정된다. 세 번의 반복시험 중 두 번만 양성 기준을 충족할 경우(26~27단락 참고) 두 가지 계산 값의 EC150 또는 EC200 중 높은 값을 채택한다.
+시험보고서
+31.시험보고서는 다음의 사항을 포함한다.
+   시험물질
+             - 단일성분물질
+ ∘ IUPAC 또는 CAS 명칭, CAS 번호, SMILES 또는 InChI 코드, 구조식 또는 다른 식별요인 등과 같은 화학적 특징
+ ∘ 물리적 성상, Log Kow, 용해도, DMSO 용해도, 분자량 및 기타 물리·화학적 성질
+ ∘ 순도, 불순물의 종류
+ ∘ 시험 전 처리방법(예: 가온, 분쇄)
+ ∘ 시험 농도
+ ∘ 보관 조건과 안정성
+ ∘ 각 시험물질에 대한 용매/부형제 선택의 근거
+             - 다성분물질, UVCB 및 혼합물 
+ ∘ 화학물질 정보(위 참고), 순도, 양적 비율 및 해당 성분의 관련 물리·화학적 성질 (위 참고) 등에 따른 특성
+ ∘ 물리적 성상, 용해도, DMSO 용해도 및 기타 관련 물리·화학적 특성
+ ∘ 시험 전 처리방법(예: 가온, 분쇄)
+ ∘ 시험 농도
+ ∘ 보관 조건과 안정성
+ ∘ 각 시험물질에 대한 용매/부형제 선택의 근거
+   대조군
+             - 양성대조군
+  ∘ IUPAC 또는 CAS 명칭, CAS 번호, SMILES 또는 InChI 코드, 구조식 또는 다른 식별요인 등과 같은 화학적 특징
+  ∘ 물리적 성상, Log Kow, 용해도, DMSO 용해도, 분자량 및 기타 물리화학적 성질
+  ∘ 순도, 불순물의 종류
+  ∘ 시험 전 처리방법(예: 가온, 분쇄)
+  ∘ 시험 농도
+  ∘ 보관 조건과 안정성
+             - 음성대조군 및 용매/부형제 대조군
+ ∘ IUPAC 또는 CAS 명칭, CAS 번호, SMILES 또는 InChI 코드, 구조식 또는 다른 식별요인 등과 같은 화학적 특징
+ ∘ 순도, 불순물의 종류 
+ ∘ 본 시험가이드라인에 언급된 것 이외의 다른 용매/부형제 대조군이 사용되는 경우 물리적 성상, 분자량 및 기타 관련 물리·화학적 성질 
+ ∘ 보관 조건과 안정성
+ ∘ 각 시험물질에 대한 용매/부형제 선택의 근거
+   시험법 조건
+- 시험의뢰자, 시험기관, 시험책임자의 이름과 주소
+- 사용한 시험법의 설명
+- 사용한 세포주, 세포주 보관 조건과 공급처(예: 세포주 제공 기관) 
+-사용하는 유세포 분석(예: 모델) (장치 설정, 글로불린, 항체 및 사용한 세포독성 표지자 포함)
+- 시험방법의 수행에 대한 시험 기관의 숙련도 입증 자료(예: 숙련도 평가물질 시험 결과 및 관련 기록) 또는 시험법의 재현성 확인 자료를 구비하여야 함. 시험기관은 숙련도를 입증하는 데 사용된 절차 및 숙련도 평가 화학물질에 대한 문서를 유지·보관하여야 함. 
+   시험 인정기준
+- 허용 범위 대비 용매/부형제 대조군에서 얻은 세포생존율, MFI 및 RFI 값
+- 허용 범위 대비 양성대조군에서 얻은 세포생존율 및 RFI 값
+- 시험물질의 모든 시험 농도에서 얻은 세포생존율
+   시험 절차
+- 사용한 시험 횟수
+- 사용한 시험 물질 농도, 적용 및 노출 시간 (권장된 것과 다를 경우)
+- 노출 지속 시간 (권장된 것과 다를 경우)
+- 사용한 평가 및 결정 기준 설명
+- 시험 절차 변경에 대한 설명
+   결과
+-CV75 포함한(해당하는 경우) 표 형식의 데이터, 개별 기하 MFI, RFI, 세포생존율 값, 매 시험마다 시험물질 및 양성대조군 물질에 대해 얻은 EC150/EC200 값 (해당하는 경우) 및 예측모델에 따른 시험물질 등급 표시
+- 해당하는 경우 관련된 다른 영향에 대한 설명
+   결과 토의
+-h-CLAT 시험법으로 얻은 결과에 대한 토의, 예측 결과에 영향을 미칠 수 있는 모든 관련 요인(예: 용해도 제한 또는 물리화학적 특성)을 포함하여야 함;
+- 다른 관련 정보가 있는 경우 IATA의 맥락에서 시험법 결과 고려
+   결론 
+참고문헌
+(1) Ashikaga T, Yoshida Y, Hirota M, Yoneyama K, Itagaki H, Sakaguchi H, Miyazawa M, Ito Y, Suzuki H, Toyoda H. (2006), Development of an in vitro skin sensitization test using human cell lines: The human Cell Line Activation Test (h-CLAT) I. Optimization of the h-CLAT protocol. Toxicol. In Vitro 20, 767–773.
+(2) Miyazawa M, Ito Y, Yoshida Y, Sakaguchi H, Suzuki H. (2007), Phenotypic alterations and  cytokine production in THP-1 cells in response to allergens. Toxicol. In Vitro 21, 428-437.
+(3) EC EURL-ECVAM (2013), Recommendation on the human Cell Line Activation Test (h-CLAT) for skin sensitisation testing. Accessible at: https://eurl-ecvam.jrc.ec.europa.eu/eurl-ecvam-recommendations
+(4) Takenouchi O, Fukui S, Okamoto K, Kurotani S, Imai N, Fujishiro M, Kyotani D, Kato Y, Kasahara T, Fujita M, Toyoda A, Sekiya D, Watanabe S, Seto H, Hirota M, Ashikaga T, Miyazawa M. (2015), Test battery with the human cell line activation test, direct peptide reactivity assay and DEREK based on a 139 chemical data set for predicting skin sensitizing potential and potency of chemicals. J Appl Toxicol. 35, 1318-1332.
+(5) Hirota M, Fukui S, Okamoto K, Kurotani S, Imai N, Fujishiro M, Kyotani D, Kato Y, Kasahara T, Fujita M, Toyoda A, Sekiya D, Watanabe S, Seto H, Takenouchi O, Ashikaga T, Miyazawa M. (2015), Evaluation of combinations of in vitro sensitization test descriptors for the artificial neural network-based risk assessment model of skin sensitization. J Appl Toxicol. 35, 1333-1347.
+(6) Bauch C, Kolle SN, Ramirez T, Fabian E, Mehling A, Teubner W, van Ravenzwaay B, Landsiedel R. (2012), Putting the parts together: combining in vitro methods to test for skin sensitizing potencials. Regul Toxicol Parmacol. 63, 489-504.
+(7) Van der Veen JW, Rorije E, Emter R, Natch A, van Loveren H, Ezendam J. (2014), Evaluating the performance of integrated approaches for hazard identification of skin sensitizing chemicals. Regul Toxicol Pharmacol. 69, 371-379.
+(8) Urbisch D, Mehling A, Guth K, Ramirez T, Honarvar N, Kolle S, Landsiedel R, Jaworska J, Kern PS, Gerberick F, Natsch A, Emter R, Ashikaga T, Miyazawa M, Sakaguchi H. (2015), Assessing skin sensitization hazard in mice and men using non-animal test methods. Regul Toxicol Parmacol. 71, 337-351.
+(9) Jaworska JS, Natsch A, Ryan C, Strickland J, Ashikaga T, Miyazawa M. (2015), Bayesian integrated testing strategy (ITS) for skin sensitization potency assessment: a decision support system for quantitative weight of evidence and adaptive testing strategy. Arch Toxicol. 89, 2355-2383.
+(10) Strickland J, Zang Q, Kleinstreuer N, Paris M, Lehmann DM, Choksi N, Matheson J,   Jacobs A, Lowit A, Allen D, Casey W. (2016), Integrated decision strategies for skin   sensitization hazard. J Appl Toxicol. DOI 10.1002/jat.3281.
+(11) Nukada Y, Ashikaga T, Miyazawa M, Hirota M, Sakaguchi H, Sasa H, Nishiyama N.   (2012), Prediction of skin sensitization potency of chemicals by human Cell Line Activation  Test (h-CLAT) and an attempt at classifying skin sensitization potency. Toxicol. In Vitro 26, 1150-60.
+(12) EC EURL ECVAM (2015), Re-analysis of the within and between laboratory reproducibility  of the human Cell Line Activation Test (h-CLAT). Accessible at: https://eurl-ecvam.jrc.  ec.europa.eu/eurlecvam-recommendations/eurl-ecvam-recommendation-on-the-human-cell-  line-activation-test-h-clatfor-skin-sensitisation-testing
+(13) EC EURL ECVAM (2012), human Cell Line Activation Test (h-CLAT) Validation Study  Report Accessible at: https://eurl-ecvam.jrc.ec.europa.eu/eurl-ecvam-recommendations
+(14) Takenouchi O, Miyazawa M, Saito K, Ashikaga T, Sakaguchi H. (2013), Predictive performance   of the human Cell Line Activation Test (h-CLAT) for lipophilic with high octanol-water  partition coefficients. J. Toxicol. Sci. 38, 599-609.
+(15) Ashikaga T, Sakaguchi H, Sono S, Kosaka N, Ishikawa M, Nukada Y, Miyazawa M, Ito Y,   NishiyamaN, Itagaki H. (2010), A comparative evaluation of in vitro skin sensitisation tests:  the human cell-line activation test (h-CLAT) versus the local lymph node assay (LLNA).  Altern. Lab. Anim. 38, 275-284.
+(16) Fabian E., Vogel D., Blatz V., Ramirez T., Kolle S., Eltze T., van Ravenzwaay B., Oesch F.,   Landsiedel R. (2013), Xenobiotic metabolizin enzyme activities in cells used for testing  skin sensitization in vitro. Arch Toxicol 87, 1683-1969.
+(17) Okamoto K, Kato Y, Kosaka N, Mizuno M, Inaba H, Sono S, Ashikaga T, Nakamura T,   Okamoto Y, Sakaguchi H, Kishi M, Kuwahara H, Ohno Y. (2010), The Japanese ring   study of a human Cell Line Activation Test (h-CLAT) for predicting skin sensitization  potential (6th report): A study for evaluating oxidative hair dye sensitization potential  using h-CLAT. AATEX 15, 81-88.
+(18) DB-ALM (INVITTOX) (2014), Protocol 158: human Cell Line Activation Test (h-CLAT),  23pp. Accessible at: http://ecvam-dbalm.jrc.ec.europa.eu/
+(19) Mizuno M, Yoshida M, Kodama T, Kosaka N, Okamato K, Sono S, Yamada T, Hasegawa S,  Ashikaga T, Kuwahara H, Sakaguchi H, Sato J, Ota N, Okamoto Y, Ohno Y. (2008),    Effects of pre-culture conditions on the human Cell Line Activation Test (h-CLAT) results;  Results of the 4th Japanese interlaboratory study. AATEX 13, 70-82.
+(20) Sono S, Mizuno M, Kosaka N, Okamoto K, Kato Y, Inaba H, , Nakamura T, Kishi M,   Kuwahara H, Sakaguchi H, Okamoto Y, Ashikaga T, Ohno Y. (2010), The Japanese ring  study of a human Cell Line Activation Test (h-CLAT) for predicting skin sensitization  potential (7th report): Evaluation of volatile, poorly soluble fragrance materials.   AATEX 15, 89-96.
+(21) OECD (2005), Guidance Document No.34 on “the Validation and International Acceptance  of New or Updated Test Methods for Hazard Assessment”. OECD Series on Testing  and Assessment. Organization for Economic Cooperation and Development, Paris,   France, 2005, 96 pp.
+(22) OECD (2012), The Adverse Outcome Pathway for Skin Sensitisation Initiated by   Covalent Binding to Proteins. Part 1: Scientific Evidence. Series on Testing and  Assessment No. 168. Available at: http://www.oecd.org/officialdocuments/publicdisplay  documentpdf/?cote=ENV/JM/MONO(2012)10/PA RT1&docLanguage=En
+(23) United Nations UN (2013), Globally Harmonized System of Classification and Labelling  of Chemicals (GHS). Fifth revised edition. New York & Geneva: United Nations Publications.  ISBN: 978-92-1-117006-1. Available at: [http://www.unece.org/trans/danger/publi/ghs/ghs   _rev05/05files_e.html].
+(24) ECETOC (2003). Contact sensitization: Classification according to potency. European Centre for Ecotoxicology & Toxicology of Chemicals (Technical Report No. 87).
+(25) Ashikaga T, Sakaguchi H, Okamoto K, Mizuno M, Sato J, Yamada T, Yoshida M, Ota N, Hasegawa S, Kodama T, Okamoto Y, Kuwahara H, Kosaka N, Sono S, Ohno Y. (2008), Assessment of the human Cell Line Activation Test (h-CLAT) for Skin Sensitization; Results of the First Japanese Inter-laboratory Study. AATEX 13, 27-35.
+부록 1
+ 용어 정의
+정확도(Accuracy): 시험 결과와 허용된 참고치의 일치 정도. 시험 수행에 대한 평가 척도이고 상관성(Relevance)의 한 측면이다. 정확하게 맞춘 시험결과의 비율을 의미하는 “일치성(Concordance)”과 “정확도(Accuracy)”는 같은 의미로 쓰임(21)
+독성발현경로(AOP, Adverse Outcome Pathway): 분자 수준의 시작단계를 거쳐 체내 유해반응까지 표적 화학물질 또는 유사한 화학물질 그룹으로부터 일어나는 일련의 현상(22)
+CV75: 75 %의 세포생존율을 나타내는 예상 농도
+EC150: CD86 발현에서 150의 RFI 값을 나타내는 농도
+EC200: CD54 발현에서 200의 RFI 값을 나타내는 농도
+유세포 분석(Flow cytometry): 세포 및 그 성분에 특징적인 패턴으로 산란되는 여기광(exciting light)의 초점을 통해 한 번에 하나씩 세포를 유체에 부유시키는 세포 분석법. 세포는 흔히 형광 표지자로 표지되어 빛이 먼저 흡수된 다음 변경된 주파수에서 발산함
+위험성(Hazard): 물질이 생명체, 생태계 또는 특정 인구집단에 노출될 때, 유해한 영향을 야기할 가능성이 있는 물질 또는 상황(Situation)의 본질적 특성
+통합독성평가(Integrated Approach to Testing and Assessment, IATA): 화학물질 또는 화학물질 그룹의 위험성 확인(잠재력), 위험성 결정(효력) 또는 안전성 평가(잠재력/효력, 노출)를 위하여 사용되는 구조적 접근 방법. 위험성 잠재력 또는 위해성(Risk) 또는 심화 추적 필요성에 관한 규제 결정을 위하여 모든 관련 데이터를 전략적으로 통합하고 경중을 가림으로써 최소한의 시험만 수행하도록 함
+배지대조군(Medium control): 시험물질을 제외한 시험계의 모든 구성 요소가 포함된 군, 이 샘플은 용매/부형제가 시험계와 상호 작용하는지 여부를 판별하기 위해 시험물질이 처리된 샘플 및 다른 대조군 샘플과 함께 시험
+혼합물(Mixture): 서로 반응하지 않는 두 개 이상의 물질로 구성된 혼합물질 또는 용액
+단일성분물질(Mono-constituent substance): 정량적인 구성으로 정의되며, 하나의 주요성분이 적어도 80 % (w/w) 이상인 물질 
+다성분물질(Multi-constituent substance): 두 가지 이상의 주요성분의 양이 ≥ 10 % (w/w) 및 < 80 % (w/w)인 물질, 다성분 물질은 생산과정의 산물이다. 혼합물과 다성분 물질의 차이는 혼합물은 두 가지 이상의 물질을 화학반응 없이 섞어서 얻고, 다성분 물질은 화학반응의 산물임
+양성대조군(Positive control): 시험계의 모든 구성요소를 포함하고 양성반응을 유도한다고 알려진 물질로 처리한 군(Replicate), 시간에 따른 양성대조군 반응의 변동성을 평가할 수 있다는 확신을 갖기 위하여 양성반응의 범위가 초과해서는 안 됨
+프리합텐(Pre-haptens): 비생물학적 변환을 통해 피부감작성물질이 되는 화학물질
+프로합텐(Pro-haptens): 피부 감작능을 일으키기 위해 효소 활성을 필요로 하는 화학물질
+상대적 형광 강도(RFI, Relative fluorescence intensity): 용매/부형제 처치 세포의 MFI와 비교하여 시험물질로 처리된 세포의 기하 평균 형광 강도 (MFI)의 상대적인 값
+상관성(Relevance): 시험과 관심 효과의 관련성 및 시험이 특정 목적에 의미 있고 유용한 지에 대한 설명, 상관성은 시험이 얼마나 관심 생물학적 효과를 정확하게 측정하고 예측하는 지 나타내며, 상관성은 시험법의 정확도(일치성)를 내포함(21)
+신뢰도(Reliability): 동일한 시험방법에 따라 반복 시행하였을 때 동일 실험실과 다른 실험실에서 시험 결과를 재현할 수 있는 정도, 신뢰도는 실험실 내, 실험실 간 재현성(Reproducibility)과 실험실 내 반복성(Repeatability)으로 평가됨(21)
+반복시험(Run): 반복시험은 용매/부형제 대조군과 양성대조군과 같이 시험 되는 하나 이상의 시험물질로 구성
+민감도(Sensitivity): 시험법으로 모든 양성/활성 화학물질이 정확하게 분류되는 비율, 민감도는 시험법의 범주 결정에 대한 정확도의 척도이며 시험법의 상관성을 평가하는 중요 고려사항(21)
+염색 완충액(Staining buffer): 0.1 % 소혈청알부민을 함유한 인산 완충 생리식염수
+용매/부형제 대조군(Solvent/vehicle control): 시험물질을 제외한 시험계의 모든 구성요소와 사용된 용매/부형제를 포함하는 군, 동일한 용매/부형제에 용해되거나 안정적으로 분산된 시험물질로 처리한 샘플의 기본적인 반응을 평가하기 위해 사용. 이 샘플은 배지 대조군과 함께 시험될 경우 용매/부형제가 시험계와 상호작용하는지 여부도 확인가능
+특이도(Specificity): 시험법으로 모든 음성/비활성 화학물질이 정확하게 분류되는 비율, 특이도는 시험법의 범주 결정에 대한 정확도의 척도이며 시험법의 상관성을 평가하는 중요 고려사항(21)
+물질(Substance): 생산과정을 통해 얻어지거나 또는 자연상태로 얻어진 화학원소들(elements)과 이들로 이루어진 구성물질(Compound), 생산품의 안정성을 유지시키는데 필요한 첨가제와 생산과정에서 유래하는 불순물을 포함하지만, 해당물질의 안정성이나 조성의 변화에 영향을 주지 않고 분리될 수 있는 용매는 제외함
+시험물질(Test chemical): ‘시험물질’은 시험할 때 무엇을 사용하였는지 언급할 때 사용 됨
+UN의 화학물질의 분류 및 표시에 관한 국제조화시스템(United Nations Globally Harmonized System of Classification and Labelling of Chemicals, UN GHS): 물리적, 보건적, 환경적 위험성의 수준 및 표준화된 유형에 따른 화학물질(물질 또는 혼합물)의 분류체계로, Pictogram, 표시방법, 위험 사항, 시험 전 주의사항, 안전정보지 등의 소통 방식을 통해 화학물질의 유해 정보를 전달하여, 사람(고용주, 근로자, 운송자, 소비자, 응급처치자 등)과 환경을 보호하고자 제시된 체계(23)
+UVCB (Substances of unknown or variable composition, complex reaction products or biological materials): 조성이 알려져 있지 않거나 다양한 조성으로 이루어진 화합물, 복잡한 반응산물 또는 생물학적 물질
+검증된 시험법(Validated test method): 특정한 목적에 대한 상관성과 신뢰도를 충족시키고 과학적으로 입증된 원리에 근거한 시험법, 절대적으로 완벽하게 검증된 시험법은 없지만 특정한 목적과 관련됨(21) 
+부록 2
+ 숙련도물질
+본 시험가이드라인에 따른 시험법을 일상적으로 사용하기 전에 실험실은 표 1에서 권고하는 10종의 물질에 대하여 h-CLAT 예측을 정확하게 판별하여 숙련도를 입증하여야 한다. 그리고 10가지 숙련도 물질 중 적어도 8가지 이상에 대해 각각의 기준 범위에 포함되는 CV75, EC150 및 EC200 값을 얻음으로써 숙련도를 입증하여야 한다. 숙련도 물질들은 피부 감작 위험성에 대한 반응 범위를 나타내기 위해 선정되었다. 다른 선정 기준으로는 상업적으로 구매 가능하며, 고품질의 체내 참고 데이터와 h-CLAT 시험법으로 얻은 체외 데이터가 있어야 한다. 또한, h-CLAT 시험법에 대한 공개된 참고 데이터를 사용할 수 있다(3)(14).
+표 1. h-CLAT 시험법 숙련도 확인용 권장 물질
+약어 : CASRN = Chemical Abstracts Service Registry Number
+1 체내 위험성과 성능(Potency)은 LLNA 데이터를 기반으로 한다(3)(14). 체내 예측력은 ECETOC가 제안한 기준을 이용해 도출한다(24).
+2 기존 관찰된 값 기반(13)(25).
+3 기존에 본 표지자에 대한 다수의 음성 결과를 확보했기 때문에 대체로 음성 결과가 예측된다. 제공된 범위는 기존에 관찰된 소수의 양성 결과를 기반으로 정의되었다. 양성 결과를 확보한 경우 EC 값은 보고된 참고 범위 내에 포함되어야 한다.
+숙련도 물질
+CASRN
+성상
+체내
+예측력1
+CV75
+기준 범위
+µg/mL2
+CD86 대한 h-CLAT 결과
+(EC150 기준 범위 in µg/mL)2
+CD54 대한 h-CLAT 결과
+(EC200 기준 범위 µg/mL)2
+2,4-Dinitrochlorobenzene
+97-00-7
+고체
+감작성    (매우강함)
+2-12
+양성 (0.5-10)
+양성 (0.5-15)
+4-Phenylenediamine
+106-50-3
+고체
+감작성     (강함)
+5-95
+양성 (<40)
+음성 (>1.5)3
+Nickel sulfate
+10101-97-0
+고체
+감작성     (보통)
+30-500
+양성 (<100)
+양성 (10-100)
+2-Mercaptbenzothiazole
+149-30-4
+고체
+감작성    (보통)
+30-400
+음성 (>10)3
+양성 (10-140)
+R(+)-Limonene
+5989-27-5
+액체
+감작성    (약함)
+>20
+음성 (>5)3
+양성 (<250)
+Imidazolidinyl urea
+39236-46-9
+고체
+감작성     (약함)
+25-100
+양성 (20-90)
+양성 (20-75)
+Isopropanol
+67-63-0
+액체
+비감작성
+>5000
+음성 (>5000)
+음성 (>5000)
+Glycerol
+56-81-5
+액체
+비감작성
+>5000
+음성 (>5000)
+음성 (>5000)
+Lactic acid
+50-21-5
+액체
+비감작성
+1500-5000
+음성 (>5000)
+음성 (>5000)
+4-Aminobenzoic acid
+150-13-0
+고체
+비감작성
+>1000
+음성 (>1000)
+음성 (>1000)
+Ⅲ
+원문(OECD TG 442E)Ⅲ. 원문(OECD TG 442E)
+‘화장품 등 피부감작성 동물대체시험법
+(인체 세포주 활성화 방법, h-CLAT) 
+가이드라인(민원인 안내서)’
+발행일
+발행인
+편집위원장
+편집위원
+문의처
+주소
+2026년 7월
+식품의약품안전평가원장 
+독성평가연구부장 박상애
+이이다, 김주환, 김봉섭, 이수빈, 김소희, 차민희
+식품의약품안전평가원 비임상자원연구과 및 한국동물대체시험법검증센터Tel : 043-719-5509, 5502
+충청북도 청주시 흥덕구 오송읍 오송생명 2로 187,오송보건의료행정타운 식품의약품안전처 식품의약품안전평가원
+공익신고자 보호제도란?
+- 공익신고자(친족 또는 동거인 포함)등이 공익신고 등으로 인하여 피해를 받지 않도록 비밀보장, 불이익
+  보호조치, 신변보호조치 등을 통하여 보호하는 제도
+[공직자 부조리 및 공익신고안내]
+▶ 부조리 신고 : 식약처 홈페이지 ‘국민신문고 〉공직자 부조리 신고’ 코너
+▶ 공익 신고 : 식약처 홈페이지 ‘국민소통 〉신고 센터 〉부패·공익신고 상담’ 코너
+♣ 보호조치 요구 방법
+우편(30102) 세종특별자치시 도움5로 20 정부세종청사 7동, 국민권익위원회 공익보호지원과.전화 044-200-7773

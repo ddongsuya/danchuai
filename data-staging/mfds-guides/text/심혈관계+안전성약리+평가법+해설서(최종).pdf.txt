@@ -1,0 +1,443 @@
+등록번호 안내서-1112-01
+심혈관계 안전성약리 평가법 해설서
+다중이온채널 평가법 및 인간 유도만능줄기세포 유래 심근세포 기반 다전극측정법
+2021. 4.
+
+지침서ㆍ안내서 제ㆍ개정 점검표
+
+명칭
+등록대상 여부
+
+심혈관계 안전성약리 평가법 해설서 (민원인 안내서)
+
+아래에 해당하는 사항에 체크하여 주시기 바랍니다.
+□ 이미 등록된 지침서ㆍ안내서 중 동일ㆍ유사한 내용의 지침서ㆍ안내서가 있습니까?
+
+□예 ■ 아니오
+
+☞ 상기 질문에 ‘예’라고 답하신 경우 기존의 지침서ㆍ안내서의 개정을 우선적으로 고려하시기
+
+바랍니다. 그럼에도 불구하고 동 지침서ㆍ안내서의 제정이 필요한 경우 그 사유를 아래에
+
+기재해 주시기 바랍니다.
+
+(사유 :
+
+)
+
+□ 법령(법ㆍ시행령ㆍ시행규칙) 또는 행정규칙(고시ㆍ훈령ㆍ예규)의 내용을 단순 편집 또는 나열한 것입니까?
+□ 단순한 사실을 대외적으로 알리는 공고의 내용입니까?
+□ 일회성 지시ㆍ명령에 해당하는 내용입니까?
+□ 외국 규정을 번역하거나 설명하는 내용입니까? □ 신규 직원 교육을 위해 법령 또는 행정규칙을 알기 쉽게 정리한 자료
+입니까?
+
+□예 ■ 아니오
+□예 ■ 아니오
+□예 ■ 아니오
+□예 ■ 아니오
+□예 ■ 아니오
+
+☞ 상기 사항 중 어느 하나라도 ‘예’에 해당되는 경우에 지침서ㆍ안내서 등록 대상이 아닙니다. 지침서ㆍ안내서 제ㆍ개정 절차를 적용하실 필요는 없습니다.
+
+지침서ㆍ안 내서 구분
+기타 확인 사항
+
+□ 행정사무의 통일을 기하기 위하여 내부적으로 행정사무의 세부기준이나 절차를 제시하는 것입니까? (공무원용)
+□ 민원인들의 이해를 돕기 위하여 법령 또는 행정규칙을 알기 쉽게 설명 하거나 특정 민원업무에 대한 행정기관의 대외적인 입장을 기술하는 것 입니까? (민원인용)
+
+□ 예(☞지침서) ■ 아니오
+■ 예(☞안내서) □ 아니오
+
+□ 상위 법령을 일탈하여 새로운 규제를 신설ㆍ강화하거나 민원인을 구속하는 □ 예
+
+내용이 있습니까?
+
+■ 아니오
+
+☞ 상기 질문에 ‘예’라고 답하신 경우 상위법령 일탈 내용을 삭제하시고 지침서ㆍ안내서 제ㆍ개정 절차를 진행하시기 바랍니다.
+
+상기 사항에 대하여 확인하였음.
+
+2021 년
+
+4월 일 담당자 확 인(부서장)
+
+이진무 최선옥
+
+i
+
+이 안내서는 심혈관계 안전성약리 평가법에 대하여 알기 쉽게 설명하거나 식품 의약품안전처의 입장을 기술한 것입니다.
+본 안내서는 대외적으로 법적 효력을 가지는 것이 아니므로 본문의 기술방식 (‘∼하여야 한다’ 등)에도 참고로만 활용하시기 바랍니다. 또한, 본 안내서는 2021년 4월 현재의 과학적ㆍ기술적 사실 및 유효한 법규를 토대로 작성되었으므로 이후 최신 개정 법규 내용 및 구체적인 사실관계 등에 따라 달리 적용될 수 있음을 알려 드립니다.
+※ “민원인 안내서”란 민원인들의 이해를 돕기 위하여 법령 또는 행정규칙을 알기 쉽게 설명하거나 특정 민원업무에 대한 행정기관의 대외적인 입장을 기술하는 것(식품의약 품안전처 지침서등의 관리에 관한 규정 제2조)
+※ 본 안내서에 대한 의견이나 문의사항이 있을 경우 식품의약품안전처 식품의약품안전평가원 독성평가연구부 약리연구과에 문의하시기 바랍니다. 전화번호: 043-719-5205 팩스번호: 043-719-5200
+ii
+
+개정 이력서
+
+심혈관계 안전성약리 평가법 해설서 (민원인 안내서)
+
+제․개정번호
+안내서-1112-01
+
+승인일자
+
+주요 내용
+
+2021.04. 심혈관계 안전성약리 평가법 해설서 제정
+
+iii
+
+발간사
+의약품에 의한 심혈관계 부작용은 돌연사로 이어질 위험이 있어 의약품의 주요 퇴출 사유가 되어왔습니다. 따라서, 미국 FDA 등 규제 당국은 의약품의 허가시 심혈관계 부작용을 개발 단계부터 효과적으로 평가하기 위한 안전성약리시험 자료 제출을 의무화하고 있습니다. 현재 의약품의 국제조화기구인 ICH (The International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use) S7B에서는 의약품의 심실재분극 지연에 대한 비임상 평가에 대한 가이드라인 제정하였으며, 실험동물의 심전도에서 QT 간격의 증가 정도를 측정하는 in vivo 시험과 약물의 hERG 채널 억제 정도를 측정하는 in vitro 시험 으로 구성되어 있습니다.
+그러나, 과학기술의 발전에 따라 심부정맥에 대한 위험도를 hERG 채널 억제 평가만으로 예측하는 데에는 한계가 있고, 신약 개발 저해 우려가 지속적으로 제기 되어 왔습니다. 따라서, 2013년부터 미국, 일본, 유럽을 중심으로 전임상 평가 과정에서 의약품에 의한 심혈관계 이상 반응 예측력을 높이기 위하여 종합적 심 부정맥 평가(Comprehensive in vitro proarrythmia assay, CiPA)프로젝트 그룹을 구성하여 새로운 심혈관계 안전성약리 시험을 모색하게 되었습니다.
+2023년 ICH S7B 가이드라인 개정을 목표로 하는 CiPA 프로젝트는 다중 이온 채널 평가, in silico 예측 모델 개발, 역분화 줄기세포 유래 인체 유사 모델 평가, 임상 심전도 평가 및 생체지표 발굴 등 4개의 평가 모듈로 구성되어 있습니다. CiPA의 시험법은 hERG 채널 뿐만 아니라, sodium, calcium 채널 등 심부정맥에 영향을 미치는 주요 심장활동전위 채널을 평가하고, 인간 유도만능줄기세포 유래 심근세포를 이용한 인체유사모델을 활용하여 임상에서의 심부정맥 예측력을 강화 하고자 대두된 새로운 심혈관계 안전성약리 평가법입니다.
+iv
+
+금번에 발간되는 심혈관계 안전성약리 평가법 해설서는 다중 이온채널 평가법과 인간 유도만능줄기세포 유래 심근세포 기반 다전극측정법에 대한 자세한 설명을 통하여 새로운 심혈관계 안전성약리 시험법을 구축하는 데 직접적인 도움이 될 수 있도록 구성하였습니다. 심혈관계 안전성약리 평가법 해설서가 안전성약리 분야 연구자, 제약업계 및 비임상시험연구기관 등 관련 분야 종사자에게 활용되어 새로운 시험법에 대한 인프라를 확충하고 국산 신약개발을 가속화 할 수 있는 계기가 되기를 바랍니다.
+2021년 4월
+식품의약품안전평가원장 서 경 원
+v
+
+■ 심혈관계 안전성약리 평가법 해설서
+
+목차
+
+제1장 심혈관계 안전성약리시험
+제1절 ICH 의약품 안전성약리시험 가이드라인 ························3 제2절 심혈관계 안전성약리시험의 목적 및 필요성 ··················4 제3절 미국 FDA의 CiPA 프로젝트 ··········································7
+제2장 다중심장이온채널 평가시험법
+제1절 다중심장이온채널 평가의 목적 ·····································13 제2절 다중심장이온채널 평가의 의미 ·····································13 제3절 hERG (potassium 채널) 시험법 ································14 제4절 NaV1.5 (sodium 채널) 시험법 ···································17 제5절 CaV1.2 (calcium 채널) 시험법 ···································22
+제3장 인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs) 활동전위 평가시험법
+제1절 hiPSC-CMs 활동전위 평가시험법의 목적 ··················27 제2절 hiPSC-CMs 활동전위 평가시험법의 의미 ··················27 제3절 hiPSC-CMs 기반 다전극측정법 프로토콜 ··················28
+제4장 참고문헌 ·····················································································33
+
+vii
+
+1 제 장
+심혈관계 안전성약리시험
+제1절 ICH 의약품 안전성약리시험 가이드라인 제1절 ICH 의약품 안전성약리시험 가이드라인
+제2절 심혈관계 안전성약리시험의 목적 및 필요성2 제2절 심혈관계 안전성약리시험의 목적 및 필요성
+제3절 미국 FDA의 CiPA 프로젝트 제3절 미국 FDA의 CiPA 프로젝트
+심혈관계 안전성약리 평가법 해설서
+
+제1장 심혈관계 안전성약리시험
+제1장 심혈관계 안전성약리시험
+1절. ICH 의약품 안전성약리시험 가이드라인
+국제 의약품 규제조화 위원회, ICH(the International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human use)는 1990년 4월 브뤼셀 회의에서 창설되었으며 의약품의 안전사용을 위하여 규제기관과 제약업계가 모여 과학기술적 측면에서 제약 개발 및 등록을 논의하고자 하는 국제회의이다. ICH는 기술 지침과 제품 등록 요건의 조화를 통해 공중 보건에 기여하는 것을 목표로 하며 유럽 연합은 1980년대부터 의약품 관련 규제 요건을 조화시키기 시작했고, 미국, 일본이 참여하여 1989년 규제조화를 위한 계획을 수립하기 시작했다. 2000년대부터는 유럽, 일본, 미국을 넘어 다른 지역까지 조화의 수혜를 확대하는 데 중점을 두고 있다. ICH의 주제는 Q: 품질, S: 안전성, E: 효능, M: 종합과 같이 4가지 파트로 나뉜다.
+의약품의 안전성약리시험(safety pharmacology test) 가이드라인은 약물의 잠재적 유해 반응으로부터 임상시험 참여자 및 시판용 의약품을 복용하는 환자들을 보호하는 한편, 동물 및 기타 자원의 불필요한 사용을 방지하고자 만들어졌다. 약리 시험은 지금까지 사람에게 사용하는 의약품에 관한 비임상 평가의 일부로 오랜 시간 동안 전 세계적으로 실시되어왔다. 그러나 안전성약리 시험의 설계 및 수행에 관해서는 국제적으로 인정된 정의, 목적 또는 지침이 없었다. 따라서, “안전성약리시험”이라는 용어는 “의약품에 대한 인체 대상 임상시험 수행을 위한 비임상 안전성 시험의 적절한 시기(M3)”와 “생명공학 유래 의약품의 임상 전 안전성 평가(S6)”라는 ICH 주제에서 처음 소개된 것으로 치료를 목적으로 약물을 인간에게 사용하기 위해 수행해야 할 시험을 의미한다. 안전성약리시험은 임상 용량 범위 또는 그 이상의 용량으로 시험물질(의약품, 화학물질 등)을 노출시켰을 경우 인체 주요 장기의 생리적 기능에 나타날 수 있는 바람직하지 않은 잠재적인 약력학적 효과를 평가하기 위한 시험으로써, 신약개발 과정 중 비임상 단계에서 실험동물을 통해 인간에서의 안전성을 미리 예측하고, 신약 후보물질을 신속히 스크리닝하는 과정으로 이용된다.
+3
+
+심혈관계 안전성약리 평가법 해설서
+2절. 심혈관계 안전성약리시험의 목적 및 필요성
+심혈관계 안전성약리시험은 국제적으로 ICH S7A(의약품에 대한 안전성약리시험)와 S7B (의약품의 심실재분극 지연에 대한 비임상평가)의 가이드라인이 통용되고 있다. S7A는 임상 시험 참가자 및 시판되는 약물을 복용하고 있는 환자들을 보호하기 위해 약물이 가지는 부작용을 밝힘으로써 불필요한 동물실험의 남용을 방지하고 수천억에서 수조원에 이르는 신약개발 비용을 줄이고자 유럽, 미국, 일본 등에서 제시한 국제적 안전성약리시험 가이드라인이다.
+S7B는 S7A에서 명시된 시험내용 중 의약품의 심실 재분극 지연(QT 간격 연장)에 대한 비임상 평가만을 구축해 놓은 것이다(그림 1; International Council on Harmonisation, 2005; Jose Vicente et al., 2018). 심실 재분극 지연 및 부정맥을 유발하는 의약품의 부 작용은 많은 약물에서 나타나는 현상이므로 이 효과에 대한 평가는 현재 활발하게 조사되고 있는 주제이다. 심전도의 QT 간격은 심실의 탈분극 및 재분극 기간에 대한 측정치이다. QT 간격 연장은 선천적일 수 있으며 QT 간격이 연장되는 경우, 특히 다른 위험 요소들과 결합될 때(예를 들어, 저칼륨혈증, 구조적 심장질환, 서맥) 빠르면서 무질서한 다형 심실빈맥 (Torsade de pointes, TdP)을 포함한 심실성 빈부정맥의 위험성이 증가된다. 따라서 QT 간격 연장과 관련되는 의약품의 부정맥 유발 영향이 가장 중요하다. 이 시험의 목적은 심박 출량, 심실수축, 심장혈관 반응에 대한 내적 또는 외적 영향 등을 검사하고 심혈관계의 안전성약리 필수 시험인 hERG 채널 전류에 대한 시험의 결과와 추적시험의 항목인 action potential duration(APD)를 실시하여 QT 간격의 연장 시험의 결과를 가지고 통합된 위해성 평가를 하는 것이다.
+그림 1. ICH S7B 가이드라인
+4
+
+제1장 심혈관계 안전성약리시험
+심장은 매 박동 후 다음 박동을 준비하기 위해 재분극 되는데, 이 간격이 길어지는 현상을 QT 간격(QRS 복합체의 시작으로부터 T파의 종결까지 시간) 연장(QT prolongation) 이라고 한다(그림 2; Vicente et al., 2018). QT 간격 연장은 심실 재분극 이상으로 인한 결과로, 빠르면서 무질서한 다형 심실빈맥(Torsade de pointes, TdP)을 일으켜 사망에 이르게 하는 치명적인 결과를 초래할 수 있다(그림 2; Vicente et al., 2018). 이러한 빈맥은 대부분 일시적으로 발생하여 증상이 없는 경우가 많지만, 갑자기 실신이나 경련을 유발할 수 있으며 일부는 비정상적인 심박동이 장기간 지속되면서 급사를 초래하기도 한다. QT 간격 연장의 원인은 일부 약물 혹은 전해질 이상, 그리고 유전자 이상으로 인하여 선천성 LQTS(long QT syndrome)를 가지고 태어나는 경우 및 기저질환 등에 의해서 발생 할 수 있다.
+그림 2. QT 간격 연장 5
+
+심혈관계 안전성약리 평가법 해설서
+
+심혈관계 안전성약리 시험법은 약물에 의해서 나타난 QT 간격 연장에 의한 부정맥 발 생과 이로 인한 돌연사 발생이 전 세계적으로 커다란 사회적 이슈로 등장함에 따라 신약 개발 분야 등에 있어서 중요한 평가 항목으로 주목받고 있다. 이에 각종 신약 개발 시 QT 간격 연장 작용에 대한 위해성 평가가 필수로 수행되고 있으며, 신약 개발 과정에서 약물에 의하여 나타나는 심장독성은 주요한 약물 퇴출의 원인이 된다. 1990년부터 2006년 까지 심혈관계와 관련된 부작용으로 인하여 퇴출된 약물은 13개로 해당 기간의 전체 퇴출 약물(38종)의 약 34%를 차지하고 있으며, 부정맥, 심근경색, QT 간격 연장, TdP 유발 등 의 사유로 1991년부터 2010년 기간 동안 17개의 약물이 시장에서 퇴출당한바 있다.
+
+표. 심혈관계 관련 부작용으로 인하여 퇴출된 약물 (1990 – 2006)
+
+Drug
+
+Year of withdrawal
+
+Reason(s) for withdrawal from market
+
+Astemizole Grepafloxacin
+Cisapride Droperidol
+
+1999 1999 2000 2001
+
+Drug interactions, QT interval prolongation and TdP QT interval prolongation and TdP Drug interactions, QT interval prolongation and TdP QT interval prolongation and TdP
+
+Levacetylmethadol
+
+2001
+
+Drug interactions, QT interval prolongation and TdP
+
+Dofetilide
+
+2004
+
+Drug interactions, QT interval prolongation and Tdp
+
+Thioridazine
+
+2005
+
+QT interval prolongation and TdP
+
+Terodiline
+
+1991
+
+QT interval prolongation and TdP
+
+Encainide
+
+1991
+
+Proarrhythmias
+
+Flosequinan Terfenadine Sertindole
+Mibefradil
+
+1993 1998 1998
+1998
+
+Excess mortality possibly due to proarrhythmias
+Drug interactions, QT interval prolongation and TdP
+QT interval prolongation and potential for TdP
+Stain-induced rhabdomyolysis following drug interaction and concerns on other potential drug interactions, including the risk of TdP
+
+이처럼 일부 의약품들은 심근세포의 다양한 이온 통로에 영향을 미쳐, 심실 수축 후 재 분극 과정을 연장시키며, 이는 TdP의 가능성을 증가시키는 원인이 된다. 따라서 신약 후 보물질의 TdP의 유발 가능성을 정확하게 판단하는 것은 신약 개발 및 임상시험의 안전성 을 확보할 수 있는 필수적인 기술이며, 환자를 보호하고 제약 업계의 저비용/고효율 신약 개발 기대효과를 주기 위한 향후 지속적인 발전이 필요한 기술이다.
+
+6
+
+제1장 심혈관계 안전성약리시험
+3절. 미국 FDA의 CiPA 프로젝트
+ICH는 TdP 유발 가능성에 대한 평가의 큰 틀이 되는 S7B 가이드라인을 2005년에 발표 하였다. 이 가이드라인은 현재까지 신약 후보 물질의 TdP 유발 가능성 평가를 위한 가장 중요한 기준으로 사용되고 있다. 그러나 hERG assay는 평가 방법 자체의 민감도는 매우 높은 편이지만, 특이도가 낮아 많은 신약 후보 물질들이 벽을 넘지 못하고 탈락하게 되는 문제가 지적되고 있다. 실제 심독성이 없는 의약품도 허가를 위하여 광범위한 심전도 연구를 수행함에 따라 임상 개발 비용이 증가하거나, 의약품 사용설명서에 주의 사항을 삽입하여 의약품의 가치가 하락할 가능성이 있다. 따라서 TdP 유발 가능성 평가를 위한 새로운 패러다임이 제시되어야 할 필요성이 대두되었다.
+2013년 7월, 미국 FDA 본부에서는 Cardiac Safety Research Consortium (CSRC), Health and environmental Sciences Institute (HESI)와 함께 TdP 유발 가능성 평가를 위한 새로운 전략을 논의하기 시작하였다.“The comprehensive in vitro pro arrhythmia assay (CiPA) initiative”에서 제시한 접근법은 자동화된 high throughput 방법을 사용 하며, 부정맥 기전에 대한 지식을 기반으로 이온 채널 매개성 부정맥 전위를 보다 포괄적 으로 평가하는 노력이다. 또한, 향후 동물 복지 문제 및 종 특이성 문제로 인하여 선진국을 중심으로 대부분의 나라에서 실험동물을 이용한 독성평가 기술은 점차 사라지고 인체유사 환경의 시험법이 수행될 전망이며, 인간 유도만능줄기세포 유래 심근세포(human induced pluripotent stem cell-derived cariomyocytes, hiPSC-CMs)를 활용하는 CiPA 패러 다임을 제시하였다.
+CiPA initiative는 다양한 심장 이온 채널 전류에 대한 약물 효과를 평가하고, 데이터를 in silico 모델링에 적용하여 통합된 심실 활동을 재구성하여, EADs(early after depolarization, 조기 후 탈분극) 및 재분극 불안정성, TdP에 대한 성향을 분석한다. 그리고 hiPSC-CMs 기반 in vitro 활동전위 평가를 통해 심부정맥을 예측하기 위한 추가 정보를 획득하는 것이 그 내용이다. 마지막으로 임상 1상 심전도에서 심부정맥을 예측하기 위한 새로운 바이오 마커를 발굴하여 비임상 다중심장이온채널 평가 및 in silico 모델링, hiPSC-CMs 기반 in vitro 활동전위 영향 평가를 통해 확보한 데이터와 임상 1상 심전도의 유사성을 평가 한다(그림 3; Vicente et al., 2018).
+7
+
+심혈관계 안전성약리 평가법 해설서
+그림 3. CiPA 심혈관계 안전성약리 평가 구성 요소 기존 ICH S7B는 hERG (K+ channel)에 대한 영향만을 필수 시험으로 평가하고 있으나 CiPA는 심근세포에 존재하는 다양한 이온채널(Na+, Ca2+, K+ 등)에 대한 종합적인 영향을 평가하는 것을 제시하며(그림 3-1; 그림 4; Augustus O. Grant, 2009), 기존 재분극에만
+초점을 맞춘 것과 달리 부정맥에 초점을 맞추어 평가를 실시한다. 또한, in silico 방법 및 인간 유도만능줄기세포 유래 심근세포 기반 다양한 in vitro 활동 전위 분석을 제안하고 있다(그림 3-2; 그림 3-3). 한 예로 다전극측정법(Multi electrode assay, MEA)이 포함 되어 있다.
+8
+
+제1장 심혈관계 안전성약리시험
+그림 4. 심장활동전위에 관여하는 주요 이온채널
+심부정맥을 예측하기 위한 in silico 컴퓨터 모델링은 시스템 생리학적 모델을 활용하여 예측 정확성을 높이기 위해 점진적으로 발달해왔다. 2011년 O’Hara et al.은 인간 심근 세포의 활동전위의 생리학적, 동역학적 성질이 적용된 모델로써 QT 간격 연장 예측을 위한 O’Hara-Rudy 모델을 구축하였고, 2013년 Di Veroli et al.이 O’Hara-Rudy 모델에 약물과 이온 채널 결합 동역학 변수를 적용하여 Markov 모델로 발전시켰다. 2016년 Zhihua Li et al.은 Markov 모델에 hERG 채널에 대한 온도 의존성 게이팅 전환 변수를 접목하여 IKr- dynamic ORD 모델로 발전시켰다. 더 나아가 2017년 Sara Dutta et al.은 심장활동전위 동안 발생하는 내향 및 외향 전류에 의해 이동한 전류의 총합을 정량화 함으로써 TdP 유발 위험성 지표를 구축하였고, 약물에 의한 TdP 유발 위험성 정도에 따라 고/중/저 TdP 유발 약물로 분류하기 위한 모델로 향상시켰다. 이에 더하여 2019년 Zhihua Li et al.은 hERG, CaV1.2, NaV1.5 채널에 대한 IC50와 Hill coefficient를 사용 하여 TdP 위험성을 예측하는 모델로 발전시켰다. 점차적으로 일부 바이오마커에 의존하지 않고 약물이 심장의 각 이온 채널에 미치는 영향을 종합적으로 분석하여, 심실 재분극 패턴을 예측할 수 있는 기술을 in silico method로 확립하고 있다. 2003년 hERG 억제
+9
+
+심혈관계 안전성약리 평가법 해설서
+데이터 베이스 in silico 모델을 시작으로 in silico method의 발달은 향후 안전성약리 시험의 정확도를 높이고 약물 개발 비용을 줄이고 개발 속도를 높이는데 중요한 의의를 가진다.
+인간 유도만능줄기세포 유래 심근세포(human induced pluripotent stem cell-derived cardiomyocytes, hiPSC-CMs) 기반 MEA는 인체환경과 유사한 시스템으로 in vitro 심장 안전성약리 평가가 가능한 시험방법 중 하나이다(그림 3-3). hiPSC-CMs에서 MEA를 통해 의약품 평가 수행을 위한 다양한 파라미터를 측정한다. hiPSC-CMs의 사용은 실험동물의 사용을 줄일 수 있고, 세포를 배양할 수 있기 때문에 시험약물에 대하여 장시간 노출 시험이 가능하게 하고 TdP 혹은 심장활동전위의 변화에 대한 이해를 줄 것으로 예상한다.
+또한 CiPA는 기존 QT prolongation 지표였던 PR, QRS, QTc 뿐만 아니라 새로운 바이오마커의 필요성을 제안하였다(그림 3-4). CiPA 임상 1상 심전도 평가 활동 그룹은 12개의 심전도 바이오마커를 제안하였다. 대표적으로 J-Tpeak interval은 hERG 억제 의존성 QTc 연장 약물과 hERG와 late sodium 혹은 calcium 억제 의존성 QTc 연장 약물을 구별하는 최적의 바이오마커로 선정되었다(Jose Vicente et al., 2018). QTc interval에 비해 J-Tpeak가 약물의 부정맥 유발 가능성을 더 잘 예측 가능하다는 것이 그 근거이다. 임상 1상 심전도 평가를 도입하여 인간 특이적 대사체와 단백질 결합성 차이로 인한 심장 이온 채널 부작용 여부와 비임상 다중 심장 이온 채널 평가 데이터와 임상 1상 심전도의 유사성을 평가한다. 그리고 임상 1상 심전도 평가는 강도 높은 임상 3상 심전도 모니터링의 필요성 여부를 결정한다.
+10
+
+2 제 장
+다중심장이온채널 평가시험법
+제1절 다중심장이온채널 평가의 목적 제2절 다중심장이온채널 평가의 의미 제3절 hERG (potassium 채널) 시험법 제4절 NaV1.5 (sodium 채널) 시험법 제5절 CaV1.2 (calcium 채널) 시험법
+심혈관계 안전성약리 평가법 해설서
+
+제2장 다중심장이온채널 평가시험법
+제2장 다중심장이온채널 평가시험법
+1절. 다중심장이온채널 평가의 목적
+In vitro 다중심장채널 평가법 확립을 통해 심혈관계 안전성약리 평가 분야의 국제의약품 규제조화위원회(ICH) 가이드라인(S7B) 개정에 반영하고 의약품 심장독성평가 지표로 활용 하고자한다.
+2절. 다중심장이온채널 평가의 의미
+심혈관계 안전성약리시험의 현재 ICH의 S7B 가이드라인 in vitro hERG assay는 의약품의 심실재분극 지연(the prolongation of ventricular repolarization)에 대한 비임상평가 방법의 하나로써 의약품 혹은 그 대사체가 QT 간격 연장과 관련 있는 hERG potassium 채널의 억제(hERG block)를 평가하는 시험법이다(Fermini et al., 2016; Vincente et al., 2018). 그러나 심장 활동 전위의 탈분극과 재분극에 기여하는 이온 채널은 hERG potassium 채널(IKr)과 함께 NaV1.5 채널(INa), KCNQ1/KCNE1 채널(IKs), Kir2.1 채널 (IK1), Kv4.3/KChIP2 채널(Ito), CaV1.2 채널(ICaL) 등이 존재하기 때문에 한 가지 이온 채널에 대한 평가는 위음성을 나타낼 가능성이 있다(Augustus O. Grant, 2009). 그리고 약물의 hERG 채널에 대한 양성효과는 실제 임상이나 비임상 시험에서는 영향을 주지 않는 경우도 있다. 실제로 의약품에 의한 hERG block이 존재한다 하더라도 CaV1.2 채널과 NaV1.5 채널의 억제는 QT 간격 연장과 TdP 유발을 감소시킬 수 있는 가능성이 있는 기전으로 알려져 있다(Belardinelli et al., 2013; Gintant, Su, Martin, & Cox, 2006; Johannesen et al., 2014). 따라서 현재의 ICH S7B 비임상 시험 전략으로 심부정맥 TdP 위험도를 예측하기에 한계가 존재한다(Fermini et al., 2016). 또한 CiPA initiative의 심장이온채널 활동그룹에서 발표한 MICE(multiple ion channel effects) 모델에서 제안 되었던 기존의 7가지 이온채널들 중 가장 큰 영향을 미치는 채널로 IKr(hERG), ICaL(CaV1.2)와 INa/INaL(NaV1.5 fast/late)을 제안하였다. 그리하여 hERG 채널뿐만 아니라 심장활동전위를 구성하는 주요 채널인 NaV1.5 채널, CaV1.2 채널의 다중 평가를 통해 복합적으로 근거를 마련하여 기전 이해를 바탕으로 하는 다중심장이온채널 평가가 필요하다.
+13
+
+심혈관계 안전성약리 평가법 해설서
+3절. hERG (potassium 채널) 시험법(hERG assay)
+(1) hERG current protocol
+- 배양액의 조성 : hERG ○ External solution(mM)
+130 NaCl, 10 HEPES, 5KCl, 1MgCl2*6H2O, 1CaCl2*6H2O, 12.5 dextrose pH adjusted to 7.4 with NaOH ∼280 mOsM
+○ Internal solution(mM) 120 K-gluconate, 20 KCl, 10 HEPES, 5 EGTA, 1.5 MgATP pH adjusted to 7.3 with KOH ∼280 mOsM
+위의 용액을 사용하면 약 15 mV의 액체 접합 전위가 발생하며, 전류 측정 시 이를 고려 한다. 예를 들어 명령 전압을 –80 mV로 설정하려면 액체 접합 전위(-15 mV)을 생각하여 –65 mV를 사용해야 한다. 이때 직렬 저항 보정이 권장된다.
+- 배양세포 : hERG hERG 유전자에 의해 세포막에 hERG potassium channel을 발현하는 세포주를 시험 계로 사용하며 hERG assay에서 사용하는 세포는 일반적으로 CHO(Chinese hamster ovary) cell 또는 HEK(human embryonic kidney) cell에 일시적으로 또는 영구적으로 hERG 유전자를 삽입하여 사용한다.
+- 실험방법 hERG assay는 in vitro 시험이므로 투여경로는 오직 관류되는 external solution에 시험물질을 희석하여 세포가 담긴 챔버(chamber)에 관류시키는 방법만을 사용한다. Whole-cell voltage clamp 방법을 사용하여 세포막을 통한 미세전류를 기록한다. Amplifier와 Digidata를 사용하여 전류를 5 kHz에서 필터링 후 sampling rate를 최소 10 kHz 이상 에서 디지털화하고 특정 저장 매체 소프트웨어 프로그램을 사용하여 데이터를 저장하고 분석 한다(그림 5). 모든 실험은 자동 온도조절 장치(automatic temperature controller)를 사용해서 36.5 ± 0.5 ℃에서 수행한다.
+14
+
+제2장 다중심장이온채널 평가시험법
+그림 5. 패치클램프와 whole-cell patched cell 아래 프로토콜(그림 6)은 hERG 전류에 영향을 미치는 약물 효과를 이해하기 위해 사용 된다. Whole-cell 패치 시 세포에 대한 밀착 저항값은 1GΩ 이상이어야 하며, whole-cell 패치 후 세포의 안정화를 위해 약 3분 동안 기본 external solution을 관류 시킨다. 전압 프로토콜은 약 5초간 지속되며 5초마다 반복시키고 -80 mV에서 –90 mV로 100 ms 동안의 작은 과분극 전압은 옴의 법칙에 따라 입력 저항을 계산하기 위해 사용 된다. -80 mV에서 +40 mV로 500 ms 동안 탈분극 시킨 후 전압 램프 다운 구간인 +40mV∼-80mV(1.2V/s의 전압 변화) 단계에서 100 ms 동안 peak hERG 전류를 측정 한다. 그리고 holding potential, –80 mV에서 평형상태로 유지한다. hERG 전류는 leak currents (pA)의 절댓값이 150 이하 peak currents +500 pA 이상을 보이는 안정된 세 포에서만 기록한다. 연속적으로 전류를 측정하여 약 10%의 오차 범위 내에서 안정적으로 유지하는지 확인한 후 약물을 적용한다. 약물 효과는 안정적인 hERG 전류 상태를 얻을 때까지 모니터링 되어야 한다. 실험 종료 시 측정된 전류가 hERG 채널에 의해 매개된다 는 것을 보여주기 위해 1 μM E-4031에 대한 hERG 전류 억제를 확인한다. 관류용액 속 도는 유량에 맞추어 설정하며 반드시 기재되어야 한다. 가능한 경우 각 약물에 대하여 최소 3개 이상의 농도를 테스트할 것을 권장하며, 50% 전류 억제 농도((IC50)를 잘 추정할 수 있도록 20%에서 80%까지의 억제 범위에서 수행할 것을 권장한다.
+15
+
+심혈관계 안전성약리 평가법 해설서
+그림 6. hERG current pulse protocol - 평가방법 hERG 전류는 탈분극(depolarization) 자극 시 세포막에 존재하는 hERG 채널을 통해 세포 내에서 세포 외로 전류가 유출(outward current)되고, 이어서 재분극(repolarization) 시 탈분극 단계에서 보다 더 큰 전류가 세포 외로 유출되는 특징이 있다. hERG 전류는 +40 mV에서 –80 mV로 재분극 동안 peak hERG 전류가 측정된다(그림 6; 그림 7). 위의 프로토콜(그림 6)에서 도출된 데이터는 hERG 전류와 약물 농도와의 관계, 약물의 hERG 채널에 대한 특이성(specificity)을 이해하기 위해 사용된다. hERG 채널에 대한 약물 효과를 정량화하기 위해 기본 external solution을 관류하여 연속적으로 측정된 안정화 상태의 hERG 전류 평균값과 약물 적용 후 안정화 상태의 hERG 전류 평균값으로 분석한다. 시험 약물 농도에 따른 peak hERG 전류에 대해 표시하고, IC50과 Hill 계수를 생성하기 위해 Hill 방정식을 이용한다(그림 7). IC50과 Hill 계수는 hERG 채널에 대한 약물 효과를
+이해할 뿐만 아니라 CiPA의 in silico 컴퓨터 모델링에서 TdP 위험성을 예측하는 파라 미터로 제공된다.
+그림 7. Dofetilide에 대한 hERG 전류 영향 평가 16
+
+제2장 다중심장이온채널 평가시험법
+4절. NaV1.5 sodium 채널 시험법(NaV1.5 assay)
+(1) Late NaV1.5 current
+- 배양액의 조성 : Late NaV1.5 ○ External solution(mM) 137 NaCl, 10 HEPES, 4CsCl, 1MgCl2*6H2O, 2 CaCl2*H2O, 10 dextrose pH adjusted to 7.4 with NaOH ∼281-287 mOsM
+○ Internal solution(mM) 130 CsCl, 7 NaCl, 1MgCl2*6H2O, 5 HEPES, 5 EGTA, 5 MgATP, 0.4 TrisGTP pH adjusted to 7.2 with CsOH ∼290 mOsM
+- 배양세포 : NaV1.5 SCN5A 유전자에 의해 세포막에 NaV1.5 sodium channel을 발현하는 세포주를 시험 계로 사용한다. NaV1.5 assay에서 사용하는 세포는 일반적으로 CHO(Chinese hamster ovary) cell 또는 HEK(human embryonic kidney) cell에 일시적으로 혹은 영구적으로 SCN5A 유전자를 삽입하여 사용한다.
+- 실험 방법 NaV1.5 assay는 자극에 의해서 세포가 탈분극(depolarization)하게 되면 세포막에 존재 하는 NaV1.5 sodium 채널을 통해 세포 밖에서 안으로 이동하는 Na+의 양을 측정하는 방법으로 패치클램프(그림 5)를 사용하였다. Amplifier와 Digidata를 사용하여 전류를 5 kHz로 필터링 후 sampling rate를 최소 20 kHz 이상 디지털화하고 특정 저장 매체 소프트웨어 프로그램을 사용하여 데이터를 저장하고 분석한다. 모든 실험은 자동 온도조절 장치(automatic temperature controller)를 사용해서 36.5 ± 0.5 ℃에서 수행한다.
+아래 프로토콜(그림 8)은 NaV1.5 전류에 영향을 미치는 약물 효과를 이해하기 위해 사용 된다. Whole-cell 패치 시 세포에 대한 밀착 저항값은 1GΩ 이상이어야 하며, whole-cell 패치 후 세포의 안정화를 위해 약 3분 동안 기본 external solution을 관류시킨다. 전세포
+17
+
+심혈관계 안전성약리 평가법 해설서
+전류 측정 시 직렬 저항 보상이 필요하다. 실험 시작 시 직렬 저항의 % 보상값을 기록하고, 실험 중 보상값 변화가 발생할 때는 재조정 해 준다. -95 mV에서 –125 mV까지의 작은 과분극 전압 펄스는 옴의 법칙에 따라 입력 저항을 계산하기 위해 사용된다. Late NaV1.5 전류를 유도하기 위해서는 150 nM ATXII를 사용한다. NaV1.5 late 전압 프로 토콜은 약 10초 마다 반복되며, 기본 external solution을 관류하여 최소 5분 동안 연속 트레이스가 안정적으로 유지될 때 NaV1.5 late 전류를 기록한다. 약물 효과는 안정적인 전류 상태를 얻을 때까지 모니터링 되어야 한다. 가능한 경우 각 약물에 대해 최소 3개 이상의 농도를 테스트할 것을 권장하며, 50% 전류 억제(IC50)와 관련된 농도를 잘 추정할 수 있도록 20%에서 80%까지의 억제 범위에서 수행한다. 또한 측정된 전류가 late NaV1.5 채널에 의해 매개된다는 것을 보여주기 위해 NaV1.5 발현 배양세포에서 sodium channel 길항제인 TTX(tetrodotoxin)를 적용하여 농도 의존적 억제 경향성을 사전에 독립적으로 세포에서 확인한다. 혹은 실험 종료 시 30 μM TTX를 적용한다.
+그림 8. NaV1.5 current pulse protocol - 평가방법 NaV1.5 채널은 탈분극(depolarization) 자극에 의해서 세포 내로 전류가 유입(inward current)되는 내향전류를 나타낸다. Sodium 전류의 2-5 ms 구간은 다양한 sodium 전류 (Peak, Early, Late INa)가 나타나는 구간이나 그 이후 구간은 NaV1.5 late 전류를 포함 한다(Victor and Albertas, 2005). NaV1.5 late 전류는 –125 mV에서 –15 mV로 탈분 극 시 내향 전류의 40 ms 지점과 램프다운 단계의 피크 전류에서 측정할 수 있다(그림 9).
+18
+
+제2장 다중심장이온채널 평가시험법
+그림 9. NaV1.5 late 전류 분석 위의 프로토콜(그림 8)에서 도출된 데이터는 NaV1.5 전류와 약물 농도와의 관계, 약물의 NaV1.5 채널에 대한 특이성을 이해하기 위해 사용된다. 약물 효과를 정량화하기 위해 내향 전류의 절댓값이 사용된다. NaV1.5 채널에 대한 약물 효과를 정량화하기 위해 기본 external solution을 관류하여 연속적으로 측정된 안정화 상태의 NaV1.5 late 전류 평균값과 약물 적용 후 안정화 상태의 NaV1.5 late 전류 평균값으로 분석한다. 시험 약물 농도에 따른 NaV1.5 late 전류에 대해 표시하고, IC50과 Hill 계수를 생성하기 위해 Hill 방정식을 이용한다(그림 10). IC50과 Hill 계수는 hERG 채널에 대한 약물 효과를 이해할 뿐만 아니라
+CiPA의 in silico 컴퓨터 모델링에서 TdP 위험성을 예측하는 파라미터로 제공된다.
+그림 10. Ranolazine에 대한 Na+ late 전류 영향 평가
+(2) Peak NaV1.5 current
+- 배양액의 조성 : Peak NaV1.5 ○ External solution(mM) 137 NaCl, 10 HEPES, 4CsCl, 1MgCl2*6H2O, 2 CaCl2*H2O, 10 dextrose pH adjusted to 7.4 with NaOH ∼281-287 mOsM ○ Internal solution(mM)
+19
+
+심혈관계 안전성약리 평가법 해설서
+130 CsCl, 7 NaCl, 1MgCl2*6H2O, 5 HEPES, 5 EGTA, 5 MgATP, 0.4 TrisGTP pH adjusted to 7.2 with CsOH ∼290 mOsM
+- 배양세포 : NaV1.5 SCN5A 유전자에 의해 세포막에 NaV1.5 sodium channel을 발현하는 세포주를 시험 계로 사용한다. NaV1.5 assay에서 사용하는 세포는 일반적으로 CHO(Chinese hamster ovary) cell 또는 HEK(human embryonic kidney) cell에 일시적으로 혹은 영구적으로 SCN5A 유전자를 삽입하여 사용한다.
+- 실험 방법 NaV1.5 assay는 탈분극(depolarization) 자극으로 세포막에 존재하는 NaV1.5 sodium 채널을 통해 세포 밖에서 안으로 이동하는 Na+의 양을 측정하는 방법으로 패치클램프(그림 5)를 사용하였다. Amplifier와 Digidata를 사용하여 전류를 5 kHz로 필터링 후 sampling rate를 최소 20 kHz 이상 디지털화하고 특정 저장 매체 소프트웨어 프로그램을 사용하여 데이터를 저장하고 분석한다. 모든 실험은 자동 온도조절 장치(automatic temperature controller)를 사용해서 36.5 ± 0.5 ℃에서 수행한다.
+NaV1.5 late 전류와 같은 전압 프로토콜(그림 8) 및 external/internal solution을 사용 하여 측정한다. Whole-cell 패치 시 세포에 대한 밀착 저항값은 1GΩ 이상이어야 하며, whole-cell 패치 후 세포의 안정화를 위해 약 3분 동안 기본 external solution을 관류 시킨다. 전세포 전류 측정 시 직렬 저항 보상이 필요하다. 실험 시작 시 직렬 저항의 % 보상값을 기록하고, 실험 중 보상값 변화가 발생할 때는 재조정 해 준다. -95 mV에서 – 125 mV까지의 작은 과분극 전압 펄스는 옴의 법칙에 따라 입력 저항을 계산하기 위해 사용된다. Peak NaV1.5 전류는 -125 mV에서 -15 mV로 40 ms 동안 탈분극 자극에 의해서 측정된다. Peak NaV1.5 전류 측정 시 ATXII는 사용하지 않는다. NaV1.5 전압 프로토콜은 약 10초 마다 반복하며 약 5분 동안 기본 external solution을 관류시킨다. 연속적으로 전류를 측정하여 약 10%의 오차 범위 내에서 안정적으로 유지하는지 확인한 후 약물을 적용한다. 약물 효과는 안정적인 전류 상태를 얻을 때까지 모니터링 되어야 한다. 가능한 경우 각 약물에 대해 최소 3개 이상의 농도를 테스트할 것을 권장하며, 50% 전류 억제(IC50)와 관련된 농도를 잘 추정할 수 있도록 20%에서 80%까지의 억제 범위에서 수행
+20
+
+제2장 다중심장이온채널 평가시험법
+한다. 또한 측정된 전류가 late NaV1.5 채널에 의해 매개된다는 것을 보여주기 위해 NaV1.5 발현 배양세포에서 sodium channel 길항제인 TTX(tetrodotoxin)를 적용하여 농도 의존적 억제 경향성을 사전에 독립적으로 세포에서 확인한다. 혹은 실험 종료 시 30 μM TTX를 적용한다.
+- 평가방법 위의 프로토콜(그림 8)에서 도출된 데이터는 NaV1.5 전류와 약물 농도와의 관계, 약물의 NaV1.5에 대한 특이성을 이해하기 위해 사용된다. NaV1.5 peak 전류는 -15 mV 단계의 내향 전류에서 측정된다(그림 11). 약물 효과를 정량화하기 위해 내향 전류의 절댓값이 사용된다. NaV1.5 채널에 대한 약물 효과를 정량화하기 위해 기본 external solution을 관류하여 연속적으로 측정된 안정화 상태의 NaV1.5 전류 평균값과 약물 적용 후 안정화 상태의 NaV1.5 전류 평균값으로 분석한다. 시험 약물 농도에 따른 Peak NaV1.5 전류에 대해 표시하고, IC50과 Hill 계수를 생성하기 위해 Hill 방정식을 이용한다. IC50과 Hill 계수는 hERG 채널에 대한 약물 효과를 이해할 뿐만 아니라 CiPA의 in silico 컴퓨터 모델 링에서 TdP 위험성을 예측하는 파라미터로 제공된다.
+그림 11. NaV1.5 peak 전류 분석
+21
+
+심혈관계 안전성약리 평가법 해설서
+5절. CaV1.2 calcium 채널 시험법(CaV1.2 assay)
+(1) CaV1.2 current protocol
+- 배양액의 조성 : CaV 1.2 ○ External solution(mM) 130 NaCl, 10 HEPES, 4 KCl, 1MgCl2*6H2O, 1.8 CaCl2*H2O, 10 dextrose pH adjusted to 7.4 with NaOH ∼290 mOsM
+○ Internal solution(mM) 120 Aspartic Acid, 120 CsOH, 10 CsCl, 10 HEPES, 10 EGTA, 5 MgATP, 0.4 TrisGTP pH adjusted to 7.2 with CsOH ∼290 mOsM
+위의 용액을 사용하면 약 17 mV의 액체 접합 전위가 발생하며, 전류 측정 시 이를 고려 한다. 예를 들어 명령 전압을 –80 mV로 설정하려면 액체 접합 전위(17 mV)를 고려하여 –63 mV를 사용해야 한다. 이때 직렬 저항 보정이 권장된다.
+- 배양세포 : CaV1.2 CACNA1C/CACNB2/CACNA2D 유전자에 의해 세포막에 CaV1.2 calcium channels을 발현하는 세포주를 시험계로 사용한다. CaV1.2 assay에서 사용하는 세포는 일반적으로 CHO(Chinese hamster ovary) cell 또는 HEK(human embryonic kidney) cell에 일시적으로 혹은 영구적으로 CACNA1C/CACNB2/CACNA2D 유전자를 삽입하여 사용한다.
+- 실험 방법 CaV1.2 assay는 탈분극(depolarization) 자극으로 세포막에 존재하는 CaV1.2 calcium 채널을 통해 세포 밖에서 안으로 이동하는 Ca2+의 양을 측정하는 방법으로 패치 클램프(그림 5)를 사용하였다. Amplifier와 Digidata를 사용하여 전류를 3 kHz로 필터링 후 sampling rate를 최소 10 kHz 이상 디지털화하고 특정 저장 매체 소프트웨어 프로그램을 사용하여 데이터를 저장하고 분석한다. 모든 실험은 자동 온도조절 장치(automatic temperature controller)를 사용해서 36.5 ± 0.5 ℃에서 수행한다.
+22
+
+제2장 다중심장이온채널 평가시험법
+Whole-cell 패치 시 세포에 대한 밀착 저항값은 1GΩ 이상이어야 하며, whole-cell 패치 후 세포의 안정화를 위해 약 3분 동안 기본 external solution을 관류시킨다. 관류 용액 속도는 기존에 보고된 유량에 맞추어 설정하며 반드시 기재되어야 한다. 전세포 전류 측정 시 직렬 저항 보상이 필요하다. 실험 시작 시 직렬 저항의 % 보상값을 기록하고, 실험 중 보상값 변화가 발생할 때는 재조정 해 준다. -80 mV에서 –90 mV까지의 작은 과분극 전압 펄스는 옴의 법칙에 따라 입력 저항을 계산하기 위해 사용된다. 높은 밀착 저항값을 얻은 경우, 고정 전류와 입력 저항을 세포 상태의 지표로 사용할 수 있으며, 실험 전반에 걸쳐 안정적으로 유지되어야 한다. CaV1.2 전류는 –80 mV에서 0 mV로 탈분극 구간과 램프 다운 구간(100ms 동안 +30∼-80mV의 램프 다운 단계)의 두 곳에서 peak CaV1.2 전류를 측정할 수 있다(그림 12). CaV1.2 전압 프로토콜은 5초마다 반복되며, 기본 external solution을 최소 5분 동안 관류시켜서 CaV1.2 전류가 안정적으로 측정될 때 연속하여 다른 농도의 시험약물에 대한 전류 측정이 가능하다. 실험 종료 시 측정된 전류가 CaV1.2 채널에 의해 매개된다는 것을 보여주기 위해 100 μM verapamil을 적용해야 한다.
+그림 12. CaV1.2 전류 측정 프로토콜
+- 평가방법 위의 프로토콜(그림 12)에서 도출된 데이터는 CaV1.2 전류와 약물 농도와의 관계, 약물의 CaV1.2에 대한 특이성을 이해하기 위해 사용된다. CaV1.2 peak 전류는 –80 mV에서 0 mV로 탈분극 구간 혹은 램프 다운 구간(100ms에서 +30∼-80mV 까지의 램프 다운)의 내향 전류에서 측정된다(그림 12; 그림 13). CaV1.2 채널에 대한 약물 효과를 정량화하기 위해 기본 external solution을 관류하여 연속적으로 측정된 안정화 상태의 CaV1.2 전류 평균값과 약물 적용 후 안정화 상태의 CaV1.2 전류 평균값으로 분석한다. 또한 CaV1.2 전류 측정 프로토콜(그림 12)을 통해 얻은 후 정량 분석한다. 시험 약물 농도에 따른
+23
+
+심혈관계 안전성약리 평가법 해설서
+CaV1.2 전류에 대해 표시하고, IC50과 Hill 계수를 생성하기 위해 Hill 방정식을 이용한다 (그림 13). IC50과 Hill 계수는 hERG 채널에 대한 약물 효과를 이해할 뿐만 아니라 CiPA의 in silico 컴퓨터 모델링에서 TdP 위험성을 예측하는 파라미터로 제공된다.
+그림 13. Verapamil에 대한 Ca2+ 전류 영향 평가
+※ 제2장 다중심장이온채널 평가시험법은 미국 FDA의 ‘Recommended voltage protocols to study drug-cardiac ion channel interations using recombinant cell lines (09.18.2019)’를 근거로 작성되었다.
+24
+
+3 제 장
+인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs)활동전위 평가시험법
+제1절 hiPSC-CMs 활동전위 평가시험법의 목적 제2절 hiPSC-CMs 활동전위 평가시험법의 의미 제3절 hiPSC-CMs 기반 다전극측정법 프로토콜
+심혈관계 안전성약리 평가법 해설서
+
+제3장 인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs)활동전위 평가시험법
+
+제3장
+
+인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs) 활동전위 평가시험법
+
+1절. hiPSC-CMs 활동전위 평가시험법의 목적
+안전성약리 평가의 패러다임이 인체유사모델을 활용하는 방향으로 전환됨에 따라 hiPSC-CMs를 활용한 안전성약리 평가법을 확립하고 이를 통해 심혈관계 안전성약리 평가 분야의 국제의약품규제조화위원회(ICH) 가이드라인(S7B) 개정에 반영하여 의약품 심장독성 평가 지표로 활용하고자한다.
+
+2절. hiPSC-CMs 활동전위 평가시험법의 의미
+2013년부터 미국 FDA를 중심으로 HESI, CSRC, 미국 SPS, 유럽 EMA, Health Canada, 일본 NIHS, 일본 PMDA에서 인체환경과 유사한 시스템으로 hiPSC-CMs를 이용한 in vitro 심장 안전성약리 평가법 개발의 필요성을 제기하였다(Bernard Fermini et al., 2016). 과학기술의 발달에 따라 현재 ICH S7B 심혈관계 안전성약리 시험법인 hERG 단일이온채널 시험에서 줄기세포 유래의 인체 유사 모델 활용 및 in silico 예측 시스템 구축 등 종합적 심부정맥 예측 평가로 패러다임의 변화가 예상된다.
+심부정맥 등 심장독성은 의약품의 주요 퇴출 사유이고, 안전성약리(safety pharmacology) 자료는 신약 허가 시 필수적으로 제출해야 하는 자료이다. 개정이 예정되어 있는 ICH 첨 단 평가시험법에 적절히 대비하지 못한다면 국내 신약개발에 차질 우려되는 상황이다. 따라서, 식품의약품안전처는 규제기관에서 선도적으로 국제추세를 반영하고 의약품 안전성 평가기술의 고도화를 위하여 국내 제작 hiPSC-CMs를 활용한 심혈관계 안전성약리 평가 시험법을 구축하고 이를 통하여 줄기세포 유래 시험법 국산화와 신약 개발의 가속화를 지원하고자 한다.
+hiPSC-CMs의 사용은 실험동물의 사용을 줄이고, 세포 배양 시스템은 시험 약물의 장 시간 노출 시험을 가능하게 하며, TdP 혹은 심장활동전위의 변화에 대한 기전 중심의 이해를 높여줄 수 있을 것으로 기대한다.
+
+27
+
+심혈관계 안전성약리 평가법 해설서
+3절. hiPSC-CMs 기반 다전극측정법 프로토콜
+(1) MEA 시스템
+MEA 시스템은 다중전극이 배열되어있는 플레이트에 세포를 배양하거나 조직을 준비하여 부착한 후, 세포막에서 나오는 전기신호를 측정하는 장비로써, 심근세포와 같이 일정한 박 동이 있는 신호를 측정하거나 신경세포의 다양한 전기적 신호 변화를 측정할 수 있다. hiPSC-CMs가 활동전위를 일으킬 때 나오는 미세전류에 의한 extracellular field potentials을 측정하여 약물에 대한 심실재분극 지연 평가를 위한 다양한 파라미터를 분석한다. 기본적으로 FPD(Field Potential Duration), BPM(Beat per minute) 혹은 ISI(interspike interval), dv/dtmax 등의 측정 항목들이 대표적이다(그림 14; Navarrete et al., 2013).
+그림 14. 심장활동전위 측정 항목
+28
+
+제3장 인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs)활동전위 평가시험법
+- 실험 방법 ○ MEA plate coating
+Fibronectin을 1 mg/㎖의 농도가 되도록 DPBS로 녹여 0.22 mm 필터 후 1회 사용 분량씩 소분하여 냉동고에 보관한다. 세포 seeding 당일에 냉동고에 보관 중이던 1 mg/ ㎖의 fibronectin stock을 꺼내어 DPBS로 최종 50 μg/㎖의 농도로 희석한다. MEA plate의 전극을 모두 포함하도록 중앙에 50 μg/㎖ fibronectin을 첨가한 후 MEA plate가 마르지 않도록 MEA plate well 사이 공간에 DPBS를 첨가한다(그림 15; Daniel et al., 2016). 37℃, CO2 5% 세포 배양기에서 최소한 1시간 이상 배양하여 코팅이 잘 되도록 한다. Fibronectin은 반드시 사용 전에 녹여서 신선하게 사용하며, 잔여 최종 희석액은 폐기한다.
+그림 15. Plate 코팅 및 plate 사이 공간 채우기
+○ hiPSC-CMs 배양
+hiPSC-CMs는 제조사의 취급 및 관리에 따라 해동 및 배양한다. 액체질소탱크에서 세포 바이알을 꺼내 37℃ water bath에서 해동하여 180g, 3분 동안 원심 분리한다. 세포현탁 액의 일부를 덜어서 세포의 수를 확인하고, 잔여 세포현탁액을 180g, 3분간 다시 원심 분 리한다. 상층액을 제거한 후 24 well MEA plate에 적절한 밀도로 세포를 seeding 할 수 있도록 plating medium을 첨가하여 세포를 재부유 시킨다. MEA plate에 처리한 fibronectin 및 MEA plate well 사이에 첨가한 DPBS를 제거한 후 세포를 MEA plate의 가운데 전극을 덮도록 중앙위주로 seeding 한다(그림 16). 37℃, CO2 5% 세포 배양기에서 1시간 이상 배양하여 plate에 세포가 잘 부착할 수 있도록 한 뒤 적절한 부피의 plating medium을 추가로 첨가한 후 37℃, CO2 5% 세포 배양기에서 배양한다. 2일마다 새로운 maintenance medium으로 교체한다.
+29
+
+심혈관계 안전성약리 평가법 해설서
+그림 16. 심근줄기세포 및 세포 seeding 후 MEA plate ○ Field potential 측정 hiPSC-CMs를 7일 이상 배양하여 세포가 안정화되는 것을 확인한다. MEA 장비의 온 도와 CO2를 37℃, 5%로 셋팅하고, hiPSC-CMs가 seeding된 MEA plate를 기기에 장착 하여 세포를 안정화한다. 세포의 안정화가 확인되면 프로그램을 이용하여 beat rate, field potential 등의 파라미터를 확인한다(그림 17). 파라미터가 일정하게 안정적인 것을 확인한 뒤 기록 버튼을 눌러 세포에 약물을 처리하지 않은 baseline을 측정한다. baseline의 측정이 끝나면 media를 1/10을 제거하고, vehicle media를 1/10 추가한 뒤 피펫팅한다. 기록 버튼을 눌러 vehicle군을 측정하고, 같은 방법으로 시험약물 농도에 대한 데이터를 측정한다. 시험 약물의 농도 선정은 Cmax 기준 전후 농도로 최소 3개 이상 선정한다.
+그림 17. MEA 측정화면 (예시)
+30
+
+제3장 인간 유도만능줄기세포 유래 심근세포(hiPSC-CMs)활동전위 평가시험법
+○ Field potential 분석 데이터 분석은 baseline에서 심근세포의 파라미터 수치가 다음과 같은 기준을 만족하는 세포를 선정하여 평가에 사용한다(Blinova et al., 2018). 단, 문헌에서 제시하고 있는 beating rate, amplitude 등 기준 지표에 대하여 연구 수행기관의 특성에 맞게 보다 정교한 기준을 설정하여 관리할 것을 권장한다.
+1) baseline beating rate가 20-90 beat/min (i.e., 0.3-1.5 Hz) 2) baseline beating rate의 well 간 차이가 6 SDs 이하 3) baseline beat period가 5% 이하 4) baseline spike amplitude가 0.3 mV 이상 MEA 측정기기의 프로그램에서 저장된 raw 파일을 불러온 후 추출하고자 하는 데이터의 구간을 재 기록하여 CSV 파일로 저장한다. CSV 파일을 열어서 spike amplitude(amp), field potential duration with fridericia’s correction(FPDcF) 등의 파라미터를 vehicle 군과 여러 가지 농도를 처리한 뒤 측정한 파라미터의 변화율을 계산하여 시험물질 농도에 따른 심근세포의 field potential에 미치는 영향을 평가한다(그림 18; 그림 19; Daniel et al., 2016). MEA 실험시 hiPSC-CMs에서 hERG 채널의 억제제의 농도가 증가함에 따라 FPDcF의 변화를 관찰할 수 있고, 고농도 처리군에서는 EAD 및 TdP 반응을 확인 할 수 있으므로, TdP 위험성은 FPDcF 변화값(20 % 이상, n=3)으로 평가가 가능하다 (Blinova et al., 2018).
+그림 18. Field potential 분석 지표
+31
+
+심혈관계 안전성약리 평가법 해설서
+BPM=beat period mean, Slope=Spike slope, Amp=spike amplitude, FPDc=field potential duration with fridericia’s correction
+그림 19. Qunidine에 대한 MEA 영향 평가 (예시) 32
+
+4 제 장
+참고문헌
+심혈관계 안전성약리 평가법 해설서
+
+제4장 참고문헌
+
+제4장 참고문헌
+
+1. International Council on Harmonisation. ICH Topic S7B the Non-clinical Evaluation of the Potential for Delayed Ventricular Repolarization (QT Interval Prolongation) by Human Pharmaceuticals. <http://www.ich.org/fileadmin/ Public_Web_Site/ICH_Products/Guidelines/Safety/S7B/Step4/S7B_Guideline.pdf> (2005).
+2. Jose Vicente, Robbert Zusterzeel, Lars Johannesen, Jay Mason, Philip Sager, Vikram Patel, Murali K. Matta, Zhihua Li, Jiang Liu, Christine Garnett, & Norman Stockbridge. Mechanistic Model-Informed Proarrhythmic Risk Assessment of Drugs: Review of the “CiPA” Initiative and Design of a Prospective Clinical Validation Study. CLINICAL PHARMACOLOGY & THERAPEUTICS. 103(1) 54-66, (2018).
+3. Liliana Sintra Grilo, Pierre-Alain Carrupt1 and Hugues Abriel. Stereoselective inhibition of the hERG1 potassium channel. Frontiers in Pharmacology 1,1-11 (2010).
+4. Dan M. Roden. Drug-Induced Prolongation of the QT Interval. N Engl J Med. 350, 1013-1022 (2004).
+5. Augustus O. Grant. Cardiac Ion Channels. Circ Arrhythmia Electrophysiol. 2, 185-194 (2009).
+6. M Cummins Lancaster and EA Sobie. Improved Prediction of Drug‐Induced Torsades de Pointes Through Simulations of Dynamics and Machine Learning Algorithms. Clin Pharmacol Ther. 100, 371-379 (2016).
+7. Lucia Romero, Jordi Cano, Julio Gomis-Tena, Beatriz Trenor, Ferran Sanz, Manuel Pastor, and Javier Saiz. In Silico QT and APD Prolongation Assay for Early Screening of Drug- Induced Proarrhythmic Risk. J. Chem. Inf. Model. 58, 867−878 (2018).
+35
+
+심혈관계 안전성약리 평가법 해설서
+8. Vicente, J., L. Johannesen, M. Hosseini, J. W. Mason, P. T. Sager, E. Pueyo and D. G. Strauss. “ Electrocardiographic Biomarkers for Detection of Drug-Induced Late Sodium Curent Block”. PLoS oNE 11(12): e0163619 (2016).
+9. Darpo, B., C. Benson, R. Brown, C. Dota, G. Feber, J. Ferry, V. Jarugula, J. Keirns, C. Ortemann-Renon, T. Pharm, S. Riley, N. Sarapa, M. Ticktin, W. Zareba and J. P. Couderc. “ Evaluation of the Effect of 5 QT-Positive Drugs on the JTpeak Interval-An Analysis of ECGs from the IQ-CSRC Study.” J Clin Pharmacol 60(1): 125-139 (2020).
+10. Bernard Fermini, Jules C. Hancox, Najah Abi-Gerges, Matthew Bridgland-Taylor, Khuram W. Chaudhary, Thomas Colatsky, Krystle Correll, William Crumb, Bruce Damiano, Gul Erdemli, Gary Gintant, John Imredy, John Koerner, James Kramer, Paul Levesque, Zhihua Li, Anders Lindqvist, Carlos A. Obejero-Paz, David Rampe, Kohei Sawada, David G. Strauss, & Jamie I. Vandenberg. A New Perspective in the Field of Cardiac Safety Testing through the Comprehensive in Vitro Proarrhythmia Assay Paradigm. Journal of Biomolecular Screening. 21(1), 1-11 (2016).
+11. Belardinelli L, Liu G, Smith-Maxwell C, Wang WQ, El-Bizri N, Hirakawa R, Karpinski S, Li CH, Hu L, Li XJ, Crumb W, Wu L, Koltun D, Zablocki J, Yao L, Dhalla AK, Rajamani S, & Shryock JC. A novel, potent, and selective inhibitor of cardiac late sodium current suppresses experimental arrhythmias. Journal of Pharmacology and Experimental Therapeutics. 344, 23–32 (2013).
+12. Gintant, G., Su, Z., Martin, R. L., & Cox, B. F. Utility of hERG assays as surrogate markers of delayed cardiac repolarization and QT safety. Toxicologic Pathology. 34, 81–90 (2006).
+13. Johannesen L, Vicente J, Mason JW, Erato C, Sanabria C, Waite-Labott K, Hong M, Lin J, Guo P, Mutlib A, Wang J, Crumb WJ, Blinova K, Chan D, Stohlman J, Florian J, Ugander M, Stockbridge N, & Strauss DG. Late sodium current block for druginduced long QT syndrome: Results from a
+36
+
+제4장 참고문헌
+prospective clinical trial. Clinical Pharmacology and Therapeutics. 99, 214– 223 (2016).
+14. REATION BIOLOGY Corporation. ADME & SAFETY SERVICES: CIPA Ion Channel Panel; http://https://www.reactionbiology.com/services/adme-safety/ cardiac-safety-assessment (accessed August 2020).
+15. Victor A. Maltsev and Albertas I. Undrovinas. A multi-modal composition of the late Na+ current in human ventricular cardiomyocytes . Cardiovascular Research 69, 116 – 127 (2005).
+16. Enrique G. Navarrete, Ping Liang, Feng Lan, Verónica Sanchez-Freire, Chelsey Simmons, Tingyu Gong, Arun Sharma, Paul W. Burridge, Bhagat Patlolla, Andrew S. Lee, BS, Haodi Wu, Ramin E. Beygui, Sean M. Wu, Robert C. Robbins, Donald M. Bers, and Joseph C. Wu. Screening Drug-Induced Arrhythmia Using Human Induced Pluripotent Stem Cell– Derived Cardiomyocytes and Low-Impedance Microelectrode Arrays. Circulation 128, S3–S13 (2013).
+17. Daniel C. Millard, Mike Clements, James D. Ross. The CiPA Microelectrode Array Assay with hSC-Derived Cardiomyocytes: Current Protocol, Future Potential. Stem Cell-Derived Models in Toxicology. pp 83-107. Axion BioSystems, Inc. Atlanta USA
+18. Blinova K, Dang Q, Millard D, Smith G, Pierson J, Guo L, Brock M, Lu HR, Kraushaar U, Zeng H, Shi H, Zhang X, Sawada K, Osada T, Kanda Y, Sekino Y, Pang L, Feaster TK, Kettenhofen R, Stockbridge N, Strauss DG, Gintant G. International multisite study of human-induced pluripotent stem cell-derived cardiomyocytes for drug proarrhythmic potential assessment. Cell Rep. 2018;24(13):3582–3592.
+37
+
+심혈관계 안전성약리 평가법 해설서
+- 다중이온채널 평가법 및 인간 유도만능줄기세포 유래 심근세포 기반 다전극측정법 -
+
+발
+
+행
+
+일 : 2021. 4.
+
+발 행 기 관 : 식품의약품안전평가원
+
+발
+
+행
+
+인 :서경원
+
+편 집 위 원 장:정자영
+
+편 집 위 원 : 최선옥, 김도정, 강미선, 이진무, 박성혜, 장미애, 안선영, 김영훈, 윤소미, 이윷모
+
+도 움 주 신 분 : 서정욱(안전성평가연구소), 김시윤(건국대학교), 최성우(동국대학교), 우동훈(㈜넥셀), 홍미연(홍 헬스케어)
+
+문
+
+의
+
+처 : 식품의약품안전평가원 독성평가연구부 약리연구과
+
+[전화 : 043-719-5205, 팩스 043-719-5200]
+
+본 해설서는 2019~2020년도 식품의약품안전처의 연구개발과제 「차세대 안전성약리 평가 연구(19181약오평405)」를 통해 마련되었습니다.
+
+“청렴한 식약처 국민 안심의 시작”
+
+공익신고자보호제도란? 공익신고자등(친족 또는 동거인 포함)이 공익신고등으로 인하여 피해를 받지 않도록 비밀보장, 불이익보호조치, 신변보호조치 등을 통하여 보호하는 제도
+♣ 보호조치 요구 방법 우편(30102) 세종특별자치시 도움5로 20 정부세종청사 7동, 국민권익위원회 공익보호지원과/ 전화 044-200-7773 / 팩스 044-200-7949
+【공직자 부조리 및 공익신고안내】 ★★신고자 및 신고내용은 보호됩니다. ▶ 부조리 신고 : 식약처 홈페이지 “국민신문고 > 공직자 부조리 신고” 코너 ▶ 공익 신고 : 식약처 홈페이지 “국민소통 > 신고센터 > 부패·공익신고 상담” 코너
+
+
