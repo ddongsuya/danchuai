@@ -14,6 +14,8 @@ export interface WorkspaceRepo {
   ensure(key: string, kind: "requester" | "cro", name: string): Promise<string>;
   consent(userId: string): Promise<{ version: string; agreedAt: string } | null>;
   agree(userId: string, version: string): Promise<void>;
+  /** 이 계정의 동의를 철회로 표시한다(기록은 남긴다) */
+  revoke(userId: string): Promise<void>;
 }
 
 export interface DanchuIdentity {
@@ -80,9 +82,12 @@ export class PgWorkspaceRepo implements WorkspaceRepo {
   }
   async agree(userId: string, version: string) {
     await this.pool.query(
-      `insert into agent_consents (danchu_user_id, version) values ($1, $2) on conflict (danchu_user_id, version) do update set revoked_at = null`,
+      `insert into agent_consents (danchu_user_id, version) values ($1, $2) on conflict (danchu_user_id, version) do update set revoked_at = null, agreed_at = now()`,
       [userId, version],
     );
+  }
+  async revoke(userId: string) {
+    await this.pool.query(`update agent_consents set revoked_at = now() where danchu_user_id = $1 and revoked_at is null`, [userId]);
   }
 }
 
@@ -103,5 +108,8 @@ export class MemoryWorkspaceRepo implements WorkspaceRepo {
   }
   async agree(userId: string, version: string) {
     this.consents.set(`${userId}:${version}`, new Date().toISOString());
+  }
+  async revoke(userId: string) {
+    for (const k of [...this.consents.keys()]) if (k.startsWith(`${userId}:`)) this.consents.delete(k);
   }
 }

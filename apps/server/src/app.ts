@@ -17,6 +17,8 @@ import { MemoryConversationRepo, MemoryRequestDirectory, type ConversationRepo, 
 import type { MarketRepo } from "./db/market";
 import { marketRoutes } from "./market";
 import type { DanchuApi } from "./danchu";
+import { purgeRoutes, type PurgeRepo } from "./purge";
+import type { UsageMeter } from "./usage";
 import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
 import type { DanchuError } from "./danchu";
 import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
@@ -41,6 +43,10 @@ export interface Deps {
     lookup: (authorization: string | undefined) => Promise<DanchuIdentity | DanchuError>;
     workspaces: WorkspaceRepo;
   };
+  /** 탈퇴·철회 때 지우기. 있으면 /internal/danchu/purge 를 연다(서명 비밀값이 없으면 503) */
+  purge?: { repo: PurgeRepo; secret: string | undefined; now?: () => number };
+  /** AI 이용량 상한. 없으면 상한 없음 */
+  usage?: UsageMeter;
 }
 
 type Env = { Variables: { session: Session } };
@@ -66,8 +72,11 @@ export function createApp(deps: Deps) {
 
   app.get("/health", (c) => c.json({ ok: true }));
 
+  // 단추 → 에이전트 삭제 요청(서명 확인). 사용자 로그인과 무관한 서버 간 경로라 /v1 밖에 둔다
+  if (deps.purge) app.route("/internal/danchu", purgeRoutes(deps.purge));
+
   if (deps.danchu) {
-    app.route("/account", danchuAccountRoutes({ lookup: deps.danchu.lookup, workspaces: deps.danchu.workspaces, api: deps.danchu.api }));
+    app.route("/account", danchuAccountRoutes({ lookup: deps.danchu.lookup, workspaces: deps.danchu.workspaces, api: deps.danchu.api, purge: deps.purge?.repo }));
   } else if (deps.identity && deps.accounts) {
     app.route("/account", accountRoutes({ identity: deps.identity, repo: deps.accounts }));
   } else {
@@ -82,7 +91,7 @@ export function createApp(deps: Deps) {
   });
 
   // 국외 이전·AI 처리 동의 전에는 AI 대화를 열지 않는다(단추 연동 모드)
-  if (deps.danchu) app.use("/v1/agent/*", requireConsent(deps.danchu.workspaces));
+  if (deps.danchu) app.use("/v1/agent/*", requireConsent(deps.danchu.workspaces, { api: deps.danchu.api, purge: deps.purge?.repo }));
 
   app.onError((err, c) => {
     if (err instanceof ApprovalError) return c.json({ error: err.code, message: err.message }, STATUS_BY_CODE[err.code]);
@@ -165,6 +174,7 @@ export function createApp(deps: Deps) {
       requests: deps.requests ?? new MemoryRequestDirectory(),
       outbound: deps.outbound,
       market: deps.market,
+      usage: deps.usage,
     }),
   );
 

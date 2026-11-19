@@ -15,6 +15,8 @@ import { providerFromEnv } from "./providers";
 import { MemoryOutboundRepo } from "./repo";
 import { danchuApi, danchuBaseFromEnv } from "./danchu";
 import { danchuIdentity, MemoryWorkspaceRepo, PgWorkspaceRepo } from "./danchuAuth";
+import { PgPurgeRepo, type PurgeRepo } from "./purge";
+import { MemoryUsageRepo, PgUsageRepo, usageConfigFromEnv, usageMeter } from "./usage";
 
 type Env = Record<string, string | undefined>;
 
@@ -35,6 +37,15 @@ export function buildServer(env: Env): Hono {
     danchu?.resolver ?? (pool && supabaseAuthFromEnv(env, pool)) ?? devAuthFromEnv(env) ?? { resolve: async () => null };
 
   const supaKey = pool ? supabaseKeyFromEnv(env) : null;
+
+  // 탈퇴·철회 지우기(단추가 서명해 알린다, AGENT_PURGE_SECRET). 메모리 모드는 동의만 철회한다
+  const purgeRepo: PurgeRepo | null = pool
+    ? new PgPurgeRepo(pool)
+    : danchu
+      ? { purge: async (userId) => (await danchu.workspaces.revoke(userId), { conversations: 0, drafts: 0 }) }
+      : null;
+  // AI 이용량 상한(AGENT_PRICE_*, AGENT_CAP_*). 잘못된 값이면 여기서 시작을 멈춘다
+  const usage = usageMeter(pool ? new PgUsageRepo(pool) : new MemoryUsageRepo(), usageConfigFromEnv(env));
 
   // 메모리 모드에서는 기관 화면 확인용 견본 요청 하나를 둔다.
   const memoryRequests = new MemoryRequestDirectory({
@@ -71,6 +82,8 @@ export function buildServer(env: Env): Hono {
     accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
     market: pool ? new PgMarketRepo(pool) : undefined,
     danchu: danchu ?? undefined,
+    purge: purgeRepo ? { repo: purgeRepo, secret: env.AGENT_PURGE_SECRET } : undefined,
+    usage,
   });
 
   const origins = (env.CORS_ORIGINS ?? "http://localhost:8081").split(",");
