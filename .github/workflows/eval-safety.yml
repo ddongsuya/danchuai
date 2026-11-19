@@ -1,0 +1,23 @@
+name: eval-safety
+
+# 실제 모델을 부르므로(사용료) 손으로만 돌린다. 저장소 비밀값 DANCHUAI_EVAL_KEY(평가 전용 Anthropic 키)가 있어야 한다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run eval:safety -w @danchuai/server
+        env:
+          DANCHUAI_EVAL_KEY: ${{ secrets.DANCHUAI_EVAL_KEY }}
+          PROMPTFOO_DISABLE_TELEMETRY: "1"

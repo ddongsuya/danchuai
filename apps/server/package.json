@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build:vercel": "node scripts/build-vercel.mjs",
-    "eval:intake": "tsx scripts/eval-intake.ts"
+    "eval:intake": "tsx scripts/eval-intake.ts",
+    "eval:safety": "npx -y promptfoo@0.126.0 eval -c evals/promptfooconfig.yaml --no-share --no-cache --no-write -j 3"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
@@ -24,9 +25,9 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2",
     "tsx": "^4.19.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.1.0",
-    "esbuild": "^0.28.2"
+    "vitest": "^5.1.0"
   }
 }
