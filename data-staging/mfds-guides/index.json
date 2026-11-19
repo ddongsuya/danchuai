@@ -21,9 +21,8 @@
       "text": "text/[안내서]세포유전자치료제_초기_임상시험_디자인_가이드라인.pdf.txt",
       "bytes": 20976668,
       "pages": 39,
-      "chars": 1459,
-      "method": "pdftotext",
-      "likely_scanned": true
+      "chars": 32737,
+      "method": "ocr-windows"
     },
     {
       "source": "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf",
@@ -79,9 +78,8 @@
       "text": "text/「의약품등의+독성시험기준」+해설서+책자.pdf.txt",
       "bytes": 104552430,
       "pages": 209,
-      "chars": 0,
-      "method": "pdftotext",
-      "likely_scanned": true
+      "chars": 191704,
+      "method": "ocr-windows"
     },
     {
       "source": "감염병+예방+및+치료용+단클론항체의약품+비임상+임상+평가+가이드라인.pdf",
@@ -416,9 +414,8 @@
       "text": "text/화장품+등+피부흡수+동물대체시험법+가이드라인(민원인+안내서)+개정.pdf.txt",
       "bytes": 22058385,
       "pages": 39,
-      "chars": 39,
-      "method": "pdftotext",
-      "likely_scanned": true
+      "chars": 41487,
+      "method": "ocr-windows"
     },
     {
       "source": "화장품+피부부식성+동물대체시험법(장벽막을+이용한+피부부식+시험법+가이드라인).pdf",
@@ -454,10 +451,7 @@
     }
   ],
   "scanned": [
-    "[안내서]세포유전자치료제_초기_임상시험_디자인_가이드라인.pdf",
-    "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf",
-    "「의약품등의+독성시험기준」+해설서+책자.pdf",
-    "화장품+등+피부흡수+동물대체시험법+가이드라인(민원인+안내서)+개정.pdf"
+    "unzipped/화장품+등+광독성+동물대체시험법(In+vitro+3T3+NRU+시험법)+가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인/화장품 등 광독성 동물대체시험법(In vitro 3T3 NRU 시험법) 가이드라인(책자).pdf"
   ],
   "failed": [
     {
