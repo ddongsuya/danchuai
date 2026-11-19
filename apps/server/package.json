@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build:vercel": "node scripts/build-vercel.mjs",
-    "eval:intake": "tsx scripts/eval-intake.ts"
+    "eval:intake": "tsx scripts/eval-intake.ts",
+    "eval:answers": "tsx scripts/eval-answers.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
