@@ -1,0 +1,58 @@
+# 에이전트 전용 정적 점검 규칙. CLAUDE.md "반드시 지킬 것" 5·6번을 코드로 막는다. CI(.github/workflows/security.yml)에서 돈다.
+rules:
+  - id: danchuai-no-org-id-from-body
+    message: >-
+      org_id는 서버 세션에서만 가져온다(CLAUDE.md 5). 요청 본문 스키마나 본문 값에서 org_id를 읽지 않는다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/server/src/"]
+      exclude: ["*.test.ts"]
+    pattern-either:
+      - pattern: |
+          const $SCHEMA = z.object({..., org_id: $T, ...})
+      - pattern: |
+          const $SCHEMA = z.object({..., orgId: $T, ...})
+      - pattern: (await $C.req.json()).org_id
+      - pattern: (await $C.req.json()).orgId
+      - pattern: $C.req.query("org_id")
+      - pattern: $C.req.header("x-org-id")
+
+  - id: danchuai-no-log-content
+    message: >-
+      로그에 프롬프트·본문·메시지를 남기지 않는다(CLAUDE.md 6). 오류 이름·코드만 남긴다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/", "packages/"]
+      exclude: ["*.test.ts", "scripts/"]
+    patterns:
+      - pattern-either:
+          - pattern: console.$F(...)
+          - pattern: $LOG.$F(...)
+      - metavariable-regex:
+          metavariable: $F
+          regex: ^(log|info|warn|error|debug)$
+      - pattern-either:
+          - pattern: $X(..., $A.body, ...)
+          - pattern: $X(..., $A.prompt, ...)
+          - pattern: $X(..., $A.messages, ...)
+          - pattern: $X(..., $A.content, ...)
+          - pattern: $X(..., $A.system, ...)
+          - pattern: $X(..., body, ...)
+          - pattern: $X(..., prompt, ...)
+          - pattern: $X(..., messages, ...)
+          - pattern: $X(..., $ERR.message, ...)
+          - pattern: $X(..., err, ...)
+          - pattern: $X(..., error, ...)
+          - pattern: $X(..., JSON.stringify(...), ...)
+
+  - id: danchuai-no-send-tool-for-agent
+    message: >-
+      에이전트에 보내기 도구를 주지 않는다(CLAUDE.md 1). 상대에게 나가는 것은 사람이 승인한 본문만, 승인 경로로만 보낸다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/server/src/agent/"]
+      exclude: ["*.test.ts"]
+    pattern-regex: name:\s*["'`](send|send_[a-z_]+|submit_[a-z_]+|deliver[a-z_]*)["'`]

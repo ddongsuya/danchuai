@@ -1,0 +1,8 @@
+# gitleaks 설정. 기본 규칙에 예외만 더한다.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "앱에 실리는 공개 값"
+# Supabase publishable 키는 공개용이다(apps/mobile/.env.production 주석 참고).
+regexes = ['''sb_publishable_[A-Za-z0-9_-]+''']
