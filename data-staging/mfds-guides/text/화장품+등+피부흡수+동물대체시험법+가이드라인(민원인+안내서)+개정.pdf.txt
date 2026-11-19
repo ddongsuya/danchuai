@@ -147,7 +147,7 @@ cell)에 고정시킨 피부제작물(skin preparations) 표면에 시험조제�
 침투 및 투과되어 전달되는 것을 비교하는 스크리닝 시험법으로 사용되거나 인체 피부를 통한
 화학-물질의 흡수를 평가하는 유용한 모델이 될 수 있다.
 본 시험법은 모든 상황 및 모든 등급의 화학물질에 적용할 수 있는 것은 아니다. 피부투과의
-초기 정량적 평가를 위한 방법으로 시용 기능하나, 더 자세한 평가가 필요한 경우 생체내(i72 vivo)
+초기 정량적 평가를 위한 방법으로 시용 기능하나, 더 자세한 평가가 필요한 경우 생체내(in vivo)
 시험 결과도 함께 고려해야 한다.
 0 GD28(피부흡수시험법의 수행을 위한 지침서, 시험 및 평가에 대한 OECD 문서 제28호)
 9. 생체외 시험법은 말초혈액호름(peripheral blood flow)의 싱크조건(sink conditlon)을 완전히 재현할 수 없다는
@@ -189,12 +189,12 @@ cell)에 고정시킨 피부제작물(skin preparations) 표면에 시험조제�
 고려하여 선택한다. 또한 회수액이 피부제작물의 무결성(integrity)에 영향을 주지 않아야 한다.
 0 GD28(피부흡수시험법의 수행을 위한 지침서, 시험 및 평가에 대한 OECD 문서 제28호)
 24. 생리활성이 없는 피부를 이용하여 수용성 물질을 평가하는 경우, 회수액은 보통 pH 7.4의 생리식염수 등을 사용한다.
-소수성 시험물질을 평가하는 경우, 에탄올을 혼합액(1:1) 또는 물에 용해한 6 0/0 폴리에틸렌글리콜20올레일에테르
+소수성 시험물질을 평가하는 경우, 에탄올을 혼합액(1:1) 또는 물에 용해한 6 % 폴리에틸렌글리콜20올레일에테르
 (polyethylene glycol 20 oleyl ether) 등과 같은 유기용매를 사용할 수 있다.
 25. 생리활성이 있는 피부를 사용하는 경우, 조직배양배지 등과 같은 생리학적 회수액을 선택한다. 비극성 시험물질의
 경우 이러한 회수액의 사용이 제한될 수 있는데 회수액에서 시험물질의 용해도가 불충분할 수 있기 때문이다.
-이려한 문제는 생리식염수 등에 개선제(modlfier)를 추가함으로쎠 해결할 수 있는데 주로 6 0/0 폴리에틸렌글리콜
-20올례일에테르 또는 5 0/0 소혈청 알부민이 사용된다.
+이려한 문제는 생리식염수 등에 개선제(modlfier)를 추가함으로쎠 해결할 수 있는데 주로 6 % 폴리에틸렌글리콜
+20올례일에테르 또는 5 % 소혈청 알부민이 사용된다.
 26. 방사성이 표지되지 않은 시험물질을 평가하는 경우의 회수액은 분석과정을 고러하여 선택한다.
 3화장품 등 피부흡수 동물대체시험법(생체외 피부흡수시험법, Skin Absorption: in V/tro Method) 가이드라인
 (2) 회수액 교환 및 유속
@@ -205,7 +205,7 @@ cell)에 고정시킨 피부제작물(skin preparations) 표면에 시험조제�
 29. 정적 확산시스템에서 회수액의 양(일반적으로 2~20 mL)은 시험물질의 흡수를 제한하지 않을 만큼 충분해아 한다.
 30. 동적 확산시스템에서 시험물질 회수간의 회수액 양은 일반적으로 0.1~5 mL이며, 회수액으로의 확산속도가 제한
 되지 않도록 계속해서 회수액을 보충해주어야 한다.
-31. 유속은 일반적으로 3 mL 회수간의 경우 9 mL/hr(AI간당 3회 교환)이거나 150~300 uL 회수간의 경우 1 5 mL/hr
+31. 유속은 일반적으로 3 mL 회수간의 경우 9 mL/hr(시간당 3회 교환)이거나 150~300 uL 회수간의 경우 1 5 mL/hr
 (시간당 5~10회 교환)이다. 유속을 더 낮추는 것(예: 교환하지 않거나 시간당 1회 교환)이 때때로 적절할 수
 있는데, 방사성이 표지되지 않은 물질을 평가하거나 회수액 내 시험물질의 양이 낮아 분석이 어려울 때 특히
 그리하다.
@@ -225,7 +225,7 @@ HPLC ⅵal에 넣음
 시 험물질 회수액을새로 교체함으로씨
 일정 양을 유지
 온도조절이 가능한 항온수조로
-시험물질 회수간/ 회수액을32 ℃ 士 1 ℃로 유지한다.
+시험물질 회수간, 회수액을32 ℃ ± 1 ℃로 유지한다.
 그림1. 생체외 피부흡수시험을 위한 정적 확산장치의 예
 3) 생리활성의 유지
 피부 대사를 시험하고자 할 때에는 갓 채취된 피부를 기능한 한 바르게 사용하여야 하고, 피부
@@ -327,7 +327,7 @@ c) 시험 후 피부 무결성 평가
 적시는 것은 보통의 실제 사용 조건과 같은 환경적 습도와 땀을 어느정도 모방할 수 있다.
 53. 시험조제물 내 시험물질의 안정성과 균질성을 확인할 필요가 있다.
 4.2. 온도 및 습도
-피부 온도변회는 흡수과정에 영종을 줄 수 있으므로, 장지 중 회수액의 온도는 32 ℃ 士 1 ℃로
+피부 온도변회는 흡수과정에 영종을 줄 수 있으므로, 장지 중 회수액의 온도는 32 ℃ ± 1 ℃로
 일정하게 유지한다. 피부의 온도를 일정하게 유지하기 위해 항온수조나 히팅블록을 사용할 수
 있다. 온도계를 시용하여 시험계의 피부나 회수액이 적정온도를 유지하는지 확인한다. 장지의 습도는
 30 %~70 %가 적절하다.
@@ -335,11 +335,11 @@ c) 시험 후 피부 무결성 평가
 4.3. 시험방법
 1) 피부적용
 일반적인 시험에서는 시험물질의 농도를 한정적으로 적용한다. 고체물질의 경우 피부 cm2당
-1~5 mg, 액체의 경우 cm2당 10 〃L까지 도포한다. 피부 내 최대흡수율을 유지하기 위해 적용하는
+1~5 mg, 액체의 경우 cm2당 10 μL까지 도포한다. 피부 내 최대흡수율을 유지하기 위해 적용하는
 물질의 양을 제한하지 않을 수 있다. 도포량은 시험물질의 예상되는 시용조건이나 연구 목적,
 시험물질의 물리적 성질을 고려하여 결정한다. 점도가 낮은 물질의 경우 그 양을 줄일 수 있다.
 0 GD28(피부흡수시험법의 수행을 위한 지침서, 시험 및 평가에 대한 OECD 문서 제28호)
-58. 적용량을 제한하지 않는 시험(일반적으로 100 uL/cm2 도는 10 mg/cm2 이상의 양을 적용)의 경우, 일정한
+58. 적용량을 제한하지 않는 시험(일반적으로 100 μL/cm2 또는 10 mg/cm2 이상의 양을 적용)의 경우, 일정한
 유속, 흡수율, Kp 값을 통해 일정한 피부흡수상대를 유지할 수 있다.
 59. 균일한 도포를 위해 기구를 사용할 수 있으나, 기구에 남아있는 시험물질의 양은 시험 완료 후 결과 산출에 반영
 하여야 한다.
@@ -362,7 +362,7 @@ c) 시험 후 피부 무결성 평가
 8I. 해설문
 3) 분석
 시험계의 모든 구성 요소가 분석되어야 하며, 회수율이 평가되어야 한다(방시능표지물질의 경우
-100 0% 士 10 %。 회수를 목표로 하며 이를 벗어났을 경우 그 이우i를 보고서에 명시한다). 여기에는
+100 0% ± 10 % 회수를 목표로 하며 이를 벗어났을 경우 그 이우i를 보고서에 명시한다). 여기에는
 시험물질 도포 기구, 시험물질 적용간, 피부 세척액, 피부, 회수액 및 시험물질 회수간 등이 포함된다.
 경우에 따라 피부를 시험물질 노출부 및 장지 테두리 쪽 피부(비노출 테두리)로 구분하기도 하며,
 각질층, 상피 및 진피 부분 등으로 분획하여 분석할 수 있다.
@@ -518,7 +518,7 @@ vftro) 시험 절차의 선정을 돕기 위해 마련되었다.
 면적당 큰 용량이 적용되는 피부 표면에 대한 적응은 무한할 수 있다.
 온도
 17. 시험물질의 수동확신(및 그에 따른 피부흡수)은 온도에 영향을 받는다. 확산챔Ed(diffusion
-chamber) 및 피부는 일반 피부 온도인 32 ℃ 士 1 ℃와 유사한 온도가 지속적으로 유지되어야
+chamber) 및 피부는 일반 피부 온도인 32 ℃ ± 1 ℃와 유사한 온도가 지속적으로 유지되어야
 한다. 피부투과장지 설계는 수용체/피부가 생리학적 기준을 유지하도록 하는 다양한 항온
 수조 또는 히팅블록 온도를 필요로 한다. 습도는 30 %~70 %가 적당하다.
 노출 기간 및 시료채취
@@ -536,7 +536,7 @@ chamber) 및 피부는 일반 피부 온도인 32 ℃ 士 1 ℃와 유사한 온
 피부 표면 세척액, 피부제직물 및 회수액/킨이 포함된다. 경우에 띠라 피부를 시험물질 노출부
 및 장지 테두리 쪽 피부로 구분하기도 하며, 각질층, 상피 및 진피 부분 등으로 분획하여
 분석할 수 있다.
-20. 모든 시험에서 적절한 회수가 이루어져야 한다(방사성표지물질의 경우 평균 100 %。 士 10 %를
+20. 모든 시험에서 적절한 회수가 이루어져야 한다(방사성표지물질의 경우 평균 100 % ± 10 %를
 목표로 해야 하며 이에 벗어나는 경우 타당성을 제시해야 함). 적합한 기법을 시용하여 회수액,
 피부제작물, 피부표면 세척액 및 기기 세척액 속 시험물질의 양을 분석해야 한다.
 데이터 및 기록
@@ -586,10 +586,10 @@ for Percutaneous Absorption Testing, Annex 1 to E뾰/JM/TG(2000)5. OECD, Paris.
 (4) Kemppainen BW and Reifenrath WG. (1990). Methods for skin absorption. CRC
 Press, Boca Raton.
 (5) Bronaugh RL and Collier, SW. (1991). Protocol for in vitro Percutaneous Absorption
-Studies, in 772 vitro Percutaneous Absorption: Pcinciples, Fundamentals and
+Studies, in In vitro Percutaneous Absorption: Pcinciples, Fundamentals and
 Applications, RL Bronaugh and HI Maibach, Eds., CRC Press, Boca Raton, PP.
 237-241
-(6) Bronaugh RL and Maibach HI. (1991). 777 vitro Percutaneous Absorption: Pcinciples,
+(6) Bronaugh RL and Maibach HI. (1991). In vitro Percutaneous Absorption: Pcinciples,
 Fundamentals 27k Applications. CRC Press, Boca Raton.
 (7) European Centre for Ecotoxicology and Toxicology of Chemicals (1993). Monograph
 No. 20, Percutaneous Absorption, ECETOC, Brussels.
@@ -597,7 +597,7 @@ No. 20, Percutaneous Absorption, ECETOC, Brussels.
 M,Spengler J, SteiIing W (1999). Test Guidelines for in vitro Assessment of Dermal
 Absorption and Percutaneous Penetration Of Cosmetic lngredients, Fd Chem TOX,
 37, 191-205.
-(9) Recommended Protocol for 777 vitro Percutaneous Absorption Rate Studies (1996).
+(9) Recommended Protocol for In vitro Percutaneous Absorption Rate Studies (1996).
 US Federal Register, Ⅴ이. 61, No. 65.
 (10) Howes D, Guy R, Hadgraft J, Heylings JR 27. (1996). Methods for assessing
 percutaneous absorption. ECVAM Workshop Report ATLA 24, 81 R10.
@@ -607,7 +607,7 @@ absorption. Karger, Basel.
 (12) Roberts MS and Walters KA. (1998). Dermal absorption and toxicity assessment.
 Marcel Dekker, New York.
 (13) JeweII, C., Heylings, JR., CIowes, HM. And WiIIiams, FM. (2000). Percutaneous
-absorption and metabolism Of dinitrochlorobenzene 777 vitro. Arch Toxicol 74:
+absorption and metabolism Of dinitrochlorobenzene In vitro. Arch Toxicol 74:
 356-365.
 19화장품 등 피부흡수 동물대체시험법(생체외 피부흡수시험법, Skin Absorption in vitro Method) 가이드라인
 匯00
@@ -637,275 +637,327 @@ Annex
 1.
 Ⅲ
 원문(OECD TG428)
-OECD/OCDE
-428
-Adopted
-13 ApriI 2004
+OECD/OCDE 428
+
+Adopted :
+13 April 2004
+
 OECD GUIDELINE FOR THE TESTING OF CHEMICALS
+
 Skin Absorption: in vitro Method
+
 INTRODUCTION
-This test guideline has been designed tO provide infonnation 飜1 absorption Of a test substance
-applied to excised skin. lt can either be combined with the OECD Test Guidehne for Skin Absorption. ln
-vivo Method (1), or be conducted separately. lt is recommended that the OECD Guidance Document for
-the Conduct of Skin Absorption Studies (2) be consulted to assist in the design of studies based 011 this Test
-Guideline. The OECD Guidance Document has been prepared to facilitate the selecfion of appropnate in
-vitro procedures for use 111 specific clrcumstances, tO ensure the reliability of results obtained by t111S
+
+1. This test guideline has been designed to provide information on absorption of a test substance
+applied to excised skin. It can either be combined with the OECD Test Guideline for Skin Absorption: Jn
+vivo Method (1), or be conducted separately. It is recommended that the OECD Guidance Document for
+the Conduct of Skin Absorption Studies (2) be consulted to assist in the design of studies based on this Test
+Guideline. The OECD Guidance Document has been prepared to facilitate the selection of appropriate in
+vitro procedures for use in specific circumstances, to ensure the reliability of results obtained by this
 method.
+
 INITIAL CONSIDERATIONS
-2.
-The methods for measuring skin absorption and dermal delivery can be divided into two
-categones: tn VIVO and in vitro. ln vivo methods on skin absorption are well established and provide
-pharmacokinetic information in a range Of animal species. An in VIVO method is separately described in
-another OECD guideline (1). /,7 vitro methods have also been used for many years t0 measure skin
-abs01Vtion. AIthough formal validation studies of the in vitro methods covered by this Test GuideIine have
-not been performed OECD expelts agreed in 1999 that there was sufficient data evaluated to suppolt the in
-1,it尸() Test Guideline (3). Further details that substantiate this support, including a significant number of
-direct compansons 0f in vitro 끠d in 1,!v(2 methods are provided with the Guidance Document (2). There
-are a number 0f monographs that review this topic and provide detailed background 이1 the use of an in
-vitro method (4)(5)(6)(7)(8)(9)(10)(11)(12). ln vitro methods measure the diffusion of chemicals into
-across skin tO a flLIId reservoll* and can utllise non-viable skin tO measure diffusion only, or fresh
-metabolically active skin t0 simultaneously measure diffusion and skin metabolism. Such methods have
-found palticular use as a screen for companng delivery of chemlcals into and through sk111 from different
-formulations and can alSO provide useful models for the assessment Of percutaneous absorptlon in humans.
-3.
-The in vitro method may 1沁t be applicable for all situations and classes 0f chemicals. lt may
-be possible tO use the in vitro test method for an initial qualitative evaluation Of skin penetration. ln
-celtam cases, it may be necessary to follow this up with in vivo data. The Gu1dance Document (2) should
+
+2. The methods for measuring skin absorption and dermal delivery can be divided into two
+categories: in vivo and in vitro. In vivo methods on skin absorption are well established and provide
+pharmacokinetic information in a range of animal species. An in vivo method is separately described in
+another OECD guideline (1). In vitro methods have also been used for many years to measure skin
+absorption. Although formal validation studies of the in vitro methods covered by this Test Guideline have
+not been performed, OECD experts agreed in 1999 that there was sufficient data evaluated to support the in
+vitro Test Guideline (3). Further details that substantiate this support, including a significant number of
+direct comparisons of in vitro and in vivo methods, are provided with the Guidance Document (2). There
+are a number of monographs that review this topic and provide detailed background on the use of an in
+vitro method (4)(5)(6)(7)(8)(9)(10)(11)(12). In vitro methods measure the diffusion of chemicals into and
+across skin to a fluid reservoir and can utilise non-viable skin to measure diffusion only, or fresh,
+metabolically active skin to simultaneously measure diffusion and skin metabolism. Such methods have
+found particular use as a screen for comparing delivery of chemicals into and through skin from different
+formulations and can also provide useful models for the assessment of percutaneous absorption in humans.
+
+3. The in vitro method may not be applicable for all situations and classes of chemicals. It may
+be possible to use the in vitro test method for an initial qualitative evaluation of skin penetration. In
+certain cases, it may be necessary to follow this up with in vivo data. The Guidance Document (2) should
 be consulted for further elaboration of situations where the in vitro method would be suitable. Additional
-detailed information t0 suppoft the decision is provided in an OECD Expert Meeting repolt (3).
-4.
-This guideline presents general principles for measunng dermal absorptlon and delivery of a test
-substance usmg excised skin Skin from many mammalian specles, including humans, “11 be used. The
-penneability properties of skin are maintained after excision from the body because the principal diffusion
-barrier is the non-viable stratum corneum; active transpolt Of chemicals through the skin has 1逾t been
-identified. The sk111 has been s110₩11 to have the capability to metabolise some chen-ncals during
+detailed information to support the decision is provided in an OECD Expert Meeting report (3).
+
+4. This guideline presents general principles for measuring dermal absorption and delivery of a test
+substance using excised skin. Skin from many mammalian species, including humans, can be used. The
+permeability properties of skin are maintained after excision from the body because the principal diffusion
+barrier is the non-viable stratum corneum; active transport of chemicals through the skin has not been
+identified. The skin has been shown to have the capability to metabolise some chemicals during
 percutaneous absorption (6), but this process is not rate limiting in terms of actual absorbed dose, although
-it may affect the nature 0f the matelial entering the bloodstream.
-22Ⅲ. 원문(OECD TG428)
-OECD/OCDE
-428
-PRINCIPLE OF 711E TEST
-5.
-The test substance. which may be radiolabelled, is applied to the sulface of a skin sample
-separating the two chambers 0f a diffusion cell. The chemical remains 011 the skin for a specified time
-under specified conditions, before removal by an appropnate cleansmg procedure. The receptor fluid is
-sampled at time pomts throughout the expenment and analysed for the test chemcal and/or metabolites.
-When metabolically actlve systems are used metabolites of the test chemlcal may be analysed by
-6.
-appropliate methods. At the end Of the experiment the distlibution Of the test chemical and its metabolites
-are quantified, when appropnate.
-Using appropfiate conditions, which are described in this guideline and accompanying guldance
-7.
-document (2), absorption Of a test substance dllling a given time pe1iOd is measured by analysis Of the
-receptor fluid and the treated skin. The test substance remaimng in the skin should be considered as
+it may affect the nature of the material entering the bloodstream.
+
+22
+Ⅲ. 원문(OECD TG428)
+428 OECD/OCDE
+PRINCIPLE OF THE TEST
+5. The test substance, which may be radiolabelled, is applied to the surface of a skin sample
+
+separating the two chambers of a diffusion cell. The chemical remains on the skin for a specified time
+under specified conditions, before removal by an appropriate cleansing procedure. The receptor fluid is
+sampled at time points throughout the experiment and analysed for the test chemical and/or metabolites.
+
+6. When metabolically active systems are used, metabolites of the test chemical may be analysed by
+appropriate methods. At the end of the experiment the distribution of the test chemical and its metabolites
+are quantified, when appropriate.
+
+7. Using appropriate conditions, which are described in this guideline and accompanying guidance
+document (2), absorption of a test substance during a given time period is measured by analysis of the
+receptor fluid and the treated skin. The test substance remaining in the skin should be considered as
 absorbed unless it can be demonstrated that absorption can be determined from receptor fluid values alone.
-Analysis 0f the other components (matenal washed off the skin and remammg within the skin layers)
-a110₩s for fillther data evaluation including tOtal test substance dispositlon and percentage recovery.
-8.
-TO demonstrate the pefformance and reliability Of the test system in the pefforming laboratory,
+Analysis of the other components (material washed off the skin and remaining within the skin layers)
+allows for further data evaluation, including total test substance disposition and percentage recovery.
+
+8. To demonstrate the performance and reliability of the test system in the performing laboratory,
 the results for relevant reference chemicals should be available and in agreement with published literature
-for the method used. This requirement could be met by testing an appropnate reference substance
-(preferably Of a lipophilicity close tO the test substance) concunently with the test substance or by
-providing adequate histofical data for a number Of reference substances Of different lipophilicity (e.g.
-caffeine, benzolc acid, and testosterone).
+for the method used. This requirement could be met by testing an appropriate reference substance
+(preferably of a lipophilicity close to the test substance) concurrently with the test substance or by
+providing adequate historical data for a number of reference substances of different lipophilicity (e.g.
+caffeine, benzoic acid, and testosterone).
+
 DESCRIPTION OF THE METHOD
 Diffusion cell
-9.
-A diffusion cell consists 0f a d0110f chamber and a receptor chamber between which the skin is
-positioned (an example 0f a typical design is provided in Figure 1). The cell should provide a good seal
-around the skin enable easy sampling and good mxing Of the receptor solution ⅱ1 contact with the
-underside of the skin, and good temperature COI血01 of the cell and its contents. Static and flow-thl℃ugh
-diffusion cells are both acceptable. Normally, d01甛r chambers are left unoccluded durmg exposure to a
-finite dose Of a test preparation. However, for infinite applications and cefiain scenarios for finite doses,
-the d0110r chambers may be occluded.
+
+9. A diffusion cell consists of a donor chamber and a receptor chamber between which the skin is
+positioned (an example of a typical design is provided in Figure 1). The cell should provide a good seal
+around the skin, enable easy sampling and good mixing of the receptor solution in contact with the
+underside of the skin, and good temperature control of the cell and its contents. Static and flow-through
+diffusion cells are both acceptable. Normally, donor chambers are left unoccluded during exposure to a
+finite dose of a test preparation. However, for infinite applications and certain scenarios for finite doses,
+the donor chambers may be occluded.
+
 Receptor fluid
-The use 0f a physiologically conducive receptor fluid is prefe1Ted although others may also be
-10.
-used provided that they are Justified. The preclse composition of the receptor fluid should be provided.
-Adequate solubllity 0f the test chenmcal in the receptor fluid should be demonstrated so that it does not act
-as a barrier tO absorption. ln addition the receptor fluid should 110t affect skin preparation integrity. ln a
-flow-through system, the rate Of flOW must not hinder diffusion Of a test substance intO the receptor fluid.
-ln a static cell system the fluid should be continuously stirred and sampled regularly. If metabolism is
-being studied, the receptor fluid must SUPP01t skin viability throughout the experiment.
-23화장품 등 피부흡수 동물대체시험법(생체외 피부흡수시험법, Skin Absorption. in V/tro Method) 가이드라인
-428
-OE CD/OCDE
+
+10. The use of a physiologically conducive receptor fluid is preferred although others may also be
+used provided that they are justified. The precise composition of the receptor fluid should be provided.
+Adequate solubility of the test chemical in the receptor fluid should be demonstrated so that it does not act
+as a barrier to absorption. In addition, the receptor fluid should not affect skin preparation integrity. In a
+flow-through system, the rate of flow must not hinder diffusion of a test substance into the receptor fluid.
+In a static cell system, the fluid should be continuously stirred and sampled regularly. If metabolism is
+being studied, the receptor fluid must support skin viability throughout the experiment.
+
+23
+24
+
+OECD/OCDE 428
 Skin preparations
-Sk111 from human or ammal sources can be used. lt is recogmsed that the use 0f human sk111 is
-11.
-subject tO national and international ethical considerations and conditlons. A1t110t걦g11 viable skin is
-preferred non-viable skin “11 also be used provided that the mtegnty of the skm c齟1 be demonstrated.
-Either epidermal membranes (enzymically, heat 01• chemically separated) or split thickness skin (typically
-200-400 gm thick) prepared a dermatome are acceptable. FuIl thickness skin may be used but
-excessive thlckness (ca. > 1 mm) should be avoided unless specifically required for determination of the
-test chemical in layers Of the skin. The selection Of species, anatomical site and preparative technique must
-be justlfied. Acceptable data from a Of four replicates per test preparation are required.
-Skin preparatlon integrltv
-lt is essential that the skin is properly prepared. lnappropnate handling may result in damage t0
-12.
-the stratum corneum, hence the integrity 0f the prepared skin must be checked. When skin metabolism is
-being invesügated, freshly excised skin should be used as S0011 as possible, under conditions known tO
-support metabolic activity. As a general guidance freshly excised skm should be used within 24 hrs, but
-the acceptable storage period may vary depending 011 the enzyme system involved in metabolisation and
-storage temperatures (13). When skm preparatlons have been stored pnor to use, evidence s110u1d be
-presented tO shOW that barrier function is maintained.
+11. Skin from human or animal sources can be used. It is recognised that the use of human skin is
+
+subject to national and international ethical considerations and conditions. Although viable skin is
+preferred, non-viable skin can also be used provided that the integrity of the skin can be demonstrated.
+Either epidermal membranes (enzymically, heat or chemically separated) or split thickness skin (typically
+200-400 µm thick) prepared with a dermatome, are acceptable. Full thickness skin may be used but
+excessive thickness (ca. > 1 mm) should be avoided unless specifically required for determination of the
+test chemical in layers of the skin. The selection of species, anatomical site and preparative technique must
+be justified. Acceptable data from a minimum of four replicates per test preparation are required.
+
+Skin preparation integrity
+
+12. It is essential that the skin is properly prepared. Inappropriate handling may result in damage to
+the stratum corneum, hence the integrity of the prepared skin must be checked. When skin metabolism is
+being investigated, freshly excised skin should be used as soon as possible, and under conditions known to
+support metabolic activity. As a general guidance, freshly excised skin should be used within 24 hrs, but
+the acceptable storage period may vary depending on the enzyme system involved in metabolisation and
+storage temperatures (13). When skin preparations have been stored prior to use, evidence should be
+presented to show that barrier function is maintained.
+
 Test substance
-13.
-The test substance is the entity whose penetration characteristlcs are tO be studied.
+
+13. The test substance is the entity whose penetration characteristics are to be studied. Ideally, the
 test substance should be radiolabelled.
+
 Test preparation
-ldeally, the
-14.
-The test substance preparation (e.g., neat, diluted 01• formulated lnatemial contallling the test
-substance is applied to the skin) should be the same (or a realistic surrogate) as that to
-humans or other potential target species may be exposed. Any variation from the 'in-use' preparation must
+
+14. The test substance preparation (e.g., neat, diluted or formulated material containing the test
+substance which is applied to the skin) should be the same (or a realistic surrogate) as that to which
+humans or other potential target species may be exposed. Any variation from the ‘in-use’ preparation must
 be justified.
+
 Test substances concentrations and formulations
-N01그nally 1Ⅱ01℃ than one concentratlon of the test substance IS used in typical formulations,
-spanning the realistic range 0f potential human exposures. Likewise, testing a range 0f typical
+
+15. Normally more than one concentration of the test substance is used in typical formulations,
+spanning the realistic range of potential human exposures. Likewise, testing a range of typical
 formulations should be considered.
-Application tO the skin
-Under normal conditions Of human exposure tO chenucals, finite doses are usually encountered.
-Therefore, an application that mimics human exposure, n01그nally 1-5 mg/cm 0f skin for a solid and up t0
-10 kll/cm for liquids, should be used. The quantity should be justified by the expected use conditions, the
-study objectives or physical charactenstics 0f the test preparation. For example, applications t0 the skin
-surface may be infinite, where large volumes per umt area are applied.
+
+Application to the skin
+
+16. Under normal conditions of human exposure to chemicals, finite doses are usually encountered.
+Therefore, an application that mimics human exposure, normally 1-5 mg/cm2 of skin for a solid and up to
+10 µl/cm2 for liquids, should be used. The quantity should be justified by the expected use conditions, the
+study objectives or physical characteristics of the test preparation. For example, applications to the skin
+surface may be infinite, where large volumes per unit area are applied.
+
 Temperature
-The passive diffusion of chemicals (and therefore their skin absorption) is affected by
-temperature. The diffusion chamber and skin should be maintained at a constant temperature close tO
-24428
+
+17. The passive diffusion of chemicals (and therefore their skin absorption) is affected by
+temperature. The diffusion chamber and skin should be maintained at a constant temperature close to
+428
 Ⅲ. 원문(OECD TG428)
-OECD/OCDE
-normal skin temperature of 32 + 10C. Different cell designs will require different water bath or heated
-block temperatures to ensure that the receptor/skin is at its physiological norm. Hum1dity should preferably
+428 OECD/OCDE
+
+normal skin temperature of 32 ± 1°C. Different cell designs will require different water bath or heated
+block temperatures to ensure that the receptor/skin is at its physiological norm. Humidity should preferably
 be between 30 and 70%.
-Duration Of exposure and sampling
-Skin exposure tO the test preparafion may be for the entire duratlon Of the experiment or for
-18.
-sh01ter times (i.e. t0 mimic a specific type ofhuman exposure). The skin should be washed 0f excess test
-preparation with a relevallt cleansing agent, alld tlle linses collected for analysis. The removal procedure
-of the test preparation will depend on the expected use condition and should be justified. A pefiod of
-sampling 0f 24 hours is normally required t0 a110W for adequate charactelisation 0f the absorption profile.
-Since skin integlity may stalt t0 deteliorate beyond 24 h0t11S, sampling times should not normally exceed
+
+Duration of exposure and sampling
+
+18. Skin exposure to the test preparation may be for the entire duration of the experiment or for
+shorter times (i.e., to mimic a specific type of human exposure). The skin should be washed of excess test
+preparation with a relevant cleansing agent, and the rinses collected for analysis. The removal procedure
+of the test preparation will depend on the expected use condition, and should be justified. A period of
+sampling of 24 hours is normally required to allow for adequate characterisation of the absorption profile.
+Since skin integrity may start to deteriorate beyond 24 hours, sampling times should not normally exceed
 24 hours. For test substances that penetrate the skin rapidly this may not be necessary but, for test
-substances that penetrate slowly, 1이삠er times may be reqmred. Sampling frequency of the receptor fluld
-should a110W the absorptlon profile of the test substance to be presented graphically.
+substances that penetrate slowly, longer times may be required. Sampling frequency of the receptor fluid
+should allow the absorption profile of the test substance to be presented graphically.
+
 Terminal procedures
-A11 components of the test system should be analysed and recovery IS to be determined. This
-19.
-includes the d0110r chamber, the skin surface rmsing, the skm preparation and the receptor fluid/chamber.
-ln some cases the skin may be fractionated into the exposed area of skin and area of skin under the cell
-flange, and intO stralurn corneum, epidermis and dermis fractions, for separate analysis.
-Analvsis
-ln all studies adequate recovery s110u1d be achieved (the should be a mean of 100 士10% of
-20.
-the radioactivity and any deviation should be justified). The amount Of test substance in the receptor fluid
-skin preparation skin surface washings and apparatus rlnse should be analysed using a suitable technique.
+
+19. All components of the test system should be analysed and recovery is to be determined. This
+includes the donor chamber, the skin surface rinsing, the skin preparation and the receptor fluid/chamber.
+In some cases, the skin may be fractionated into the exposed area of skin and area of skin under the cell
+flange, and into stratum corneum, epidermis and dermis fractions, for separate analysis.
+
+Analysis
+20. In all studies adequate recovery should be achieved (the aim should be a mean of 100 ± 10% of
+
+the radioactivity and any deviation should be justified). The amount of test substance in the receptor fluid,
+skin preparation, skin surface washings and apparatus rinse should be analysed, using a suitable technique.
+
 DATA AND REPORTING
 Data
-The analysis 0f receptor fluid the distribufion 0f the test substance chemical in the test system
-21.
-and the absorption profile with time, should be presented. When finlte dose conditions 0f exposure are
-used the quantity washed from the skln the quantity associated with the skin (and in the different skin
-layers if analysed) and the amount present in the receptor fluid (rate, and amount or percentage 0f applied
-dose) should be calculated. Skin abs0Qtion may sometimes be expressed using receptor fluid data alone.
-However, when the test substance remalns in the skin at the end of the study, it may need to be included in
-the total amount absorbed (see Guidance Document, paragraph 66). When infinite dose conditions 0f
-exposure are used the data may permit the calculation 0f a permeability constant (Kp). Under the latter
+21. The analysis of receptor fluid, the distribution of the test substance chemical in the test system
+
+and the absorption profile with time, should be presented. When finite dose conditions of exposure are
+used, the quantity washed from the skin, the quantity associated with the skin (and in the different skin
+layers if analysed) and the amount present in the receptor fluid (rate, and amount or percentage of applied
+dose) should be calculated. Skin absorption may sometimes be expressed using receptor fluid data alone.
+However, when the test substance remains in the skin at the end of the study, it may need to be included in
+the total amount absorbed (see Guidance Document, paragraph 66). When infinite dose conditions of
+exposure are used the data may permit the calculation of a permeability constant (Kp). Under the latter
 conditions, the percentage absorbed is not relevant.
-25화장품 등 피부흡수 동물대체시험법(생체외 피부흡수시험법, Skin Absorption. in V/tro Method) 가이드라인
-428
-OE CD/OCDE
+
+25
+26
+
+OECD/OCDE 428
 Test report
-The test rep()lt must include the reqmrements stipulated m the protocol including a Justification
-22.
-for the test system used should, comprise the following:
+22. The test report must include the requirements stipulated in the protocol, including a justification
+
+for the test system used and should, comprise the following:
 Test substance:
-physical nature, physicochemical properties (at least molecular weight and 10g Pow), punty
-(radiochemcal purity);
-identification information (e.g. batch number);
-solubility in receptor fluid.
-Test preparafion:
-formulation and justification Of use•
-homogeneity.
+
+— physical nature, physicochemical properties (at least molecular weight and log P,,,), purity
+(radiochemical purity);
+
+— identification information (e.g. batch number);
+
+— solubility in receptor fluid.
+
+Test preparation:
+
+— formulation and justification of use;
+— homogeneity.
+
 Test conditions:
-sources and site Of skin, method Of preparafion, storage conditions prior tO use, any
-pre-treatment (cleanmg, antibiotic treatments, etc.), skin integrity measurements, metabolic
-status, justification Of use;
-cell design, receptor fluid compositlon, receptor fluid flow rate or sampling times 끠d
-procedure S ;
-details 0f applicatlon 0f test preparation and quantification 0f dose applied;
-durafion Of exposure;
-details 0f removal Of test preparation from the skin for example, skin rinsing;
-details of analysis of skin and any fractionatlon techmques employed to demonstrate skin
+
+— sources and site of skin, method of preparation, storage conditions prior to use, any
+pre-treatment (cleaning, antibiotic treatments, etc.), skin integrity measurements, metabolic
+status, justification of use;
+
+— cell design, receptor fluid composition, receptor fluid flow rate or sampling times and
+procedures;
+
+— details of application of test preparation and quantification of dose applied;
+
+— duration of exposure;
+
+— details of removal of test preparation from the skin, for example, skin rinsing;
+
+— details of analysis of skin and any fractionation techniques employed to demonstrate skin
 distribution;
-cell and equipment washmg procedures;
-assay methods, extraction techniques, limits 0f detection and analytical method validation.
+
+— cell and equipment washing procedures;
+
+— assay methods, extraction techniques, limits of detection and analytical method validation.
+
 Results:
-overall recoveries 0f the experiment (Applied dose Skin washmgs + Skin + Receptor fluid +
+
+— overall recoveries of the experiment (Applied dose = Skin washings + Skin + Receptor fluid +
 Cell washings);
-tabulation Of individual cell recoverles 111 each compaltment;
-absorption profile;
-tabulated absorptlon data (expressed as rate, amount or percentage).
-DiSCUSS1011 Of results.
+
+— tabulation of individual cell recoveries in each compartment;
+
+— absorption profile;
+— tabulated absorption data (expressed as rate, amount or percentage).
+
+Discussion of results.
+
 Conclusions.
-26Ⅲ. 원문(OECD TG428)
-OECD/OCDE
-428
-니TERATURE
-(2)
-(3)
-(4)
-(6)
-(7)
-(9)
-(10)
-(11)
-(12)
-(13)
-OECD (2004). Test Guideline 427: Skin absorption• in vivo Method. OECD Paris.
-OECD (2004). Guidance Document forthe Conduct of Skin Absorption Studies. OECD, Paris.
-OECD (2000). ReP01t of the Meeting of the OECD Extended Stee1ing Committee for
-Percutaneous Absorption Testing, Annex 1 to ENV/JM/TG(2000)5. OECD Pa1is.
-Kemppainen BW and Reifenrath WG. (1990). Methods for skin absorption. CRC Press, Boca
+Ⅲ. 원문(OECD TG428)
+428 OECD/OCDE
+
+LITERATURE
+
+(1) OECD (2004). Test Guideline 427: Skin absorption: in vivo Method. OECD, Paris.
+
+(2) OECD (2004). Guidance Document for the Conduct of Skin Absorption Studies. OECD, Paris.
+
+(3) OECD (2000). Report of the Meeting of the OECD Extended Steering Committee for
+Percutaneous Absorption Testing, Annex 1 66 ENV/JM/TG(2000)5. OECD, Paris.
+
+(4) Kemppainen BW and Reifenrath WG. (1990). Methods for skin absorption. CRC Press, Boca
 Raton.
-Bronaugh RL and CoIIier, SW. (1991). Protocol for ln vitro Percutaneous Absorption Studies, in
-ln vitro Percutaneous Absorption: PrincipIes, Fundamentals and Applications, RL Bronaugh
-and HI Maibach Eds. CRC Press, Boca R飜011 pp. 237-241.
-Bronaugh RL and Maibach HI. (1991). /,7 vitro Percutaneous Absorptton: Princtples,
-Fundarnenlals and Applicalions. CRC Press, Boca Raton.
-European Centre for Ec0toxic010gy and Toxic010gy 0f ChemicaIs (1993). Monograph No. 20
-Percutaneous AbS01卍ti011, ECETOC Brussels.
-Diembeck W, Beck H Benech-K1effer F, COL11tellemont P, Dupuis J, Lovell W Paye
-M Spengler J, Steiling W (1999). Test Guidelines for ln Vitro Assessment 0f Dermal Absorption
-and Percutaneous Penetrat1011 of Cosmetic lngredients Fd Chem Tox, 37, 191-205.
-Recommended Pr℃t0C01 for ln vitro Percutaneous Absorption Rate Studies (1996). US Federal
-Register, V01. 61, No. 65.
-Howes D, Guy R, Hadgraft J, Heylings JR 교. (1996). Methods for assessing percutaneous
-absorption. ECVAM Workshop Rep01t ATLA 81 R10.
-Schaefer H and Redelmeier TE. (1996). Skin banier: plinciples of percutaneous abs01pt10n.
-Karger, BaseI.
-Robe1ts MS and WaIters KA. (1998). Dermal absolption and toxlcity assessment. Marcel
-Dekker New York.
-Jewell, C. Heylings, JR. CIowes, HM And WiIIiams, FM. (2000). Percutaneous absorption and
-metabolism of dinitrochlorobenzene in ⅵ柱0. Arch Tox1col 74: 356-365.
-27화장품 등 피부흡수 동물대체시험법(생체외 피부흡수시험법, Skin Absorption: in V/tro Method) 가이드라인
-0
-0
-•를
-드
-2
-28428
+
+(5) Bronaugh RL and Collier, SW. (1991). Protocol for In vitro Percutaneous Absorption Studies, in
+In vitro Percutaneous Absorption: Principles, Fundamentals and Applications, RL Bronaugh
+and HI Maibach, Eds., CRC Press, Boca Raton, pp. 237-241.
+
+(6) Bronaugh RL and Maibach HI. (1991). In vitro Percutaneous Absorption: Principles,
+Fundamentals and Applications. CRC Press, Boca Raton.
+
+(7) European Centre for Ecotoxicology and Toxicology of Chemicals (1993). Monograph No. 20,
+Percutaneous Absorption, ECETOC, Brussels.
+
+(8) Diembeck W, Beck H, Benech-Kieffer F, Courtellemont P, Dupuis J, Lovell W, Paye
+M.Spengler J, Steiling W (1999). Test Guidelines for In Vitro Assessment of Dermal Absorption
+and Percutaneous Penetration of Cosmetic Ingredients, Fd Chem Tox, 37, 191-205.
+
+(9) Recommended Protocol for In vitro Percutaneous Absorption Rate Studies (1996). US Federal
+Register, Vol. 61, No. 65.
+
+(10) Howes D, Guy R, Hadgraft J, Heylings JR et al. (1996). Methods for assessing percutaneous
+absorption. ECVAM Workshop Report ATLA 24, 81 R10.
+
+(11) Schaefer H and Redelmeier TE. (1996). Skin barrier: principles of percutaneous absorption.
+Karger, Basel.
+
+(12) Roberts MS and Walters KA. (1998). Dermal absorption and toxicity assessment. Marcel
+Dekker, New York.
+
+(13) Jewell, C., Heylings, JR., Clowes, HM. And Williams, FM. (2000). Percutaneous absorption and
+
+metabolism of dinitrochlorobenzene in vitro. Arch Toxicol 74: 356-365.
+
+27
+28
+428
 Ⅲ. 원문(OECD TG428)
-OECD/OCDE
+428 OECD/OCDE
 ANNEX
+
 DEFINITIONS
-Unabsorbed do쿄: represents that washed from the skln surface after exposure and any present on the non-
-occlusive cover, mcludmg any dose shown tO volatilise from the skin during exposure.
-Absorbed dose: (in pitro): lnass Of test substance reaclling the receptor fluid or systennc circulation witllill
+Unabsorbed dose: represents that washed from the skin surface after exposure and any present on the non-
+occlusive cover, including any dose shown to volatilise from the skin during exposure.
+
+Absorbed dose: (in vitro): mass of test substance reaching the receptor fluid or systemic circulation within
 a specified period of time.
-The absorbable do쿄: (in vitro) represents that present on or in the skln following washmg.
-29“화장품 등 피부흡수 동물대체시험법
+
+The absorbable dose: (in vitro) represents that present on or in the skin following washing.
+
+29
+
+“화장품 등 피부흡수 동물대체시험법
 (생체외 피부흡수시험법, Skin Absorption: in vitro Method)
 6H 이
 발 행 인
