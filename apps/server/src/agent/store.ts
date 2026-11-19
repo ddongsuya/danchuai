@@ -1,7 +1,7 @@
 import type { AgentMessage, DanchuQuoteBrief, DanchuQuoteDraft, RequestSheet, Usage } from "@danchuai/core";
 import type { Role } from "./tools";
 
-export type ConversationMode = "request" | "ask";
+export type ConversationMode = "request" | "ask" | "assist";
 
 /** 답이 인용한 가이드라인 원문(화면에 다시 보여 주려고 답과 함께 저장한다) */
 export interface SourceView {
@@ -36,7 +36,7 @@ export interface Conversation {
   /** 대화를 연 사용자(세션의 userId) */
   createdBy: string;
   role: Role;
-  /** request: 견적 요청·회신 대화, ask: 가이드라인 질문 대화(요청서·도구 없음) */
+  /** request: 견적 요청·회신 대화, ask: 가이드라인 질문 대화(요청서·도구 없음), assist: 기관 비서(단추 고객관리·일정, 기관 담당자만) */
   mode: ConversationMode;
   /** 기관 대화일 때 받은 요청(레거시 에이전트 DB 요청, uuid) */
   requestId: string | null;
@@ -70,6 +70,8 @@ export interface ConversationRepo {
   listAsks(orgId: string, userId: string, limit: number): Promise<AskListItem[]>;
   /** 이 사용자가 이 단추 요청으로 연 기관 견적 대화(가장 최근 것). 다시 열면 이어서 쓴다 */
   findDanchu(orgId: string, userId: string, no: string): Promise<Conversation | null>;
+  /** 이 사용자의 기관 비서 대화(가장 최근 것). 다시 열면 이어서 쓴다 */
+  latestAssist(orgId: string, userId: string): Promise<Conversation | null>;
 }
 
 /** 지난 질문 제목: 첫 질문 글 한 줄 */
@@ -84,6 +86,12 @@ export class MemoryConversationRepo implements ConversationRepo {
   async findDanchu(orgId: string, userId: string, no: string) {
     const hit = [...this.items.values()]
       .filter((c) => c.orgId === orgId && c.createdBy === userId && c.role === "cro" && c.danchuNo === no)
+      .sort((a, b) => (this.touched.get(b.id) ?? 0) - (this.touched.get(a.id) ?? 0))[0];
+    return hit ? structuredClone(hit) : null;
+  }
+  async latestAssist(orgId: string, userId: string) {
+    const hit = [...this.items.values()]
+      .filter((c) => c.orgId === orgId && c.createdBy === userId && c.mode === "assist")
       .sort((a, b) => (this.touched.get(b.id) ?? 0) - (this.touched.get(a.id) ?? 0))[0];
     return hit ? structuredClone(hit) : null;
   }

@@ -38,6 +38,7 @@ export const ERROR_LABEL: Record<ChatErrorCode, string> = {
   network: '연결이 끊겼어요',
   unauthorized: '로그인이 필요해요',
   quote_unavailable: '지금은 이 요청의 견적을 쓸 수 없어요',
+  undo_unavailable: '되돌릴 수 없어요',
 };
 export const RETRYABLE: readonly ChatErrorCode[] = ['provider_error', 'network', 'truncated', 'turn_in_progress', 'agent_unavailable'];
 

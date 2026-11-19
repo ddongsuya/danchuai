@@ -5,7 +5,7 @@
 import type { Conversation } from "./agent/store";
 import { z } from "zod";
 import { RFQ_NO } from "./danchu";
-import type { DanchuRole } from "./danchu";
+import type { DanchuCatalog, DanchuRole } from "./danchu";
 
 export const ACTIONS = {
   // 4단계: create·ask·answer / 5단계: select·detail(2차 요청)·contract_confirm·contract_result
@@ -102,16 +102,40 @@ export function checkAction(role: DanchuRole, input: unknown): Checked {
   return { ok: true, action: a, text };
 }
 
-/** 승인된 본문을 다시 동작으로. 형식이 깨졌으면 null(보내지 않는다) */
+/**
+ * 단추 액션 목록에만 있는 승인 동작(등록부에 새로 생긴 것). 목록의 역할·범위·수준을 그대로 따른다.
+ * 앞의 고정 목록(ACTIONS)에 있는 동작은 checkAction 으로만 받는다(본문 모양을 더 엄격히 본다).
+ */
+export function checkCatalogAction(role: DanchuRole, input: unknown, catalog: DanchuCatalog | null): Checked {
+  const p = CatalogActionBody.safeParse(input);
+  if (!p.success) return { ok: false, error: "bad_request" };
+  const { action, rfqNo, body } = p.data;
+  const def = catalog && catalog.role === role ? catalog.actions.find((a) => a.name === action) : null;
+  if (!def || def.level !== "confirm") return { ok: false, error: "forbidden" };
+  if ((def.scope === "rfq") !== !!rfqNo) return { ok: false, error: "bad_request" };
+  if ("action" in body) return { ok: false, error: "bad_request" };
+  const a = { action: action as DanchuActionName, rfqNo: rfqNo ?? null, body };
+  const text = canonical(a);
+  if (text.length > MAX_TEXT) return { ok: false, error: "too_long" };
+  return { ok: true, action: a, text };
+}
+
+const ACTION_NAME = /^[a-z][a-z_]{1,39}$/;
+const CatalogActionBody = z.object({ action: z.string().regex(ACTION_NAME), rfqNo: z.string().regex(RFQ_NO).optional(), body: z.record(z.string(), z.unknown()) }).strict();
+
+/** 승인된 본문을 다시 동작으로. 형식이 깨졌으면 null(보내지 않는다). 본문은 초안 때 checkAction·checkCatalogAction 을 지났다 */
 export function parseActionText(text: string): DanchuAction | null {
   try {
     const v = JSON.parse(text) as { action?: unknown; rfqNo?: unknown; body?: unknown };
-    const p = DanchuActionBody.safeParse({ action: v.action, body: v.body, ...(typeof v.rfqNo === "string" ? { rfqNo: v.rfqNo } : {}) });
-    return p.success ? { action: p.data.action, rfqNo: p.data.rfqNo ?? null, body: p.data.body } : null;
+    const p = CatalogActionBody.safeParse({ action: v.action, body: v.body, ...(typeof v.rfqNo === "string" ? { rfqNo: v.rfqNo } : {}) });
+    return p.success ? { action: p.data.action as DanchuActionName, rfqNo: p.data.rfqNo ?? null, body: p.data.body } : null;
   } catch {
     return null;
   }
 }
+
+/** 고정 목록에 있는 동작인지 */
+export const isKnownAction = (role: DanchuRole, action: unknown): boolean => typeof action === "string" && (ACTIONS[role] as readonly string[]).includes(action);
 
 /** 단추 응답 상태 → 장부 결과. 4xx는 확실한 거절(failed), 시간 초과·너무 잦음·5xx는 결과 불명 */
 export function outcomeOf(status: number): "sent" | "failed" | "unknown" {

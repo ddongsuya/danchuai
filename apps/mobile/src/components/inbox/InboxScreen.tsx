@@ -2,7 +2,7 @@
 // 진단 문서 A05 "② 새 요청 버튼 하나"(사용자 선택 2026-11-17): 새 요청은 바닥에 붙은 버튼 하나, 질문하기는 머리줄, 검색은 없음.
 // 기관(A06)은 앱에서 요청을 만들지 않으므로 바닥 버튼이 없다.
 import { router, type Href } from 'expo-router';
-import { ChatCircle, Dna, Drop, Flask, Plus, User, UserSwitch } from 'phosphor-react-native';
+import { ChatCircle, Dna, Drop, Flask, ListChecks, Plus, User, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -155,6 +155,11 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
         {role === 'requester' && (
           <View style={styles.bottom}>
             <Button title="새 요청" tall icon={<Plus size={u(18)} weight="bold" color={tokens.onInk} />} onPress={() => router.push({ pathname: '/requester/[id]', params: { id: 'new' } })} />
+          </View>
+        )}
+        {role === 'cro' && (
+          <View style={styles.bottom}>
+            <Button title="비서" tall icon={<ListChecks size={u(18)} weight="bold" color={tokens.onInk} />} onPress={() => router.push('/lab/assist')} />
           </View>
         )}
       </View>

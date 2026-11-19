@@ -11,6 +11,7 @@ import { createPool } from "./db/pool";
 import { supabaseAuthFromEnv, supabaseIdentity, supabaseKeyFromEnv } from "./supabaseAuth";
 import { PgAccountRepo } from "./db/account";
 import { InAppTransport, PgMarketRepo } from "./db/market";
+import { PgRunRepo } from "./db/runs";
 import { providerFromEnv } from "./providers";
 import { MemoryOutboundRepo } from "./repo";
 import { danchuApi, danchuBaseFromEnv } from "./danchu";
@@ -70,6 +71,7 @@ export function buildServer(env: Env): Hono {
     identity: supaKey ? supabaseIdentity(supaKey) : undefined,
     accounts: pool && supaKey ? new PgAccountRepo(pool) : undefined,
     market: pool ? new PgMarketRepo(pool) : undefined,
+    runs: pool ? new PgRunRepo(pool) : undefined,
     danchu: danchu ?? undefined,
   });
 
