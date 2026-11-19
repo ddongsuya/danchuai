@@ -10,7 +10,7 @@ import {
   type LlmProvider,
   type OutboundDraft,
 } from "@danchuai/core";
-import { checkAnswer, citedSources, contextBlock, DOCS, issueNote, retrieve } from "@danchuai/knowledge";
+import { checkAnswer, citedSources, contextBlock, DOCS, issueNote, retrieve, retrieveMany } from "@danchuai/knowledge";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import type { OutboundRepo } from "../repo";
 import type { AgentEvent } from "./interpret";
 import { runToolTurn } from "./repair";
 import { ASK_SYSTEM, SYSTEM } from "./prompts";
+import { searchQueries } from "./searchQueries";
 import { TOOLS } from "./tools";
 import type { Conversation, ConversationRepo, RequestDirectory, StoredMessage } from "./store";
 
@@ -178,15 +179,6 @@ export function agentRoutes(deps: AgentDeps) {
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
     // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
-    const evidence = retrieve(ask ? userText : retrievalQuery(userText, conv.sheet));
-    const messages: AgentMessage[] = [
-      ...history,
-      // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.
-      {
-        role: "user",
-        content: ask ? `${userText}\n\n${contextBlock(evidence)}` : `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}`,
-      },
-    ];
 
     return streamSSE(c, async (stream) => {
       const send = (event: string, data: unknown) => stream.writeSSE({ event, data: JSON.stringify(data) });
@@ -195,6 +187,17 @@ export function agentRoutes(deps: AgentDeps) {
       stream.onAbort(() => abort.abort());
       try {
         await send("step", { label: ask ? "원문 찾기" : conv.role === "cro" ? "요청 확인" : "요청서 확인" });
+        // 질문 대화는 질문을 영어 원문·고시 용어 검색어로 바꿔 함께 찾는다(정답 조각이 검색에서 빠지지 않게).
+        const search = ask ? await searchQueries(provider, userText, abort.signal) : { queries: [] as string[] };
+        const evidence = ask ? retrieveMany([userText, ...search.queries]) : retrieve(retrievalQuery(userText, conv.sheet));
+        const messages: AgentMessage[] = [
+          ...history,
+          // 바뀌는 요청서 상태·근거는 맨 끝에 붙여 앞부분 캐시를 지킨다. 질문 대화에는 요청서가 없다.
+          {
+            role: "user",
+            content: ask ? `${userText}\n\n${contextBlock(evidence)}` : `${userText}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}`,
+          },
+        ];
         const onText = (delta: string) => {
           writes = writes.then(() => send("text", { delta }));
         };
@@ -213,6 +216,14 @@ export function agentRoutes(deps: AgentDeps) {
         await writes;
 
         const { conv: next, events, notes } = result;
+        // 검색어 만들기 호출도 이용량에 넣는다(비용 상한 계산).
+        if (search.usage) {
+          result.usage = {
+            ...result.usage,
+            inputTokens: result.usage.inputTokens + search.usage.inputTokens,
+            outputTokens: result.usage.outputTokens + search.usage.outputTokens,
+          };
+        }
         for (const e of events) await send(e.event, e.data);
         // 답이 인용한 원문만 출처로 보낸다(앱이 원문 링크로 보여 준다).
         const sources = citedSources(result.text, evidence.sources).map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version }));

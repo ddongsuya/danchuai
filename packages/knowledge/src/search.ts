@@ -58,7 +58,10 @@ export function mentionedDocs(query: string, docs: readonly string[]): Set<strin
     if (!d.startsWith("ICH") && query.includes(d.replace(/^식약처 /, ""))) hit.add(d);
   }
   if (/독성시험기준|독성시험 기준/.test(query)) hit.add("식약처 독성시험기준");
-  for (const [re, doc] of TOPIC_DOCS) if (re.test(query) && docs.includes(doc)) hit.add(doc);
+  const topic = TOPIC_DOCS.filter(([re, doc]) => re.test(query) && docs.includes(doc)).map(([, doc]) => doc);
+  // 제품 분야 고시를 말한 질문이면 일반 의약품 기준(독성시험기준)은 주제어만으로 높이지 않는다.
+  const product = topic.some((d) => d !== "식약처 독성시험기준");
+  for (const d of topic) if (!(product && d === "식약처 독성시험기준")) hit.add(d);
   return hit;
 }
 
@@ -79,7 +82,8 @@ export class Bm25Index {
   constructor(private readonly passages: readonly Passage[], weight?: (p: Passage) => number) {
     this.weight = passages.map((p) => weight?.(p) ?? 1);
     for (const p of passages) {
-      const toks = tokenize(`${p.section}\n${p.section}\n${p.text}`);
+      // 문서 이름도 넣는다: 별표처럼 본문에 문서 이름이 없는 조각도 "기능성화장품" 같은 분야 질문에 같이 걸리게.
+      const toks = tokenize(`${p.doc}\n${p.section}\n${p.section}\n${p.text}`);
       const m = new Map<string, number>();
       for (const t of toks) m.set(t, (m.get(t) ?? 0) + 1);
       for (const t of m.keys()) this.df.set(t, (this.df.get(t) ?? 0) + 1);

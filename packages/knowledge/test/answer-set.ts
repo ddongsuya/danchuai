@@ -45,7 +45,7 @@ export const ANSWER_SET: readonly AnswerCase[] = [
   { q: "hERG 시험은 언제 해요?", cite: ["ICH S7B", "ICH E14/S7B Q&A"],
     proof: [{ doc: "ICH S7B", re: /hERG/ }], must: [/hERG/] },
   { q: "소아 임상 전에 어린 동물 독성시험이 꼭 필요해요?", cite: ["ICH S11", "ICH M3"],
-    proof: [{ doc: "ICH S11", re: /juvenile/ }], must: [/어린|유약|발육/] },
+    proof: [{ doc: "ICH S11", re: /juvenile/ }, { doc: "ICH M3 Q&A", re: /JUVENILE ANIMAL/i }], must: [/어린|유약|발육/] },
   // 원문에 없는 것: 짐작하지 말고 확인하지 못했다고 해야 한다
   { q: "ToxTracker 시험이 식약처 기준에 들어 있나요?", cite: [], proof: [],
     must: [/확인하지 못|찾지 못|없어요|없습니다/], mustNot: [/(근거: 식약처[^)]*\))/] },

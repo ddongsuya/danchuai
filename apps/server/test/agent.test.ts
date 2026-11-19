@@ -10,6 +10,7 @@ import { createApp } from "../src/app";
 import { LIMITS } from "../src/agent/routes";
 import { MemoryConversationRepo, MemoryRequestDirectory } from "../src/agent/store";
 import { ASK_SYSTEM, SYSTEM } from "../src/agent/prompts";
+import { parseSearchQueries, SEARCH_SYSTEM } from "../src/agent/searchQueries";
 import type { Session } from "../src/auth";
 import { MemoryOutboundRepo } from "../src/repo";
 
@@ -431,6 +432,8 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
 
   it("질문 대화는 도구·요청서 없이 원문 근거만 붙여 답하고, 출처를 보낸다", async () => {
     const p = new FakeProvider([
+      // 첫 호출: 원문 검색어 만들기
+      { text: "EN: standard battery genotoxicity tests\nKO: 유전독성 표준조합" },
       {
         text: "표준 조합은 두 가지예요(근거: ICH S2 2.2).",
         // 모델이 도구를 불러도 질문 대화에서는 무시한다
@@ -440,7 +443,9 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
     const { create, turn } = setup(p);
     const { conv } = await create("Bearer cro", { mode: "ask" });
     const { events } = await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?", "Bearer cro");
-    const req = p.calls[0]!;
+    expect(p.calls[0]!.system).toBe(SEARCH_SYSTEM);
+    expect(p.calls[0]!.messages.at(-1)!.content).toBe("유전독성 표준 시험 조합이 뭐예요?");
+    const req = p.calls[1]!;
     expect(req.system).toBe(ASK_SYSTEM);
     expect(req.tools).toBeUndefined();
     const last = req.messages.at(-1)!.content;
@@ -462,7 +467,7 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
   });
 
   it("답의 근거를 저장해 다시 열 때 보여 주고, 모델에는 보내지 않는다. 지난 질문은 내 것만", async () => {
-    const p = new FakeProvider([{ text: "두 가지예요(근거: ICH S2 2.2)." }, { text: "네." }]);
+    const p = new FakeProvider([{ text: "EN: standard battery" }, { text: "두 가지예요(근거: ICH S2 2.2)." }, { text: "" }, { text: "네." }]);
     const { create, turn, call } = setup(p);
     const { conv } = await create("Bearer req", { mode: "ask" });
     await turn(conv.id, "유전독성 표준 시험 조합이 뭐예요?");
@@ -471,7 +476,7 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
     };
     expect(view.messages[1]!.sources?.map((x) => x.doc)).toEqual(["ICH S2"]);
     await turn(conv.id, "고마워요");
-    expect(p.calls[1]!.messages.every((m) => Object.keys(m).sort().join() === "content,role")).toBe(true);
+    expect(p.calls[3]!.messages.every((m) => Object.keys(m).sort().join() === "content,role")).toBe(true);
 
     // 요청 대화·글 없는 질문 대화·다른 사람 질문은 목록에 없다
     await create("Bearer req", { mode: "ask" });
@@ -486,5 +491,12 @@ describe("에이전트 대화: 가이드라인 질문하기", () => {
     expect(ASK_SYSTEM).toContain("여덟 문장");
     expect(ASK_SYSTEM).not.toContain("한두 문장");
     expect(ASK_SYSTEM).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+});
+
+describe("원문 검색어 만들기", () => {
+  it("EN·KO 두 줄만 뽑고, 형식이 어긋나면 비운다", () => {
+    expect(parseSearchQueries("EN: Ames strains TA98\nKO: 복귀돌연변이 균주\n설명")).toEqual(["Ames strains TA98", "복귀돌연변이 균주"]);
+    expect(parseSearchQueries("답은 이래요")).toEqual([]);
   });
 });

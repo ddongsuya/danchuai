@@ -77,19 +77,23 @@ export const MIN_SCORE = 6;
  * (한 언어가 낱말 수 차이로 다른 언어를 덮지 않게). 정리본이 가리킨 ICH 문서는 영어 검색에서 높게 본다.
  * 결과: 원문 조각 최대 limit-2개 + 정리본 2개.
  */
-export function retrieve(query: string, opts: { limit?: number } = {}): Retrieved {
+export function retrieve(query: string, opts: { limit?: number; perDoc?: number } = {}): Retrieved {
   const limit = opts.limit ?? 6;
+  const perDoc = opts.perDoc ?? 2;
   const ix = getIndexes();
   const summary = ix.notes.search(query, { limit: 2, perDoc: 2 }).filter((h) => h.score >= MIN_SCORE);
   const pointed = docsNamedIn(summary.map((h) => h.text).join("\n"));
-  const ko = ix.ko.search(query, { limit: limit, perDoc: 2 }).filter((h) => h.score >= MIN_SCORE);
-  const en = ix.en.search(query, { limit: limit, perDoc: 2, english: true, boost: pointed }).filter((h) => h.score >= MIN_SCORE);
+  const ko = ix.ko.search(query, { limit: limit, perDoc }).filter((h) => h.score >= MIN_SCORE);
+  const en = ix.en.search(query, { limit: limit, perDoc, english: true, boost: pointed }).filter((h) => h.score >= MIN_SCORE);
   const original: Hit[] = [];
   for (let i = 0; original.length < limit - 2 && (i < ko.length || i < en.length); i++) {
     if (en[i]) original.push(en[i]!);
     if (ko[i] && original.length < limit - 2) original.push(ko[i]!);
   }
-  const hits = [...original, ...summary].slice(0, limit);
+  return withSources([...original, ...summary].slice(0, limit));
+}
+
+function withSources(hits: Hit[]): Retrieved {
   const sources = hits.map((h, i) => {
     const d = DOC_BY_SHORT.get(h.doc);
     return { n: i + 1, doc: h.doc, name: d?.name ?? h.doc, section: h.section, url: d?.url ?? null, version: d?.version ?? "" };
@@ -97,10 +101,34 @@ export function retrieve(query: string, opts: { limit?: number } = {}): Retrieve
   return { hits, sources };
 }
 
+/**
+ * 같은 질문을 여러 검색어(원래 질문, 영어 원문 용어로 옮긴 검색어, 고시 용어로 바꾼 검색어)로 찾아 합친다.
+ * 합치는 방식은 순위 합산(RRF): 여러 검색어에서 위에 나온 조각일수록 앞에 둔다. 같은 조각은 한 번만 넣는다.
+ * 정리본은 첫 검색어의 것만 쓴다. 결과: 원문 조각 최대 limit-2개 + 정리본 2개.
+ */
+export function retrieveMany(queries: readonly string[], opts: { limit?: number } = {}): Retrieved {
+  const limit = opts.limit ?? 14;
+  const qs = queries.map((q) => q.trim()).filter(Boolean);
+  if (!qs.length) return { hits: [], sources: [] };
+  const per = qs.map((q) => retrieve(q, { limit, perDoc: 3 }).hits);
+  const fused = new Map<string, { h: Hit; s: number }>();
+  for (const hs of per) {
+    hs.filter((h) => h.doc !== NOTES_DOC).forEach((h, rank) => {
+      const cur = fused.get(h.id);
+      const add = 1 / (8 + rank);
+      if (cur) cur.s += add;
+      else fused.set(h.id, { h, s: add });
+    });
+  }
+  const original = [...fused.values()].sort((x, y) => y.s - x.s).slice(0, limit - 2).map((x) => x.h);
+  return withSources([...original, ...per[0]!.filter((h) => h.doc === NOTES_DOC).slice(0, 2)]);
+}
+
 const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
 
 /** 모델에 붙이는 근거 블록. 답에는 "(근거: 문서 이름 조항)"으로 인용하게 한다. */
-export function contextBlock(r: Retrieved, perChars = 1100): string {
+// 조각은 최대 약 1,600자라 잘리지 않게 둔다(잘리면 정답 문장이 모델에 안 갈 수 있다).
+export function contextBlock(r: Retrieved, perChars = 2000): string {
   if (!r.hits.length) return "<참고자료>\n찾은 원문 없음\n</참고자료>";
   const parts = r.hits.map((h, i) => {
     const s = r.sources[i]!;

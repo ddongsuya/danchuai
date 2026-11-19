@@ -17,7 +17,8 @@ export interface AnswerIssue {
   sentence: string;
 }
 
-const CITE = /\(근거:\s*([^)]+)\)/g;
+// 문서 이름 안의 괄호 한 겹("(QT간격 연장)", "(In vitro 3T3 NRU 시험법)")까지 근거 표기로 읽는다.
+const CITE = /\(근거:\s*((?:[^()]|\([^()]*\))+)\)/g;
 const ROMAN: Record<string, string> = { "1": "I", "2": "II", "3": "III", "4": "IV" };
 // ICH 영어 원문은 작은 수를 낱말로 쓴다(two species, three months).
 const WORD: Record<string, string> = {
@@ -38,7 +39,7 @@ export function numbersIn(text: string, docNames: readonly string[] = []): strin
 }
 
 function hasNumber(text: string, n: string): boolean {
-  const t = norm(text).replace(/(\d),(?=\d{3}\b)/g, "$1");
+  const t = norm(text).replace(/(\d),(?=\d{3}(?!\d))/g, "$1");
   const re = new RegExp(`(^|[^\\d.])${n.replace(".", "\\.")}(?![\\d]|\\.\\d)`);
   if (re.test(t)) return true;
   const w = WORD[n];
@@ -49,14 +50,22 @@ function hasNumber(text: string, n: string): boolean {
 
 /** 근거 표기 한 개("ICH M3 5.1, 식약처 독성시험기준 별표2")에서 아는 문서 이름을 길게 맞는 순으로 찾는다. */
 function citedDocs(cite: string, docs: readonly DocLike[]): { docs: string[]; unknown: string[] } {
+  // 문서 이름에 쉼표·가운뎃점·괄호가 들어 있으므로 아는 이름을 먼저(긴 것부터) 지운 뒤 남은 글을 본다.
   const names = [...docs.map((d) => d.short)].sort((a, b) => b.length - a.length);
   const found: string[] = [];
+  let rest = cite;
+  for (const n of names) {
+    if (rest.includes(n)) {
+      found.push(n);
+      rest = rest.split(n).join("\u0000");
+    }
+  }
   const unknown: string[] = [];
-  for (const part of cite.split(/[,;]|\s및\s/).map((p) => p.trim()).filter(Boolean)) {
-    const d = names.find((n) => part.startsWith(n));
-    if (d) {
-      if (!found.includes(d)) found.push(d);
-    } else if (!/^\d/.test(part) && !/^(별표|제\d|부록|Note|Table|표)/.test(part)) unknown.push(part);
+  for (const part of rest.split(/[,;\u0000]|\s및\s/).map((p) => p.trim()).filter(Boolean)) {
+    // 조항 번호·표·별표·부록 같은 위치 표기는 문서 이름이 아니다
+    if (/^(\d|별표|제\s*\d|부록|Note|Table|표|Q\s*\d|[ⅠⅡⅢⅣⅤ]|[IVX]+\.|\d+\.)/.test(part)) continue;
+    if (/^[\d.\s()가-힣A-Za-z]{0,20}$/.test(part) && !/[가-힣]{2,}\s*(규정|기준|가이드라인|시행규칙|안내서|해설서)/.test(part) && !/^(ICH|OECD|FDA|EMA)/.test(part)) continue;
+    unknown.push(part);
   }
   return { docs: found, unknown };
 }
