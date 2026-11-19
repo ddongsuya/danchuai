@@ -39,4 +39,4 @@ npm test -w @danchuai/knowledge
 - ICH PDF: 목차 제목과 같은 본문 줄은 번호가 없어도 제목으로 본다(S5 4.1~4.3). 표는 `pdftotext -layout`으로 따로 조각을 만든다(M3 표 1). 제목 번호가 없는 표 형식 Q&A(M10 Q&A)는 낱말 좌표로 조항·질문·답 칸을 나눈다.
 - 목록(`LIBRARY`) 밖에 원문을 더 넣는 ICH 문서는 `EXTRA`, 목록 주소와 다른 PDF를 쓰는 문서는 `PDF_URL`.
 - 검색 배율(`src/index.ts` `passageWeight`): 제출 서류 작성방법 별표 0.5, 공식 Q&A 0.8. 두 낱말 이상 질문은 두 낱말 이상 맞은 조각만 근거로 쓴다.
-- 식약처 민원인 안내서: mfds.go.kr은 해외 접속을 끊어서 사용자 PC 크롬으로 받아 텍스트로 바꾼 것을 쓴다. 텍스트는 브랜치 `claude/mfds-guides-text`의 `data-staging/mfds-guides/text`, 목록·이름·게시글 번호는 `mfds-guides.json`. 빌드할 때 `MFDS_GUIDES_DIR=<text 폴더>`를 준다(없으면 안내서는 건너뛴다). 스캔본(독성시험기준 해설서, 세포·유전자치료제 초기 임상시험 디자인)과 암호화 HWPX(감염병 단클론항체)는 원문 미수록. 검색 배율은 공식 Q&A와 같은 0.8.
+- 식약처 민원인 안내서: mfds.go.kr은 해외 접속을 끊어서 사용자 PC 크롬으로 받아 텍스트로 바꾼 것을 쓴다. 텍스트는 브랜치 `claude/mfds-guides-text`의 `data-staging/mfds-guides/text`, 목록·이름·게시글 번호는 `mfds-guides.json`. 빌드할 때 `MFDS_GUIDES_DIR=<text 폴더>`를 준다(없으면 안내서는 건너뛴다). 스캔본 3건(독성시험기준 해설서, 세포·유전자치료제 초기 임상시험 디자인, 피부흡수)은 사용자 PC의 Windows 내장 OCR로 읽은 글이다(index.json method "ocr-windows", 문서 license에 OCR 표시). 3T3 NRU 책자는 같은 안내서의 텍스트판이 있어 뺐다. 검색 배율은 공식 Q&A와 같은 0.8.

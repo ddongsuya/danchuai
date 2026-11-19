@@ -260,7 +260,7 @@ def split_long(txt, size=MAX_CHUNK):
 # (브랜치 claude/mfds-guides-text 의 data-staging/mfds-guides/text). 목록·이름은 mfds-guides.json.
 MFDS_VIEW = "https://www.mfds.go.kr/brd/m_1060/view.do?seq="
 GUIDE_TOP = re.compile(r"^\s*(제\s*\d+\s*[장편]\s*\S.*|[IVXⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]{1,4}\s*\.\s*\S.*|부\s*록.*|별\s*첨.*|참고\s*문헌.*)$")
-GUIDE_SUB = re.compile(r"^\s*(제\s*\d+\s*절\s*\S.*|제\d+조(의\d+)?\(.+?\).*|\d{1,2}(\.\d{1,2}){0,2}\.?\s+[^\d\s].*|Q\s*\d+[.):]?\s*\S.*)$")
+GUIDE_SUB = re.compile(r"^\s*(제\s*\d+\s*절\s*\S.*|제\d+조(의\d+)?\(.+?\).*|[1-9]\d?(\.\d{1,2}){0,2}\.?\s+[^\d\s].*|Q\s*\d+[.):]?\s*\S.*)$")
 GUIDE_TOC = re.compile(r"(·{3,}|\.{4,}|…{2,}|-{4,})|\s\d{1,3}\s*$")
 def head_label(line, n=40):
     line = re.sub(r"\s+", " ", line.strip())
@@ -305,8 +305,14 @@ def guide_chunks(text, size=MAX_CHUNK):
 
 def mfds_guides(text_dir):
     lst = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mfds-guides.json"), encoding="utf-8"))
+    idx_path = os.path.join(os.path.dirname(os.path.normpath(text_dir)), "index.json")
+    methods = {}
+    if os.path.exists(idx_path):
+        for f in json.load(open(idx_path, encoding="utf-8")).get("files", []):
+            methods[os.path.basename(f.get("text", ""))] = f.get("method", "")
     docs = []
     for e in lst:
+        e = {**e, "ocr": "ocr" in methods.get(e["file"], "")}
         path = os.path.join(text_dir, e["file"])
         txt = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
         m = re.search(r"(20\d\d)\s*[.년]\s*(\d{1,2})", txt[:3000])
@@ -541,6 +547,8 @@ def main():
             meta = {"short": short, "name": e["name"], "by": "식품의약품안전처", "about": "민원인 안내서 (" + e["group"] + ")", "url": MFDS_VIEW + str(e["seq"]),
                     "topic": "guide", "products": [], "lang": "ko", "version": version, "chunks": len(got),
                     "license": "공공저작물(저작권법 제24조의2). 식약처 민원인 안내서 원문을 조항 단위로 나눈 것이며 내용은 바꾸지 않았다."}
+            if e["ocr"]:
+                meta["license"] += " 스캔본을 OCR로 읽은 글이라 글자 오류가 있을 수 있어 수치는 원본으로 확인한다."
             if not got:
                 meta["license"] = "원문 미수록(스캔본 또는 암호화 문서). 공식 주소만 연결"
                 gaps.append(e["name"])
