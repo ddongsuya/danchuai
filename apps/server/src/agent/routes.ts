@@ -12,7 +12,7 @@ import {
   type LlmProvider,
   type OutboundDraft,
 } from "@danchuai/core";
-import { citedSources, contextBlock, retrieve } from "@danchuai/knowledge";
+import { checkAnswer, citedSources, contextBlock, DOCS, issueNote, retrieve } from "@danchuai/knowledge";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
@@ -258,7 +258,11 @@ export function agentRoutes(deps: AgentDeps) {
         const sources = citedSources(result.text, evidence.sources).map(({ doc, name, section, url, version }) => ({ doc, name, section, url, version }));
         if (sources.length) await send("sources", { items: sources });
 
-        const reply = [result.text.trim(), ...notes].filter(Boolean).join("\n") || "(응답 없음)";
+        // 근거 표기가 받은 원문을 가리키는지, 그 문장의 숫자가 원문 조각에 있는지 코드로 대조한다(지어낸 수치 표시).
+        const check = issueNote(checkAnswer(result.text, evidence.hits, DOCS));
+        if (check) await send("text", { delta: `\n\n${check}` });
+
+        const reply = [result.text.trim(), check, ...notes].filter(Boolean).join("\n") || "(응답 없음)";
         const saved: Conversation = {
           ...next,
           messages: [...conv.messages, { role: "user", content: userText }, { role: "assistant", content: reply, ...(sources.length ? { sources } : {}) }],

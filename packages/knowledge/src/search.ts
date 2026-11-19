@@ -73,8 +73,11 @@ export class Bm25Index {
   private readonly df = new Map<string, number>();
   private readonly avg: number;
   private readonly docNames: string[];
+  private readonly weight: number[];
 
-  constructor(private readonly passages: readonly Passage[]) {
+  /** weight: 조각별 점수 배율(1 = 그대로). 서식 작성 안내처럼 낱말만 많은 조각을 낮춘다. */
+  constructor(private readonly passages: readonly Passage[], weight?: (p: Passage) => number) {
+    this.weight = passages.map((p) => weight?.(p) ?? 1);
     for (const p of passages) {
       const toks = tokenize(`${p.section}\n${p.section}\n${p.text}`);
       const m = new Map<string, number>();
@@ -105,13 +108,18 @@ export class Bm25Index {
     for (let i = 0; i < N; i++) {
       const tf = this.tf[i]!;
       let s = 0;
+      let matched = 0;
       for (const t of terms) {
         const f = tf.get(t);
         if (!f) continue;
+        matched++;
         const df = this.df.get(t) ?? 0;
         const idf = Math.log(1 + (N - df + 0.5) / (df + 0.5));
         s += (idf * f * (k1 + 1)) / (f + k1 * (1 - b + (b * this.len[i]!) / this.avg));
       }
+      // 낱말이 둘 이상인 질문은 두 낱말 이상 맞아야 한다(낱말 하나만 우연히 겹친 조각을 근거로 쓰지 않게).
+      if (matched < Math.min(2, terms.length)) continue;
+      s *= this.weight[i]!;
       if (s > 0) scored.push({ i, s: boost.has(this.passages[i]!.doc) ? s * 1.6 : s });
     }
     scored.sort((x, y) => y.s - x.s);

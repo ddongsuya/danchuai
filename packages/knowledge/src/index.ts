@@ -30,9 +30,23 @@ const LANG = new Map(DOCS.map((d) => [d.short, d.lang]));
 for (const p of guidelines.chunks as Passage[]) (LANG.get(p.doc) === "en" ? EN_PASSAGES : LAW_PASSAGES).push(p);
 const NOTE_PASSAGES = notes.chunks as Passage[];
 
+/**
+ * 조각 배율. 제출 서류 작성방법 별표(CTD 작성 예시 표)는 시험 이름만 빽빽해 거의 모든 질문에 걸리므로 낮춘다.
+ * 공식 Q&A와 식약처 민원인 안내서(해설·설명)는 본 가이드라인·고시보다 조금 낮춰 본문이 먼저 나오게 한다. 내용은 그대로 두고 순서만 바꾼다.
+ */
+const GUIDE_DOCS = new Set(DOCS.filter((d) => d.url.includes("mfds.go.kr/brd/")).map((d) => d.short));
+
+export function passageWeight(p: Passage): number {
+  if (/^별표\S*\s.*(작성방법|작성요령)/.test(p.section)) return 0.5;
+  // 부칙(시행일·경과조치)과 표지·개정 이력은 빠짐없이 싣되 본문보다 뒤에 나오게 한다
+  if (/^(부칙|표지·개정 이력|본문 앞부분)/.test(p.section)) return 0.5;
+  if (/ Q&A$/.test(p.doc) || GUIDE_DOCS.has(p.doc)) return 0.8;
+  return 1;
+}
+
 let indexes: { ko: Bm25Index; en: Bm25Index; notes: Bm25Index } | null = null;
 const getIndexes = () =>
-  (indexes ??= { ko: new Bm25Index(LAW_PASSAGES), en: new Bm25Index(EN_PASSAGES), notes: new Bm25Index(NOTE_PASSAGES) });
+  (indexes ??= { ko: new Bm25Index(LAW_PASSAGES, passageWeight), en: new Bm25Index(EN_PASSAGES, passageWeight), notes: new Bm25Index(NOTE_PASSAGES) });
 
 /** 정리본 글에 나온 ICH 문서 이름(예: "ICH S2(R1)" → "ICH S2"). */
 function docsNamedIn(text: string): Set<string> {
@@ -168,3 +182,5 @@ ${reference.efficacy.note}
 ${eff}
 </효력시험 질환 영역>`;
 }
+
+export { checkAnswer, issueNote, numbersIn, type AnswerIssue } from "./check";
