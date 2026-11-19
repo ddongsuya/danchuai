@@ -13,7 +13,7 @@ import hashlib, html, json, os, re, subprocess, sys, time, urllib.parse, urllib.
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from hwp5text import hwp_text  # noqa: E402
+from hwp5text import hwp_text as hwp_text_plain, hwp_text_tables, render_table  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 DATA = os.path.join(ROOT, "packages", "knowledge", "data")
@@ -176,14 +176,30 @@ def toc_titles(lines):
     return out
 
 
+PAGE_NO = re.compile(r"(Page )?\d+( of \d+)?|i{1,3}|iv|v|vi{0,3}")
+
+
+def strip_page_numbers(text):
+    """쪽 번호는 각 쪽의 첫 줄이나 마지막 줄에 있는 숫자만 뺀다. 표 칸의 숫자("10", "112")는 그대로 둔다."""
+    pages = []
+    for pg in text.split("\f"):
+        ls = pg.split("\n")
+        idx = [i for i, l in enumerate(ls) if l.strip()]
+        for i in (idx[:1] + idx[-1:]) if idx else []:
+            if PAGE_NO.fullmatch(ls[i].strip()):
+                ls[i] = ""
+        pages.append("\n".join(ls))
+    return "\n".join(pages)
+
+
 def ich_chunks(text):
-    lines = [l.rstrip() for l in text.replace("\f", "\n").split("\n")]
+    lines = [l.rstrip() for l in strip_page_numbers(text).split("\n")]
     toc = toc_titles(lines)
-    # 목차(점선 줄)와 머리·꼬리말·쪽 번호 제거
+    # 목차(점선 줄) 제거
     body = []
     for l in lines:
         s = l.strip()
-        if re.search(r"\.{5,}\s*\d*$", s) or re.fullmatch(r"(Page )?\d+( of \d+)?|i{1,3}|iv|v|vi{0,3}", s):
+        if re.search(r"\.{5,}\s*\d*$", s):
             continue
         body.append(s)
     # pdftotext 는 절 번호와 제목을 두 줄로 내놓는다. "3.1" + "Scope" → "3.1 Scope"
@@ -203,7 +219,7 @@ def ich_chunks(text):
     for s in body:
         m = HEAD.match(s)
         if (m and len(s) < 110) or toc_head(s):
-            if cur:
+            if cur or label:  # 본문 없이 바로 하위 절이 오는 장 제목("1. INTRODUCTION" 다음 "1.1")도 남긴다
                 sections.append((label, cur))
             label, cur = s, []
         else:
@@ -225,13 +241,21 @@ def ich_chunks(text):
                 sections[i] = (f"{cand} {lb}", sections[i][1])
     out = []
     for label, ls in sections:
-        if label is None:  # 표지·개정 이력·목차·약어표
-            continue
         txt = re.sub(r"\n{2,}", "\n", "\n".join(ls)).strip()
         txt = re.sub(r"(?<![.:;])\n(?=[a-z(])", " ", txt)  # 문장 중간 줄바꿈 잇기
-        if len(txt) < 40:
+        if label is None:  # 표지·개정 이력·약어표도 원문 그대로 둔다(목차 점선 줄·쪽 번호만 뺐다)
+            label = "표지·개정 이력" if not out else "본문 앞부분"
+            full = txt
+        else:
+            # 절 제목 줄도 본문에 둔다. "1. For nonrodent studies, dose groups usually consist of ..." 같은 번호 문장이
+            # 제목으로 잡혀 section(80자)에서 잘리면 글이 사라지기 때문이다(2026-11-19 빠짐 검사로 확인).
+            full = f"{label}\n{txt}" if txt else label
+        if not full:
             continue
-        out += [(label, p) for p in split_long(txt)]
+        if len(txt) < 40 and out and out[-1][0] != "표지·개정 이력":  # 짧은 절(참고문헌 한 줄 등)은 버리지 않고 앞 조각에 잇는다
+            out[-1] = (out[-1][0], out[-1][1] + "\n" + full)
+            continue
+        out += [(label, p) for p in split_long(full)]
     return out
 
 
@@ -363,7 +387,7 @@ def law_doc(url, cache):
         p = os.path.join(cache, f"fl-{fl}.bin")
         try:
             if b[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":  # HWP(OLE)
-                files.append((name, hwp_text(p)))
+                files.append((name, hwp_text_tables(p)))
             elif b[:2] == b"PK":  # HWPX(압축 XML). 2024년 이후 고시 별표는 대부분 이 형식
                 files.append((name, hwpx_text(p)))
         except Exception:
@@ -378,17 +402,37 @@ def hwpx_text(path):
     out = []
     for n in secs:
         x = z.read(n).decode("utf-8", "ignore")
+        # <hp:t> 안에 줄바꿈·탭 태그가 끼면(<hp:t>가능하면, …<hp:lineBreak/>동일한 …</hp:t>) [^<]* 로는 통째로 빠진다
+        # (2026-11-19 PDF 판 대조로 확인). 안쪽 태그를 글자로 바꿔 둔다.
+        # 수식은 글이 아니라 수식 스크립트로 들어 있다(기능성화장품 별표 3의 SPF 계산식). 스크립트를 글로 남긴다
+        def eq(m):
+            sc = re.search(r"<hp:script>(.*?)</hp:script>", m.group(0), re.S)
+            return "<hp:t>" + html.escape("[수식: " + " ".join(re.sub(r"[`~]", " ", html.unescape(sc.group(1))).split()) + "]") + "</hp:t>" if sc else ""
+        x = re.sub(r"<hp:equation\b[^>]*/>|<hp:equation\b(?:(?!</hp:equation>).)*</hp:equation>", eq, x, flags=re.S)
+        x = re.sub(r"<hp:t\b[^>]*>(.*?)</hp:t>", lambda m: "<hp:t>" + re.sub(r"<[^>]+>", "", re.sub(r"<hp:lineBreak\s*/>", "\n", re.sub(r"<hp:tab\b[^>]*/>", " ", m.group(1)))) + "</hp:t>", x, flags=re.S)
         # 표를 먼저 행 단위 글로 바꾼다(안쪽 표부터)
         while True:
             m = re.search(r"<hp:tbl\b(?:(?!<hp:tbl\b).)*?</hp:tbl>", x, re.S)
             if not m:
                 break
-            rows = []
-            for tr in re.findall(r"<hp:tr\b.*?</hp:tr>", m.group(0), re.S):
-                cells = [re.sub(r"\s+", " ", "".join(re.findall(r"<hp:t\b[^>]*>([^<]*)</hp:t>", tc))).strip() for tc in re.findall(r"<hp:tc\b.*?</hp:tc>", tr, re.S)]
-                if any(cells):
-                    rows.append(" | ".join(cells))
-            x = x[:m.start()] + "<hp:t>" + html.escape("\n".join(rows)) + "</hp:t></hp:p>" + x[m.end():]
+            cells = []
+            for tc in re.findall(r"<hp:tc\b.*?</hp:tc>", m.group(0), re.S):
+                addr = re.search(r'<hp:cellAddr colAddr="(\d+)" rowAddr="(\d+)"', tc)
+                span = re.search(r'<hp:cellSpan colSpan="(\d+)" rowSpan="(\d+)"', tc)
+                size = re.search(r'<hp:cellSz width="(\d+)"', tc)
+                # 칸 안 문단마다 줄을 나누고, 원문 글자의 XML 이스케이프(&lt; 등)를 푼다
+                # 칸 안 모든 글(글상자 안 문단 포함)을 차례대로. 문단 끝은 줄바꿈
+                txt = html.unescape("".join(re.findall(r"<hp:t\b[^>]*>([^<]*)</hp:t>", re.sub(r"</hp:p>", "<hp:t>\n</hp:t>", tc))))
+                txt = "\n".join(l for l in txt.split("\n") if l.strip())
+                if addr:
+                    c, r = int(addr.group(1)), int(addr.group(2))
+                    cs, rs = (int(span.group(1)), int(span.group(2))) if span else (1, 1)
+                    cells.append((r, c, max(rs, 1), max(cs, 1), txt, int(size.group(1)) if size else 0))
+            # 표 제목(캡션) 등 칸 밖 글도 남긴다
+            outside = re.sub(r"<hp:tc\b.*?</hp:tc>", "", m.group(0), flags=re.S)
+            cap = " ".join(html.unescape(t) for t in re.findall(r"<hp:t\b[^>]*>([^<]*)</hp:t>", outside) if t.strip())
+            body = (cap + "\n" if cap else "") + render_table(cells)
+            x = x[:m.start()] + "<hp:t>" + html.escape(body) + "</hp:t></hp:p>" + x[m.end():]
         x = re.sub(r"</hp:p>", "\n", x)
         parts = re.findall(r"<hp:t\b[^>]*>([^<]*)</hp:t>|(\n)", x)
         out.append(html.unescape("".join(a or b for a, b in parts)))
@@ -402,20 +446,31 @@ def law_chunks(text, files, relevant):
     out = []
     # 조문
     cur, label = [], None
+    in_addenda = False
     for l in text.split("\n"):
+        # 국가법령정보센터 화면 조각(onclick 속성 등)이 줄 앞에 남는다. "부 칙"부터 쓴다
+        mb = re.search(r"부\s*칙\s*(?=[(<]|$)", l)
+        if mb and ("체크박스" in l or "return false" in l or re.match(r"^부\s*칙", l)):
+            if label and cur:
+                out.append((label, "\n".join(cur)))
+            l = l[mb.start():]
+            no = re.search(r"<[^>]*>", l)
+            label = "부칙 " + (no.group(0) if no else "").strip()
+            rest = l[no.end():].strip() if no else ""
+            cur = [l[:no.end()] if no else l] + ([rest] if rest else [])
+            in_addenda = True
+            continue
         m = ART.match(l)
-        if m:
+        if m and not in_addenda:
             if label and cur:
                 out.append((label, "\n".join(cur)))
             label, cur = f"{m.group(1)}({m.group(2)})", [l]
-        elif re.match(r"^부칙", l):
-            if label and cur:
-                out.append((label, "\n".join(cur)))
-            label, cur = None, []
         elif label:
             cur.append(l)
     if label and cur:
-        out.append((label, "\n".join(cur)))
+        # 마지막 부칙 뒤에 붙어 나오는 별표 목록([별표 1] 제목 [별표 2] 제목 …)은 별표 조각에 제목이 있으므로 뺀다
+        cur[-1] = re.sub(r"\s*\[별표\s*\d[^\]]*\].*$", "", cur[-1]) if in_addenda else cur[-1]
+        out.append((label, "\n".join(c for c in cur if c.strip())))
     # 별표: 같은 제목은 한 번만(HWP·PDF 두 벌)
     titles = set()
     for fname, f in files:
@@ -446,6 +501,7 @@ def law_chunks(text, files, relevant):
         def label():
             return re.sub(r"\s+", " ", f"{name} {chap} {sec_}" if big and (chap or sec_) else title).strip()
         plabel = label()
+        part = [l.strip() for l in lines[:head] if l.strip()]  # 머리 줄(법령 이름, [별표 N] <개정 날짜>)도 원문 그대로 둔다
         for l in lines[head:]:
             s2 = l.strip()
             if big and re.search(r"[가-힣)]\s*\d{1,3}$", s2) and len(s2) < 70:  # 목차 줄: "제5장 : 세포독성시험87"
@@ -473,7 +529,7 @@ def law_chunks(text, files, relevant):
         if part:
             out += [(plabel, p) for p in split_long("\n".join(part))]
     out = [(lb, p) for lb, t in out for p in split_long(t)]
-    return [(lb, t) for lb, t in out if len(t.strip()) > 20 and not ADDENDA.search(lb)]
+    return [(lb, t) for lb, t in out if len(t.strip()) > 0]
 
 
 ADDENDA = re.compile(r"\((시행일|적용례|경과조치|재검토기한|유효기간|다른 법령의 개정|일반적 경과조치)\)")

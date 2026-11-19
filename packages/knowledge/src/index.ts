@@ -38,6 +38,8 @@ const GUIDE_DOCS = new Set(DOCS.filter((d) => d.url.includes("mfds.go.kr/brd/"))
 
 export function passageWeight(p: Passage): number {
   if (/^별표\S*\s.*(작성방법|작성요령)/.test(p.section)) return 0.5;
+  // 부칙(시행일·경과조치)과 표지·개정 이력은 빠짐없이 싣되 본문보다 뒤에 나오게 한다
+  if (/^(부칙|표지·개정 이력|본문 앞부분)/.test(p.section)) return 0.5;
   if (/ Q&A$/.test(p.doc) || GUIDE_DOCS.has(p.doc)) return 0.8;
   return 1;
 }
