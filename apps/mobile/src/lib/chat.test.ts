@@ -126,3 +126,27 @@ describe('지난 질문 다시 열기', () => {
     expect(s.messages[0]!.sources).toBeUndefined();
   });
 });
+
+describe('기관 비서 실행 카드', () => {
+  const opened: ChatState = chatReducer(initialChat, { type: 'opened', id: 'c1', role: 'cro', sheet: { ...EMPTY_SHEET }, missing: [] });
+  it('실행 카드는 이번 턴의 답 자리에 붙고, 되돌리면 표시가 바뀐다', () => {
+    let s = chatReducer(opened, { type: 'send', text: '할 일 잡아 줘', at: 1 });
+    s = chatReducer(s, { type: 'server', event: 'text', data: { delta: '11월 25일 할 일로 잡을게요.' } });
+    s = chatReducer(s, { type: 'server', event: 'action', data: { run: { id: 'r1', undoable: true }, label: '할 일 만들기', outcome: 'done', message: null } });
+    s = chatReducer(s, { type: 'server', event: 'action', data: { run: null, label: '안건 단계 옮기기', outcome: 'skipped', message: null } });
+    s = chatReducer(s, { type: 'ended', at: 2 });
+    expect(s.messages.map((m) => m.role)).toEqual(['user', 'agent']);
+    expect(s.actions.map((a) => [a.at, a.label, a.outcome, a.undoable])).toEqual([
+      [1, '할 일 만들기', 'done', true],
+      [1, '안건 단계 옮기기', 'skipped', false],
+    ]);
+    s = chatReducer(s, { type: 'undone', runId: 'r1' });
+    expect(s.actions[0]).toMatchObject({ undone: true, undoable: false });
+  });
+  it('모르는 결과 값은 확인 필요로, 문구는 길이를 자른다', () => {
+    const s = chatReducer(opened, { type: 'server', event: 'action', data: { outcome: 'weird', label: 'x'.repeat(100), message: 'y'.repeat(300) } });
+    expect(s.actions[0]).toMatchObject({ outcome: 'unknown', runId: null });
+    expect(s.actions[0]!.label).toHaveLength(60);
+    expect(s.actions[0]!.message).toHaveLength(120);
+  });
+});

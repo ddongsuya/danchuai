@@ -11,7 +11,21 @@ export type ChatErrorCode =
   | 'network'
   | 'unauthorized'
   /** 단추 견적 대화를 열 수 없다(참여 전·불참·회신 닫힘·찾을 수 없음 등) */
-  | 'quote_unavailable';
+  | 'quote_unavailable'
+  /** 기관 비서: 되돌릴 수 없다(이미 되돌림·기간 지남·그 뒤 바뀜) */
+  | 'undo_unavailable';
+
+/** 기관 비서가 단추에서 바로 실행한 것 한 장(서버 action 이벤트). at: 이 카드가 붙는 메시지 자리 */
+export interface ActionCard {
+  key: string;
+  at: number;
+  label: string;
+  outcome: 'done' | 'failed' | 'unknown' | 'skipped';
+  message: string | null;
+  runId: string | null;
+  undoable: boolean;
+  undone: boolean;
+}
 
 export interface AgentQuestion {
   field: string;
@@ -57,6 +71,8 @@ export interface ChatState {
   pendingSources: SourceRef[];
   /** 단추 연동 기관 견적 초안(서버 quote 이벤트·대화 열기). 금액은 단추 계산값 */
   quote: DanchuQuoteDraft | null;
+  /** 기관 비서 실행 카드(이번에 연 동안 받은 것) */
+  actions: ActionCard[];
 }
 
 export const initialChat: ChatState = {
@@ -76,6 +92,7 @@ export const initialChat: ChatState = {
   draftSent: false,
   pendingSources: [],
   quote: null,
+  actions: [],
 };
 
 export type ChatAction =
@@ -95,10 +112,11 @@ export type ChatAction =
   | { type: 'open_failed'; code: ChatErrorCode }
   | { type: 'send'; text: string; at: number }
   | { type: 'server'; event: string; data: any }
+  | { type: 'undone'; runId: string }
   | { type: 'ended'; at: number }
   | { type: 'failed'; code: ChatErrorCode; at: number };
 
-const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable'];
+const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable', 'undo_unavailable'];
 const asCode = (c: unknown): ChatErrorCode => (typeof c === 'string' && KNOWN.includes(c) ? (c as ChatErrorCode) : 'provider_error');
 
 /** 출처는 모양이 맞는 것만, 원문 주소는 https만 받는다. */
@@ -184,12 +202,30 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           return { ...s, pendingSources: asSources(d.items) };
         case 'quote':
           return d.quote && typeof d.quote === 'object' ? { ...s, quote: d.quote as DanchuQuoteDraft } : s;
+        case 'action': {
+          const run = d.run && typeof d.run === 'object' ? (d.run as { id?: unknown; undoable?: unknown }) : null;
+          const outcome = ['done', 'failed', 'unknown', 'skipped'].includes(d.outcome) ? (d.outcome as ActionCard['outcome']) : 'unknown';
+          const card: ActionCard = {
+            key: `x${s.actions.length}`,
+            // 답이 내려오면 이 턴의 답 자리(사용자 글 다음)
+            at: s.messages.length,
+            label: typeof d.label === 'string' ? d.label.slice(0, 60) : '동작',
+            outcome,
+            message: typeof d.message === 'string' ? d.message.slice(0, 120) : null,
+            runId: run && typeof run.id === 'string' ? run.id : null,
+            undoable: !!run && run.undoable === true,
+            undone: false,
+          };
+          return { ...s, actions: [...s.actions, card] };
+        }
         case 'error':
           return { ...s, error: asCode(d.code) };
         default:
           return s;
       }
     }
+    case 'undone':
+      return { ...s, actions: s.actions.map((c) => (c.runId === a.runId ? { ...c, undone: true, undoable: false } : c)) };
     case 'ended':
       return settle(s, a.at);
     case 'failed':

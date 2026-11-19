@@ -8,7 +8,7 @@ type Row = {
   org_id: string;
   created_by: string;
   role: "requester" | "cro";
-  mode: "request" | "ask";
+  mode: "request" | "ask" | "assist";
   request_id: string | null;
   danchu_rfq_no: string | null;
   quote: Conversation["quote"];
@@ -51,6 +51,16 @@ export class PgConversationRepo implements ConversationRepo {
         where org_id = $1 and created_by = $2 and role = 'cro' and danchu_rfq_no = $3
         order by updated_at desc limit 1`,
       [orgId, userId, no],
+    );
+    return rows[0] ? this.hydrate(rows[0]) : null;
+  }
+
+  async latestAssist(orgId: string, userId: string): Promise<Conversation | null> {
+    const { rows } = await this.pool.query<Row>(
+      `select ${COLS} from conversations
+        where org_id = $1 and created_by = $2 and mode = 'assist'
+        order by updated_at desc limit 1`,
+      [orgId, userId],
     );
     return rows[0] ? this.hydrate(rows[0]) : null;
   }

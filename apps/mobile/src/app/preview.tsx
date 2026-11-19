@@ -20,6 +20,7 @@ import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
+import { AssistView } from '@/components/lab/AssistChat';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -202,6 +203,28 @@ const CHAT_HEAD = (
 const CHAT_FILLED = <AgentText>요청서를 다 채웠어요.</AgentText>;
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
+// 기관 비서 예시(가상의 고객사·담당자)
+const ASSIST_BRIEF = {
+  date: day(0),
+  today: [
+    { kind: 'task' as const, time: null, title: '견적서 보완', sub: '가 제약, 랫드 4주 반복투여독성', done: false, overdue: true, badge: 'D+1' },
+    { kind: 'event' as const, time: '14:00', title: '나 바이오 화상 미팅', sub: '효력시험 설계 협의', done: false, overdue: false, badge: '' },
+    { kind: 'danchu' as const, time: null, title: 'DC-2026-0142 회신 기한', sub: '반복투여독성, 기한 내일', done: false, overdue: false, badge: 'D-1' },
+  ],
+  need: [
+    { dealId: 'd2', title: '유전독성 3종', company: '다 바이오텍', reason: '견적 유효기간 D-3', tone: 'due' as const, suggest: '안건 열기' },
+    { dealId: 'd3', title: '랫드 PK', company: '라 제약', reason: '다음 할 일 없음', tone: 'warn' as const, suggest: '할 일 잡기' },
+  ],
+};
+const ASSIST_MESSAGES = [
+  { id: 'u1', role: 'user' as const, text: '다 바이오텍 다음 주 화요일에 후속 연락 잡고, 라 제약 PK는 협의로 옮겨 줘' },
+  { id: 'a1', role: 'agent' as const, text: '다 바이오텍 후속 연락을 11월 25일 할 일로 잡고, 라 제약 랫드 PK는 협의 단계로 옮길게요.' },
+];
+const ASSIST_ACTIONS = [
+  { key: 'x0', at: 1, label: '할 일 만들기', outcome: 'done' as const, message: null, runId: 'r1', undoable: true, undone: false },
+  { key: 'x1', at: 1, label: '안건 단계 옮기기', outcome: 'done' as const, message: null, runId: 'r2', undoable: false, undone: true },
+];
+
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
@@ -224,6 +247,8 @@ const VIEWS: View_[] = [
   { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
+  { key: 'lab-assist', label: '비서, 오늘 브리핑', group: '기관' },
+  { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
   { key: 'gate-plan', label: '기관 요금제 Pro 아님', group: '관문·계정' },
@@ -377,6 +402,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
+    case 'lab-assist':
+      return <AssistView brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-run':
+      return <AssistView brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'gate-error':
     case 'gate-wait':
     case 'gate-plan':
