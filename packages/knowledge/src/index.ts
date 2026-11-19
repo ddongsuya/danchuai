@@ -182,3 +182,5 @@ ${reference.efficacy.note}
 ${eff}
 </효력시험 질환 영역>`;
 }
+
+export { checkAnswer, issueNote, numbersIn, type AnswerIssue } from "./check";
