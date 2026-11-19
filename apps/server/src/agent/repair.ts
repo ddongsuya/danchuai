@@ -7,7 +7,7 @@ import type { Conversation } from "./store";
 // (1) 태그가 보이는 곳부터 글을 자르고, 스트리밍 중에도 사용자에게 보내지 않는다.
 // (2) 의뢰자 요청 대화에서 질문·본문이 없고 빈 칸이 남으면 한 번만 다시 불러 다음 질문을 받는다.
 
-const TOOL_TAG = /<\/?(?:function_calls|invoke|parameter|update_sheet|ask_question|draft_body|summarize_request)\b/;
+const TOOL_TAG = /<\/?(?:function_calls|invoke|parameter|update_sheet|ask_question|draft_body|summarize_request|update_quote)\b/;
 
 /** 도구 태그가 처음 나오는 곳부터 잘라 낸다. */
 export function stripToolMarkup(text: string): string {

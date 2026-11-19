@@ -202,12 +202,15 @@ export class PgMarketRepo implements MarketRepo {
       sheet: Partial<RequestSheet>;
       status: RequestStatus | null;
       waiting: boolean;
+      handed_off: boolean;
       recipients: number;
       replies: number;
       updated_at: Date;
     }>(
       `select c.id as conversation_id, r.id as request_id, r.title, coalesce(r.sheet, c.sheet) as sheet, r.status,
               (c.draft is not null and coalesce((c.draft->>'outboundCreated')::boolean, false) = false) as waiting,
+              -- 단추 연동: 단추로 접수된 대화(본문을 보냈거나 단추 요청 번호를 받음). 단추 요청함에 따로 보이므로 작성 중으로 세지 않는다
+              (r.id is null and (c.danchu_rfq_no is not null or coalesce((c.draft->>'outboundCreated')::boolean, false))) as handed_off,
               (select count(*)::int from request_recipients rr where rr.request_id = r.id) as recipients,
               (select count(*)::int from request_recipients rr where rr.request_id = r.id and rr.replied_at is not null) as replies,
               greatest(c.updated_at, coalesce(r.sent_at, c.updated_at), coalesce(r.selected_at, c.updated_at),
@@ -221,7 +224,7 @@ export class PgMarketRepo implements MarketRepo {
       conversationId: r.conversation_id,
       requestId: r.request_id,
       title: r.title ?? requestTitle(r.sheet ?? {}),
-      status: r.status && r.status !== "draft" ? r.status : r.waiting ? "waiting" : "drafting",
+      status: r.status && r.status !== "draft" ? r.status : r.handed_off ? "sent" : r.waiting ? "waiting" : "drafting",
       recipients: r.recipients,
       replies: r.replies,
       updatedAt: iso(r.updated_at)!,

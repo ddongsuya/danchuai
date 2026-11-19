@@ -1,4 +1,4 @@
-import type { AgentMessage, RequestSheet, Usage } from "@danchuai/core";
+import type { AgentMessage, DanchuQuoteBrief, DanchuQuoteDraft, RequestSheet, Usage } from "@danchuai/core";
 import type { Role } from "./tools";
 
 export type ConversationMode = "request" | "ask";
@@ -38,8 +38,15 @@ export interface Conversation {
   role: Role;
   /** request: 견적 요청·회신 대화, ask: 가이드라인 질문 대화(요청서·도구 없음) */
   mode: ConversationMode;
-  /** 기관 대화일 때 받은 요청 */
+  /** 기관 대화일 때 받은 요청(레거시 에이전트 DB 요청, uuid) */
   requestId: string | null;
+  /**
+   * 단추 연동: 대화가 다루는 단추 요청 번호(DC-...). 기관 견적 대화는 받은 요청, 의뢰자 대화는 단추에 접수된 뒤 받은 번호.
+   * 단추 연동 기관 대화는 requestId 대신 이것을 쓴다(말로 맡기는 견적 2단계).
+   */
+  danchuNo: string | null;
+  /** 단추 연동 기관 견적 초안(단추 회신 구조, 부가세 별도). 금액은 단추 계산 또는 담당자 입력만 */
+  quote: DanchuQuoteDraft | null;
   sheet: RequestSheet;
   /** 모델에 다시 보내는 기록. 사용자 글은 연락처를 지운 뒤 저장한다. */
   messages: StoredMessage[];
@@ -61,6 +68,8 @@ export interface ConversationRepo {
   unlockTurn(id: string): Promise<void>;
   /** 이 사용자가 연 질문 대화(글이 있는 것만, 최근 순) */
   listAsks(orgId: string, userId: string, limit: number): Promise<AskListItem[]>;
+  /** 이 사용자가 이 단추 요청으로 연 기관 견적 대화(가장 최근 것). 다시 열면 이어서 쓴다 */
+  findDanchu(orgId: string, userId: string, no: string): Promise<Conversation | null>;
 }
 
 /** 지난 질문 제목: 첫 질문 글 한 줄 */
@@ -72,6 +81,12 @@ export const TURN_LOCK_MS = 120_000;
 export class MemoryConversationRepo implements ConversationRepo {
   private items = new Map<string, Conversation>();
   private touched = new Map<string, number>();
+  async findDanchu(orgId: string, userId: string, no: string) {
+    const hit = [...this.items.values()]
+      .filter((c) => c.orgId === orgId && c.createdBy === userId && c.role === "cro" && c.danchuNo === no)
+      .sort((a, b) => (this.touched.get(b.id) ?? 0) - (this.touched.get(a.id) ?? 0))[0];
+    return hit ? structuredClone(hit) : null;
+  }
   async listAsks(orgId: string, userId: string, limit: number) {
     return [...this.items.values()]
       .filter((c) => c.orgId === orgId && c.createdBy === userId && c.mode === "ask" && c.messages.length)
@@ -104,9 +119,35 @@ export class MemoryConversationRepo implements ConversationRepo {
   }
 }
 
+/** 단추 요청 조회 실패 코드(단추 입구의 오류 코드 그대로) */
+export type DanchuLookupError = "unauthorized" | "forbidden" | "org_not_ready" | "plan_required" | "not_found" | "rate_limited" | "unavailable";
+
 /** 기관이 받은 요청을 찾는다. 그 기관에 보낸 요청이 아니면 null. */
 export interface RequestDirectory {
   forCro(requestId: string, croOrgId: string): Promise<{ sheet: RequestSheet; requesterOrgId: string } | null>;
+  /**
+   * 단추 연동: 받은 단추 요청(DC-...)의 요청서 전체와 회신 초안. 사용자 단추 토큰으로 단추에서 읽는다.
+   * 어느 기관의 요청인지는 단추가 토큰으로 정한다(다른 기관 요청은 not_found).
+   */
+  forDanchu?(no: string, authorization: string | undefined): Promise<{ ok: true; brief: DanchuQuoteBrief } | { ok: false; error: DanchuLookupError }>;
+}
+
+/** 단추 연동 모드의 요청 찾기: DC-... 는 단추 입구(croQuote)로, 그 밖에는 레거시 저장소로 */
+export class DanchuRequestDirectory implements RequestDirectory {
+  constructor(
+    private readonly api: { croQuote(token: string, no: string): Promise<{ ok: true; data: DanchuQuoteBrief } | { ok: false; error: DanchuLookupError }> },
+    private readonly legacy?: RequestDirectory,
+  ) {}
+  async forCro(requestId: string, croOrgId: string) {
+    return this.legacy ? this.legacy.forCro(requestId, croOrgId) : null;
+  }
+  async forDanchu(no: string, authorization: string | undefined) {
+    // 단추 입구와 같은 토큰 모양(danchuAuth BEARER)만 넘긴다
+    const token = /^Bearer ([A-Za-z0-9._-]{20,4096})$/.exec(authorization ?? "")?.[1];
+    if (!token) return { ok: false as const, error: "unauthorized" as const };
+    const r = await this.api.croQuote(token, no);
+    return r.ok ? { ok: true as const, brief: r.data } : r;
+  }
 }
 
 export class MemoryRequestDirectory implements RequestDirectory {

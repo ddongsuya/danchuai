@@ -1,6 +1,7 @@
 // 기관: 단추에서 받은 요청 한 건의 진행. 선정 전에는 의뢰자 회사 대신 단추가 준 표시만.
-// 참여 결정 전에는 앱에서 참여하기·이번 요청 불참(연동 4단계, 시트에서 승인). 견적 작성·제출은 아직 단추에서 한다.
+// 참여 결정 전에는 앱에서 참여하기·이번 요청 불참(연동 4단계, 시트에서 승인). 참여 뒤에는 AI와 견적 초안 만들기(말로 맡기는 견적 2단계).
 import { ArrowClockwise, ArrowSquareOut, CheckCircle, CircleDashed, HourglassMedium, WarningCircle } from 'phosphor-react-native';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -52,6 +53,16 @@ function labLine(it: DanchuLabItem) {
   return [it.categories, sp].filter(Boolean).join(', ') || it.title;
 }
 
+/**
+ * AI와 견적을 쓸 수 있는 요청: 참여한 뒤 견적을 쓰는 중이거나, 제출했지만 비교표가 열리기 전(고칠 수 있음).
+ * 서버가 단추에서 한 번 더 확인한다(회신이 닫혔으면 대화를 열지 않는다).
+ */
+export function canQuote(it: Pick<DanchuLabItem, 'join' | 'group' | 'stage' | 'next'>): boolean {
+  if (it.join) return false;
+  if ((it.group === 'todo' || it.group === 'work') && (it.stage === '참여' || it.stage === '작성 중')) return true;
+  return it.group === 'sent' && it.next === '비교표 열리면 알려요';
+}
+
 function task(it: DanchuLabItem) {
   if (it.join || it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
   return { title: it.next === '할 일 없음' ? it.stage : it.next, button: `단추에서 ${it.next}` };
@@ -69,6 +80,7 @@ export function DanchuLabView({ it, onChanged, initialSheet = null }: { it: Danc
   const act = ACT.includes(it.group);
   const left = daysLeft(it.due);
   const t = task(it);
+  const quotable = canQuote(it);
   return (
     <ChatShell
       title={it.no}
@@ -78,6 +90,11 @@ export function DanchuLabView({ it, onChanged, initialSheet = null }: { it: Danc
             <>
               <Button title="참여하기" tall onPress={() => setSheet('join')} />
               <Button title="이번 요청 불참" kind="text" onPress={() => setSheet('decline')} />
+            </>
+          ) : quotable ? (
+            <>
+              <Button title="AI와 견적 초안 만들기" tall onPress={() => router.push({ pathname: '/lab/quote/[no]', params: { no: it.no } })} />
+              <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />
             </>
           ) : act ? (
             <Button title={t.button} tall icon={<ArrowSquareOut size={u(16)} color={tokens.onInk} />} onPress={open} />

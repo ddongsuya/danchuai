@@ -1,5 +1,5 @@
 // 대화 화면 상태. 서버 이벤트를 받아 바꾸는 순수 함수라 테스트할 수 있다.
-import type { RequestSheet } from '@danchuai/core';
+import type { DanchuQuoteDraft, RequestSheet } from '@danchuai/core';
 
 export type ChatErrorCode =
   | 'agent_unavailable'
@@ -9,7 +9,9 @@ export type ChatErrorCode =
   | 'truncated'
   | 'provider_error'
   | 'network'
-  | 'unauthorized';
+  | 'unauthorized'
+  /** 단추 견적 대화를 열 수 없다(참여 전·불참·회신 닫힘·찾을 수 없음 등) */
+  | 'quote_unavailable';
 
 export interface AgentQuestion {
   field: string;
@@ -53,6 +55,8 @@ export interface ChatState {
   draftSent: boolean;
   /** 지금 흐르는 답의 출처 */
   pendingSources: SourceRef[];
+  /** 단추 연동 기관 견적 초안(서버 quote 이벤트·대화 열기). 금액은 단추 계산값 */
+  quote: DanchuQuoteDraft | null;
 }
 
 export const initialChat: ChatState = {
@@ -71,6 +75,7 @@ export const initialChat: ChatState = {
   lastText: null,
   draftSent: false,
   pendingSources: [],
+  quote: null,
 };
 
 export type ChatAction =
@@ -85,6 +90,7 @@ export type ChatAction =
       question?: AgentQuestion | null;
       summary?: string[] | null;
       draft?: { body: string; dropped: number; version: number; sent?: boolean } | null;
+      quote?: DanchuQuoteDraft | null;
     }
   | { type: 'open_failed'; code: ChatErrorCode }
   | { type: 'send'; text: string; at: number }
@@ -92,7 +98,7 @@ export type ChatAction =
   | { type: 'ended'; at: number }
   | { type: 'failed'; code: ChatErrorCode; at: number };
 
-const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized'];
+const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable'];
 const asCode = (c: unknown): ChatErrorCode => (typeof c === 'string' && KNOWN.includes(c) ? (c as ChatErrorCode) : 'provider_error');
 
 /** 출처는 모양이 맞는 것만, 원문 주소는 https만 받는다. */
@@ -144,6 +150,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
         summary: a.summary ?? null,
         draft: a.draft ? { body: a.draft.body, dropped: a.draft.dropped, version: a.draft.version } : null,
         draftSent: Boolean(a.draft?.sent),
+        quote: a.quote ?? null,
       };
     case 'open_failed':
       return { ...s, status: 'idle', error: a.code };
@@ -175,6 +182,8 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           return { ...s, draft: { body: d.body, dropped: d.dropped ?? 0, version: d.version }, draftSent: false };
         case 'sources':
           return { ...s, pendingSources: asSources(d.items) };
+        case 'quote':
+          return d.quote && typeof d.quote === 'object' ? { ...s, quote: d.quote as DanchuQuoteDraft } : s;
         case 'error':
           return { ...s, error: asCode(d.code) };
         default:

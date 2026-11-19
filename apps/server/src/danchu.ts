@@ -1,3 +1,4 @@
+import type { DanchuQuoteBrief } from "@danchuai/core";
 // 단추(danchu.kr) 에이전트 입구(/api/agent/*) 호출. 단추가 원장이다: 계정·역할·기관·요청·견적은 여기서만 읽는다.
 // 사용자의 단추 로그인 토큰을 그대로 넘긴다. 서비스 키는 쓰지 않는다. 응답 본문·토큰은 로그에 남기지 않는다.
 
@@ -44,39 +45,8 @@ export interface DanchuCroItem {
   join?: { terms: string; consent: string; termsUrl: string } | null;
 }
 
-/**
- * 받은 요청 한 건의 요청서 전체와 회신 초안(단추 /api/agent/requests/[no]/quote, 말로 맡기는 견적 1단계).
- * 단추가 웹 회신 화면과 같은 공개 규칙으로 준다: 의뢰자 회사명·연락처·토큰 없음, 참여 전에는 요약만.
- * 초안 금액은 단추가 기관 시험 목록 단가로 계산한 값이다.
- */
-export interface DanchuQuoteBrief {
-  no: string;
-  state: "not_joined" | "open" | "locked" | "closed" | "declined" | "expired";
-  closedReason: string | null;
-  request: {
-    full: boolean;
-    substance: string;
-    categories: string[];
-    overview: [string, string][];
-    rows: { seq: number; category: string; name: string; cond: string }[];
-    common: [string, string][];
-    situation: string[];
-    ask: string[];
-    replyBy: string;
-    authorities: string[];
-    translation: boolean;
-    files: string[];
-  };
-  draft: {
-    status: "draft" | "submitted";
-    prefilled: boolean;
-    items: { seq: number; avail: "" | "가능" | "조건부 가능" | "불가"; amount: string; weeks: string; reason?: string; source?: string; checks?: string[] }[];
-    note: string;
-    common: { validUntil: string; startDate: string; payTerms: string; substanceQty: string; reportLang: string; includes: string[] };
-    steps: { seq: number; name: string; weeks: string; after: number[] }[];
-    pdfName: string;
-  } | null;
-}
+/** 받은 요청 한 건의 요청서 전체와 회신 초안(단추 /api/agent/requests/[no]/quote). 모양은 core 의 단추 견적 모델과 같다 */
+export type { DanchuQuoteBrief } from "@danchuai/core";
 
 export type DanchuCompare =
   | { open: false; joined: number; submitted: number; replyBy: string | null }

@@ -26,7 +26,7 @@ class Fake implements LlmProvider {
 }
 
 const conv = (role: "requester" | "cro" = "requester"): Conversation => ({
-  id: "c", orgId: "o", createdBy: "u", role, mode: "request", requestId: null,
+  id: "c", orgId: "o", createdBy: "u", role, mode: "request", requestId: null, danchuNo: null, quote: null,
   sheet: { ...EMPTY_SHEET }, messages: [], question: null, summary: null, draft: null, turns: 0,
   usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
 });

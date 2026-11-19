@@ -10,6 +10,8 @@ type Row = {
   role: "requester" | "cro";
   mode: "request" | "ask";
   request_id: string | null;
+  danchu_rfq_no: string | null;
+  quote: Conversation["quote"];
   sheet: Partial<RequestSheet>;
   question: Conversation["question"];
   summary: string[] | null;
@@ -23,27 +25,38 @@ type Row = {
 
 const toSheet = (j: Partial<RequestSheet> | null): RequestSheet => ({ ...EMPTY_SHEET, ...(j ?? {}) });
 
+const COLS = `id, org_id, created_by, role, mode, request_id, danchu_rfq_no, quote, sheet, question, summary, draft, turns,
+              input_tokens, output_tokens, cache_read_tokens, cache_write_tokens`;
+
 export class PgConversationRepo implements ConversationRepo {
   constructor(private readonly pool: Pool) {}
 
   async create(c: Conversation) {
     await this.pool.query(
-      `insert into conversations (id, org_id, created_by, role, mode, request_id, sheet)
-       values ($1, $2, $3, $4, $5, $6, $7)`,
-      [c.id, c.orgId, c.createdBy, c.role, c.mode, c.requestId, JSON.stringify(c.sheet)],
+      `insert into conversations (id, org_id, created_by, role, mode, request_id, danchu_rfq_no, quote, sheet)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [c.id, c.orgId, c.createdBy, c.role, c.mode, c.requestId, c.danchuNo, c.quote && JSON.stringify(c.quote), JSON.stringify(c.sheet)],
     );
   }
 
   async get(id: string): Promise<Conversation | null> {
     if (!UUID.test(id)) return null;
+    const { rows } = await this.pool.query<Row>(`select ${COLS} from conversations where id = $1`, [id]);
+    return rows[0] ? this.hydrate(rows[0]) : null;
+  }
+
+  async findDanchu(orgId: string, userId: string, no: string): Promise<Conversation | null> {
     const { rows } = await this.pool.query<Row>(
-      `select id, org_id, created_by, role, mode, request_id, sheet, question, summary, draft, turns,
-              input_tokens, output_tokens, cache_read_tokens, cache_write_tokens
-         from conversations where id = $1`,
-      [id],
+      `select ${COLS} from conversations
+        where org_id = $1 and created_by = $2 and role = 'cro' and danchu_rfq_no = $3
+        order by updated_at desc limit 1`,
+      [orgId, userId, no],
     );
-    const r = rows[0];
-    if (!r) return null;
+    return rows[0] ? this.hydrate(rows[0]) : null;
+  }
+
+  private async hydrate(r: Row): Promise<Conversation> {
+    const id = r.id;
     const msgs = await this.pool.query<{ role: "user" | "assistant"; body: string; sources: SourceView[] | null }>(
       `select role, body, sources from messages where conversation_id = $1 and org_id = $2 order by id`,
       [id, r.org_id],
@@ -55,6 +68,8 @@ export class PgConversationRepo implements ConversationRepo {
       role: r.role,
       mode: r.mode,
       requestId: r.request_id,
+      danchuNo: r.danchu_rfq_no,
+      quote: r.quote,
       sheet: toSheet(r.sheet),
       messages: msgs.rows.map((m) => ({ role: m.role, content: m.body, ...(m.sources?.length ? { sources: m.sources } : {}) })),
       question: r.question,
@@ -74,7 +89,8 @@ export class PgConversationRepo implements ConversationRepo {
     await tx(this.pool, async (db) => {
       const up = await db.query(
         `update conversations set sheet = $3, question = $4, summary = $5, draft = $6, turns = $7,
-                input_tokens = $8, output_tokens = $9, cache_read_tokens = $10, cache_write_tokens = $11, updated_at = now()
+                input_tokens = $8, output_tokens = $9, cache_read_tokens = $10, cache_write_tokens = $11,
+                quote = $12, danchu_rfq_no = $13, updated_at = now()
           where id = $1 and org_id = $2`,
         [
           c.id,
@@ -88,6 +104,8 @@ export class PgConversationRepo implements ConversationRepo {
           c.usage.outputTokens,
           c.usage.cacheReadTokens,
           c.usage.cacheWriteTokens,
+          c.quote && JSON.stringify(c.quote),
+          c.danchuNo,
         ],
       );
       if (up.rowCount !== 1) throw new Error("conversation_missing");
