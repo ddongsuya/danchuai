@@ -42,15 +42,20 @@ export class AnthropicProvider implements LlmProvider {
         // 시스템 프롬프트·도구는 매 턴 같다. 접두부 캐시가 맞도록 바뀌는 값은 넣지 않는다.
         system: [{ type: "text", text: req.system, cache_control: { type: "ephemeral" } }],
         messages: req.messages,
-        tools: req.tools?.map((t) => ({
-          name: t.name,
-          description: t.description,
-          input_schema: toStrictSchema(t.inputSchema) as Anthropic.Tool.InputSchema,
-          strict: true,
-          eager_input_streaming: true,
-        })),
-        // Sonnet 5.5 / Opus 5.5는 강제 tool_choice를 받지 않는다. auto + strict.
-        tool_choice: { type: "auto" },
+        // 도구가 없는 대화(질문하기)에는 tools·tool_choice 를 보내지 않는다. 도구 없이 tool_choice 만 보내면 400 이다(2026-11-19 운영 오류)
+        ...(req.tools?.length
+          ? {
+              tools: req.tools.map((t) => ({
+                name: t.name,
+                description: t.description,
+                input_schema: toStrictSchema(t.inputSchema) as Anthropic.Tool.InputSchema,
+                strict: true,
+                eager_input_streaming: true,
+              })),
+              // Sonnet 5.5 / Opus 5.5는 강제 tool_choice를 받지 않는다. auto + strict.
+              tool_choice: { type: "auto" as const },
+            }
+          : {}),
         output_config: { effort: this.effort },
       },
       { signal: req.signal as AbortSignal | undefined },
