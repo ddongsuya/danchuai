@@ -104,6 +104,18 @@ const view = (c: Conversation) => ({
     .filter((m) => m.text),
 });
 
+/**
+ * 공급사 오류를 로그에 남길 값. 오류 이름·상태·종류, 그리고 요청 모양 오류(400)일 때만 공급사의 짧은 사유 문장.
+ * 사유 문장은 요청 구조에 대한 검사 결과다(예: "tool_choice may only be specified while providing tools"). 따옴표 안의 값은 지운다.
+ */
+export function providerErrorInfo(err: unknown): (string | number)[] {
+  const e = err as { status?: unknown; error?: { error?: { type?: unknown; message?: unknown } } };
+  const status = typeof e.status === "number" ? e.status : "";
+  const type = typeof e.error?.error?.type === "string" ? e.error.error.type : "";
+  const msg = status === 400 && typeof e.error?.error?.message === "string" ? e.error.error.message.replace(/(["'`]).*?\1/g, "$1…$1").slice(0, 160) : "";
+  return [err instanceof Error ? err.name : "unknown", status, type, msg];
+}
+
 /** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
 const stripNotes = (t: string) =>
   t
@@ -290,13 +302,7 @@ export function agentRoutes(deps: AgentDeps) {
         await send("done", { usage: result.usage, turns: saved.turns });
       } catch (err) {
         // 본문·프롬프트는 남기지 않는다. 오류 종류만.
-        const e = err as { status?: unknown; error?: { error?: { type?: unknown } } };
-        console.error(
-          "agent_turn_failed",
-          err instanceof Error ? err.name : "unknown",
-          typeof e.status === "number" ? e.status : "",
-          typeof e.error?.error?.type === "string" ? e.error.error.type : "",
-        );
+        console.error("agent_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
         await send("error", { code: "provider_error" });
       } finally {
@@ -356,7 +362,7 @@ export function agentRoutes(deps: AgentDeps) {
         if (result.stop !== "done") await send("error", { code: result.stop });
         await send("done", { usage: result.usage, turns: saved.turns });
       } catch (err) {
-        console.error("assist_turn_failed", err instanceof Error ? err.name : "unknown");
+        console.error("assist_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
         await send("error", { code: "provider_error" });
       } finally {
