@@ -28,24 +28,23 @@ rules:
       exclude: ["*.test.ts", "scripts/"]
     patterns:
       - pattern-either:
-          - pattern: console.$F(...)
-          - pattern: $LOG.$F(...)
+          - pattern: console.$F(..., $A.body, ...)
+          - pattern: console.$F(..., $A.prompt, ...)
+          - pattern: console.$F(..., $A.messages, ...)
+          - pattern: console.$F(..., $A.content, ...)
+          - pattern: console.$F(..., $A.system, ...)
+          - pattern: console.$F(..., body, ...)
+          - pattern: console.$F(..., prompt, ...)
+          - pattern: console.$F(..., messages, ...)
+          - pattern: console.$F(..., $ERR.message, ...)
+          - pattern: console.$F(..., err, ...)
+          - pattern: console.$F(..., error, ...)
+          - pattern: console.$F(..., JSON.stringify(...), ...)
+      # 오류를 요약 함수로 줄여 펼친 것(...providerErrorInfo(err))은 허용
+      - pattern-not: console.$F(..., ...$FN(...), ...)
       - metavariable-regex:
           metavariable: $F
           regex: ^(log|info|warn|error|debug)$
-      - pattern-either:
-          - pattern: $X(..., $A.body, ...)
-          - pattern: $X(..., $A.prompt, ...)
-          - pattern: $X(..., $A.messages, ...)
-          - pattern: $X(..., $A.content, ...)
-          - pattern: $X(..., $A.system, ...)
-          - pattern: $X(..., body, ...)
-          - pattern: $X(..., prompt, ...)
-          - pattern: $X(..., messages, ...)
-          - pattern: $X(..., $ERR.message, ...)
-          - pattern: $X(..., err, ...)
-          - pattern: $X(..., error, ...)
-          - pattern: $X(..., JSON.stringify(...), ...)
 
   - id: danchuai-no-send-tool-for-agent
     message: >-
