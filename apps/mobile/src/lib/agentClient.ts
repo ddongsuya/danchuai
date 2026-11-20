@@ -30,6 +30,8 @@ const codeOf = (status: number, body: unknown): ChatErrorCode => {
   if (e === 'turn_in_progress') return 'turn_in_progress';
   // 단추 견적 대화를 열 수 없음(quote_not_joined·quote_closed 등), 단추가 찾지 못함·막음
   if ((typeof e === 'string' && e.startsWith('quote_')) || e === 'not_found' || e === 'plan_required' || e === 'forbidden') return 'quote_unavailable';
+  // 기관 비서: 되돌릴 수 없음(이미 되돌림·7일 지남·그 뒤 바뀜)
+  if (e === 'already_undone' || e === 'not_undoable' || e === 'expired' || e === 'changed') return 'undo_unavailable';
   return 'provider_error';
 };
 
@@ -77,10 +79,39 @@ export interface AskListItem {
 /** 지난 질문(내가 연 질문 대화, 최근 순) */
 export const listAsks = (role: AgentRole) => call<{ items: AskListItem[] }>(role, '/v1/agent/asks').then((r) => r.items);
 
-export type ConversationMode = 'request' | 'ask';
+export type ConversationMode = 'request' | 'ask' | 'assist';
 
 export const createConversation = (role: AgentRole, requestId?: string, mode: ConversationMode = 'request') =>
-  call<ConversationView>(role, '/v1/agent/conversations', mode === 'ask' ? { mode } : requestId ? { requestId } : {});
+  call<ConversationView>(role, '/v1/agent/conversations', mode === 'ask' || mode === 'assist' ? { mode } : requestId ? { requestId } : {});
+
+/* ── 기관 비서: 단추 액션 바로 실행·되돌리기 ── */
+
+/** 바로 실행한 단추 액션 한 줄(서버 runView) */
+export interface AssistRunView {
+  id: string;
+  action: string;
+  label: string;
+  outcome: 'done' | 'failed' | 'unknown';
+  undoable: boolean;
+  undone: boolean;
+  createdAt: string;
+}
+
+/** 단추 브리핑(단추 lib/agent-brief.ts). 금액·연락처 없음 */
+export interface AssistBriefView {
+  date: string;
+  today: { kind: 'event' | 'task' | 'danchu'; time: string | null; title: string; sub: string; done: boolean; overdue: boolean; badge: string }[];
+  need: { dealId: string; title: string; company: string | null; reason: string; tone: 'warn' | 'due'; suggest: string }[];
+}
+
+/** 읽기 액션(브리핑 등)을 단추에서 읽는다 */
+export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}) => call<{ result: T }>('cro', '/v1/danchu/run', { action, body }).then((r) => r.result);
+
+/** 비서·앱이 바로 실행한 기록(최근 30건, 최근 순) */
+export const listRuns = () => call<{ items: AssistRunView[] }>('cro', '/v1/danchu/runs').then((r) => r.items);
+
+/** 바로 실행한 기관 기록 되돌리기 */
+export const undoRun = (id: string) => call<{ run: AssistRunView }>('cro', `/v1/danchu/runs/${encodeURIComponent(id)}/undo`, {}).then((r) => r.run);
 
 export const getConversation = (role: AgentRole, id: string) => call<ConversationView>(role, `/v1/agent/conversations/${encodeURIComponent(id)}`);
 

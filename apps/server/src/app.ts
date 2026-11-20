@@ -21,7 +21,9 @@ import { purgeRoutes, type PurgeRepo } from "./purge";
 import type { UsageMeter } from "./usage";
 import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
 import type { DanchuError } from "./danchu";
-import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, requireConsent } from "./danchuRoutes";
+import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, danchuRunRoutes, requireConsent } from "./danchuRoutes";
+import { CatalogCache } from "./danchuAssist";
+import { MemoryRunRepo, type RunRepo } from "./runs";
 import { afterDanchuSent, outcomeOf, parseActionText } from "./danchuActions";
 
 export interface Deps {
@@ -37,6 +39,8 @@ export interface Deps {
   accounts?: AccountRepo;
   /** 요청·회신·선정. 없으면 /v1/labs·/v1/requests·/v1/lab은 503 */
   market?: MarketRepo;
+  /** 기관 비서·바로 실행 기록(0012). 없으면 메모리 */
+  runs?: RunRepo;
   /** 단추 연동 모드(연동 2단계). 있으면 계정·역할·기관은 단추에서, 요청 읽기도 단추에서. auth는 이 신원으로 만든 것을 넘긴다. */
   danchu?: {
     api: DanchuApi;
@@ -69,6 +73,9 @@ export function createApp(deps: Deps) {
   const app = new Hono<Env>();
   // 대화 저장소는 에이전트 대화와 단추 동작(승인 뒤 상태 맞추기)이 같이 쓴다
   const conversations = deps.conversations ?? new MemoryConversationRepo();
+  // 단추 액션 목록(기관마다 잠깐 기억)과 바로 실행 기록. 기관 비서 대화와 /v1/danchu/run 이 같이 쓴다
+  const runs = deps.runs ?? new MemoryRunRepo();
+  const catalogs = deps.danchu ? new CatalogCache(deps.danchu.api) : null;
 
   app.get("/health", (c) => c.json({ ok: true }));
 
@@ -92,6 +99,8 @@ export function createApp(deps: Deps) {
 
   // 국외 이전·AI 처리 동의 전에는 AI 대화를 열지 않는다(단추 연동 모드)
   if (deps.danchu) app.use("/v1/agent/*", requireConsent(deps.danchu.workspaces, { api: deps.danchu.api, purge: deps.purge?.repo }));
+    // 바로 실행 기록은 에이전트 DB(일본)에 남는다. 같은 동의를 받는다
+  if (deps.danchu) for (const p of ["/v1/danchu/run", "/v1/danchu/runs", "/v1/danchu/runs/*"]) app.use(p, requireConsent(deps.danchu.workspaces, { api: deps.danchu.api, purge: deps.purge?.repo }));
 
   app.onError((err, c) => {
     if (err instanceof ApprovalError) return c.json({ error: err.code, message: err.message }, STATUS_BY_CODE[err.code]);
@@ -175,11 +184,13 @@ export function createApp(deps: Deps) {
       outbound: deps.outbound,
       market: deps.market,
       usage: deps.usage,
+      assist: deps.danchu && catalogs ? { api: deps.danchu.api, runs, catalogs } : undefined,
     }),
   );
 
   if (deps.danchu) {
-    app.route("/v1/danchu", danchuActionRoutes({ outbound: deps.outbound, conversations }));
+    app.route("/v1/danchu", danchuActionRoutes({ outbound: deps.outbound, conversations, catalogs: catalogs! }));
+    app.route("/v1/danchu", danchuRunRoutes({ api: deps.danchu.api, runs, catalogs: catalogs!, conversations }));
     app.route("/v1", danchuMarketRoutes({ api: deps.danchu.api, market: deps.market }));
   } else if (deps.market) {
     app.route("/v1", marketRoutes(deps.market));

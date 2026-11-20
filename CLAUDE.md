@@ -4,13 +4,14 @@
 
 - 기획서: https://claude.ai/artifact/SLCxhCUjM165S7oRXDWKZV
 - 단추 연결 설계: https://claude.ai/artifact/BxYAAtQEzA7Bd63DUJh9Mt
+- 액션 등록부·기관 비서 사양: docs/spec/agent-actions.md (단추 액션 목록을 읽어 비서 도구·확인 카드를 만든다. 실행 수준 read·auto·confirm·human)
 - 기술 결정: docs/adr/0001-stack.md (0001~0004는 연동 전 독립 앱 기준이라 일부 낡음. 연동 규칙은 아래 "단추 연동"이 우선)
 - 디자인: 시안 v3 (Manus·Codex·Perplexity 흐름 기반, 무채색 + 청록·호박 상태색, 원티드 산스). 색은 apps/mobile/src/constants/theme.ts 에서만 정한다. 단추 디자인은 쓰지 않는다.
 
 ## 구조
 
 - apps/mobile: Expo 앱. Expo 규칙은 apps/mobile/AGENTS.md (Expo는 SDK마다 바뀐다. 기억 말고 문서를 본다).
-- apps/server: Hono 서버. AI 호출, 보내기 장부 API, 단추 연결(danchu.ts·danchuAuth.ts·danchuRoutes.ts·danchuActions.ts).
+- apps/server: Hono 서버. AI 호출, 보내기 장부 API, 단추 연결(danchu.ts·danchuAuth.ts·danchuRoutes.ts·danchuActions.ts), 기관 비서(danchuAssist.ts·runs.ts).
 - packages/core: 금액 계산, 보내기 상태, 문장 점검, AI 공급사 설정. 순수 함수, 테스트 필수.
 - packages/knowledge: 가이드라인 원문 조각 검색과 단추 공개 기준 자료(요청서 항목 체계·시험 묶음·효력 영역). 만드는 법 scripts/knowledge/README.md. 단추 DB·기관 단가·회원 자료는 넣지 않는다(2026-11-16 사용자 결정).
 - supabase/migrations: 에이전트 DB 스키마. 모든 표에 org_id + RLS 정책. 연동 전의 의뢰·견적·조직 표는 정리 예정(연동 6단계).

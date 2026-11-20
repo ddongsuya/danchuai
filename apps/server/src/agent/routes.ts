@@ -13,7 +13,7 @@ import {
   type OutboundDraft,
 } from "@danchuai/core";
 import { citedSources, contextBlock, retrieve } from "@danchuai/knowledge";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import type { Session } from "../auth";
@@ -21,8 +21,10 @@ import { sha256 } from "../hash";
 import type { MarketRepo } from "../db/market";
 import type { OutboundRepo } from "../repo";
 import type { AgentEvent } from "./interpret";
-import { runToolTurn } from "./repair";
-import { ASK_SYSTEM, CRO_DANCHU_SYSTEM, SYSTEM } from "./prompts";
+import { MarkupFilter, runToolTurn, stripToolMarkup } from "./repair";
+import { applyAssistCalls, prepareAssist, type AssistDeps } from "../danchuAssist";
+import { BEARER } from "../danchuAuth";
+import { ASK_SYSTEM, CRO_ASSIST_SYSTEM, CRO_DANCHU_SYSTEM, SYSTEM } from "./prompts";
 import { toolsFor } from "./tools";
 import type { UsageMeter } from "../usage";
 import type { Conversation, ConversationRepo, DanchuLookupError, RequestDirectory, StoredMessage } from "./store";
@@ -59,12 +61,14 @@ export interface AgentDeps {
   market?: MarketRepo;
   /** AI 이용량 상한(계정 하루·조직 한 달·전체 한 달). 넘으면 429 usage_limit */
   usage?: UsageMeter;
+  /** 단추 연동 모드의 기관 비서(액션 목록·바로 실행). 없으면 비서 대화는 열지 않는다 */
+  assist?: AssistDeps;
 }
 
 type Env = { Variables: { session: Session } };
 
 const CreateBody = z
-  .object({ requestId: z.string().min(1).max(64).optional(), mode: z.enum(["request", "ask"]).optional() })
+  .object({ requestId: z.string().min(1).max(64).optional(), mode: z.enum(["request", "ask", "assist"]).optional() })
   .strict();
 const TurnBody = z.object({ text: z.string().trim().min(1).max(LIMITS.textChars) }).strict();
 const OutboundBody = z
@@ -103,11 +107,23 @@ const view = (c: Conversation) => ({
     .filter((m) => m.text),
 });
 
+/**
+ * 공급사 오류를 로그에 남길 값. 오류 이름·상태·종류, 그리고 요청 모양 오류(400)일 때만 공급사의 짧은 사유 문장.
+ * 사유 문장은 요청 구조에 대한 검사 결과다(예: "tool_choice may only be specified while providing tools"). 따옴표 안의 값은 지운다.
+ */
+export function providerErrorInfo(err: unknown): (string | number)[] {
+  const e = err as { status?: unknown; error?: { error?: { type?: unknown; message?: unknown } } };
+  const status = typeof e.status === "number" ? e.status : "";
+  const type = typeof e.error?.error?.type === "string" ? e.error.error.type : "";
+  const msg = status === 400 && typeof e.error?.error?.message === "string" ? e.error.error.message.replace(/(["'`]).*?\1/g, "$1…$1").slice(0, 160) : "";
+  return [err instanceof Error ? err.name : "unknown", status, type, msg];
+}
+
 /** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
 const stripNotes = (t: string) =>
   t
     .split("\n")
-    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*)\)$/.test(l.trim()))
+    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*|실행: .*|실행 안 함: .*)\)$/.test(l.trim()))
     .join("\n")
     .trim();
 
@@ -139,6 +155,14 @@ export function agentRoutes(deps: AgentDeps) {
     let quote: Conversation["quote"] = null;
     // 질문 대화는 요청과 묶이지 않는다(의뢰자·기관 모두 바로 연다).
     if (mode === "ask" && parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
+    // 기관 비서: 기관 담당자만, 단추 연동 모드에서만. 이 사용자의 비서 대화가 있으면 이어서 쓴다
+    if (mode === "assist") {
+      if (parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
+      if (s.role !== "cro") return c.json({ error: "forbidden" }, 403);
+      if (!deps.assist) return c.json({ error: "not_configured" }, 404);
+      const prev = await deps.conversations.latestAssist(s.orgId, s.userId);
+      if (prev && prev.turns < LIMITS.turns) return c.json(view(prev));
+    }
     if (mode === "request" && s.role === "cro") {
       if (!parsed.data.requestId) return c.json({ error: "bad_request" }, 400);
       if (RFQ_NO.test(parsed.data.requestId)) {
@@ -215,6 +239,8 @@ export function agentRoutes(deps: AgentDeps) {
     // 선정 전 신원 보호: 모델에 가기 전에 연락처를 지운다.
     const userText = redactContacts(parsed.data.text);
     const history = windowed(conv.messages);
+
+    if (conv.mode === "assist") return assistTurn(c, provider, conv, s, userText, history);
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
     // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
@@ -283,13 +309,7 @@ export function agentRoutes(deps: AgentDeps) {
         await send("done", { usage: result.usage, turns: saved.turns });
       } catch (err) {
         // 본문·프롬프트는 남기지 않는다. 오류 종류만.
-        const e = err as { status?: unknown; error?: { error?: { type?: unknown } } };
-        console.error(
-          "agent_turn_failed",
-          err instanceof Error ? err.name : "unknown",
-          typeof e.status === "number" ? e.status : "",
-          typeof e.error?.error?.type === "string" ? e.error.error.type : "",
-        );
+        console.error("agent_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
         await send("error", { code: "provider_error" });
       } finally {
@@ -298,6 +318,67 @@ export function agentRoutes(deps: AgentDeps) {
     });
   });
 
+  /**
+   * 기관 비서 한 턴: 단추에서 액션 목록·브리핑·이번 주 보고를 읽어 맥락과 도구를 만들고, 모델이 부른 바로 실행 액션을 단추에서 실행한다.
+   * 밖으로 나가는 액션은 도구에 없다. 실행 결과는 action 이벤트(실행 카드, 되돌리기)로 보낸다.
+   */
+  async function assistTurn(c: Context<Env>, provider: LlmProvider, conv: Conversation, s: Session, userText: string, history: AgentMessage[]) {
+    const a = deps.assist;
+    const token = BEARER.exec(c.req.header("authorization") ?? "")?.[1] ?? "";
+    const prep = a && token ? await prepareAssist(a, token, s.orgId) : ({ ok: false, error: "danchu_unavailable" } as const);
+    if (!a || !prep.ok) {
+      await deps.conversations.unlockTurn(conv.id);
+      return c.json({ error: prep.ok ? "danchu_unavailable" : prep.error }, prep.ok || prep.error === "danchu_unavailable" ? 503 : 403);
+    }
+    const messages: AgentMessage[] = [...history, { role: "user", content: `${userText}\n\n${prep.context}` }];
+    return streamSSE(c, async (stream) => {
+      const send = (event: string, data: unknown) => stream.writeSSE({ event, data: JSON.stringify(data) });
+      let writes: Promise<void> = Promise.resolve();
+      const abort = new AbortController();
+      stream.onAbort(() => abort.abort());
+      try {
+        await send("step", { label: "브리핑 확인" });
+        const filter = new MarkupFilter();
+        const onText = (delta: string) => {
+          const out = filter.push(delta);
+          if (out) writes = writes.then(() => send("text", { delta: out }));
+        };
+        const result = await provider.complete({ system: CRO_ASSIST_SYSTEM, messages, tools: prep.tools, maxTokens: LIMITS.maxTokens, signal: abort.signal, onText });
+        const rest = filter.flush();
+        if (rest) writes = writes.then(() => send("text", { delta: rest }));
+        await writes;
+        const text = stripToolMarkup(result.text.trim());
+        // 끊긴 답의 도구 호출은 실행하지 않는다
+        const calls = result.stop === "done" ? result.toolCalls : [];
+        if (calls.length) await send("step", { label: "단추에 반영" });
+        const applied = await applyAssistCalls(a, s, token, conv.id, calls, prep);
+        for (const e of applied.events) await send("action", e);
+        const reply = [text, ...applied.notes].filter(Boolean).join("\n") || "(응답 없음)";
+        const saved: Conversation = {
+          ...conv,
+          messages: [...conv.messages, { role: "user", content: userText }, { role: "assistant", content: reply }],
+          turns: conv.turns + 1,
+          usage: {
+            inputTokens: conv.usage.inputTokens + result.usage.inputTokens,
+            outputTokens: conv.usage.outputTokens + result.usage.outputTokens,
+            cacheReadTokens: conv.usage.cacheReadTokens + (result.usage.cacheReadTokens ?? 0),
+            cacheWriteTokens: conv.usage.cacheWriteTokens + (result.usage.cacheWriteTokens ?? 0),
+          },
+        };
+        await deps.conversations.save(saved);
+        if (deps.usage) await deps.usage.record(s, result.usage).catch((e) => console.error("usage_record_failed", e instanceof Error ? e.name : "unknown"));
+        if (result.stop !== "done") await send("error", { code: result.stop });
+        await send("done", { usage: result.usage, turns: saved.turns });
+      } catch (err) {
+        console.error("assist_turn_failed", ...providerErrorInfo(err));
+        await writes.catch(() => undefined);
+        await send("error", { code: "provider_error" });
+      } finally {
+        await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
+      }
+    });
+  }
+
   // 보내기 초안 만들기. 본문은 서버가 가진 점검 통과 본문만 쓰고, 앱이 보낸 본문은 받지 않는다.
   app.post("/conversations/:id/outbound", async (c) => {
     const s = c.get("session");
@@ -305,7 +386,7 @@ export function agentRoutes(deps: AgentDeps) {
     if (!conv) return c.json({ error: "not_found" }, 404);
     const parsed = OutboundBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
-    if (conv.mode === "ask") return c.json({ error: "no_draft" }, 409);
+    if (conv.mode === "ask" || conv.mode === "assist") return c.json({ error: "no_draft" }, 409);
     // 단추 연동 기관 견적은 이 장부 경로가 아니라 단추 동작(/v1/danchu/actions quote_submit)으로 제출한다
     if (conv.danchuNo && conv.role === "cro") return c.json({ error: "use_danchu_actions" }, 409);
     const d = conv.draft;

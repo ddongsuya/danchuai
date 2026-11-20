@@ -62,6 +62,16 @@ describe("AnthropicProvider (SDK)", () => {
     expect(r.stop).toBe("done");
   });
 
+  it("도구가 없는 대화(질문하기)에는 tools·tool_choice 를 보내지 않는다", async () => {
+    stopReason = "end_turn";
+    await new AnthropicProvider("claude-sonnet-5-5", "k", { baseURL }).complete({ system: "질문", messages: [{ role: "user", content: "유전독성 표준 시험 조합?" }] });
+    expect(lastBody).not.toHaveProperty("tools");
+    expect(lastBody).not.toHaveProperty("tool_choice");
+    expect(lastBody.output_config).toEqual({ effort: "low" });
+    await new AnthropicProvider("claude-sonnet-5-5", "k", { baseURL }).complete({ system: "질문", messages: [{ role: "user", content: "x" }], tools: [] });
+    expect(lastBody).not.toHaveProperty("tool_choice");
+  });
+
   it("잘린 턴의 도구 입력은 버린다", async () => {
     stopReason = "max_tokens";
     const r = await new AnthropicProvider("claude-sonnet-5-5", "k", { baseURL }).complete(req());
@@ -89,5 +99,15 @@ describe("toStrictSchema", () => {
       type: "object",
       properties: { pattern: { type: "string" } },
     });
+  });
+});
+
+describe("공급사 오류 로그 값", () => {
+  it("400 은 요청 모양 사유를 남기고 따옴표 안 값은 지운다. 그 밖에는 사유를 남기지 않는다", async () => {
+    const { providerErrorInfo } = await import("../src/agent/routes");
+    const bad = Object.assign(new Error("x"), { name: "BadRequestError", status: 400, error: { error: { type: "invalid_request_error", message: 'tool_choice may only be specified while providing tools; got "비밀 본문"' } } });
+    expect(providerErrorInfo(bad)).toEqual(["BadRequestError", 400, "invalid_request_error", 'tool_choice may only be specified while providing tools; got "…"']);
+    const rate = Object.assign(new Error("x"), { name: "RateLimitError", status: 429, error: { error: { type: "rate_limit_error", message: "slow down" } } });
+    expect(providerErrorInfo(rate)).toEqual(["RateLimitError", 429, "rate_limit_error", ""]);
   });
 });

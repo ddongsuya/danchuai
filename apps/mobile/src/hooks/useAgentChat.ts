@@ -60,5 +60,8 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
     if (state.lastText) void send(state.lastText);
   }, [open, send, state.lastText]);
 
-  return { state, send, retry, refresh };
+  /** 기관 비서: 되돌린 실행 카드를 표시한다 */
+  const markUndone = useCallback((runId: string) => dispatch({ type: 'undone', runId }), []);
+
+  return { state, send, retry, refresh, markUndone };
 }

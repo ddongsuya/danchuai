@@ -1,0 +1,26 @@
+appId: kr.danchu.agent
+name: 로그인 뒤 홈 목록
+tags: [auth]
+---
+- launchApp:
+    clearState: true
+- tapOn: "단추 계정으로 로그인"
+- tapOn: "you@company.kr"
+- inputText: ${EMAIL}
+# 이메일 칸의 다음(next) 키로 비밀번호 칸으로 간다
+- pressKey: Enter
+- inputText: ${PASSWORD}
+- tapOn: "로그인"
+# 첫 로그인이면 동의 화면이 먼저 나온다
+- runFlow:
+    when:
+      visible: "필수 동의하고 시작"
+    commands:
+      - tapOn: "필수 동의하고 시작"
+- extendedWaitUntil:
+    visible: "전체"
+    timeout: 15000
+- tapOn: "회신 도착"
+- tapOn: "승인 대기"
+- tapOn: "전체"
+- assertVisible: "전체"

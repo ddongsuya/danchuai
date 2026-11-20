@@ -5,26 +5,26 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens, u } from '@/constants/theme';
+import { fonts, tokens, uc } from '@/constants/theme';
 
 export function DraftCard({ title, body, dropped = 0, children, action, onAction }: { title: string; body: string; dropped?: number; children?: ReactNode; action: string; onAction: () => void }) {
   return (
     <View style={styles.card}>
-      <Txt variant="label" style={{ fontFamily: fonts.bold, marginBottom: space.sm }}>
+      <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, marginBottom: uc(8) }}>
         {title}
       </Txt>
       {/* 본문 전체는 다음 카드(접수 확인)에서 펼쳐 본다. 여기서는 세 줄까지(진단 문서 A07 반영안) */}
-      <Txt variant="small" color={tokens.muted} numberOfLines={3}>
+      <Txt variant="chatSmall" color={tokens.muted} numberOfLines={3}>
         {body}
       </Txt>
       {children}
       {dropped > 0 && (
-        <Txt variant="caption" color={tokens.wait} style={{ marginTop: space.sm }} tabular>
+        <Txt variant="chatCaption" color={tokens.wait} style={{ marginTop: uc(8) }} tabular>
           {`점검에서 뺀 문장 ${dropped}개`}
         </Txt>
       )}
       <View style={styles.act}>
-        <Button title={action} tall onPress={onAction} />
+        <Button chat title={action} tall onPress={onAction} />
       </View>
     </View>
   );
@@ -34,10 +34,10 @@ export function DraftCard({ title, body, dropped = 0, children, action, onAction
 export function DraftLine({ k, v, bold, right }: { k: string; v: string; bold?: boolean; right?: ReactNode }) {
   return (
     <View style={styles.to}>
-      <Txt variant="caption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
+      <Txt variant="chatCaption" color={tokens.muted} style={{ fontFamily: fonts.semibold }}>
         {k}
       </Txt>
-      <Txt variant="small" tabular style={{ flex: 1, fontFamily: bold ? fonts.bold : fonts.semibold }} numberOfLines={2}>
+      <Txt variant="chatSmall" tabular style={{ flex: 1, fontFamily: bold ? fonts.bold : fonts.semibold }} numberOfLines={2}>
         {v}
       </Txt>
       {right}
@@ -46,7 +46,7 @@ export function DraftLine({ k, v, bold, right }: { k: string; v: string; bold?: 
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, gap: u(6) },
-  act: { marginTop: space.md },
-  to: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: tokens.border, minHeight: u(44) },
+  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, padding: uc(14), gap: uc(6) },
+  act: { marginTop: uc(10) },
+  to: { flexDirection: 'row', alignItems: 'center', gap: uc(8), marginTop: uc(8), paddingTop: uc(8), borderTopWidth: 1, borderTopColor: tokens.border, minHeight: uc(44) },
 });

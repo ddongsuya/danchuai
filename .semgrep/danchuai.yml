@@ -1,0 +1,57 @@
+# 에이전트 전용 정적 점검 규칙. CLAUDE.md "반드시 지킬 것" 5·6번을 코드로 막는다. CI(.github/workflows/security.yml)에서 돈다.
+rules:
+  - id: danchuai-no-org-id-from-body
+    message: >-
+      org_id는 서버 세션에서만 가져온다(CLAUDE.md 5). 요청 본문 스키마나 본문 값에서 org_id를 읽지 않는다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/server/src/"]
+      exclude: ["*.test.ts"]
+    pattern-either:
+      - pattern: |
+          const $SCHEMA = z.object({..., org_id: $T, ...})
+      - pattern: |
+          const $SCHEMA = z.object({..., orgId: $T, ...})
+      - pattern: (await $C.req.json()).org_id
+      - pattern: (await $C.req.json()).orgId
+      - pattern: $C.req.query("org_id")
+      - pattern: $C.req.header("x-org-id")
+
+  - id: danchuai-no-log-content
+    message: >-
+      로그에 프롬프트·본문·메시지를 남기지 않는다(CLAUDE.md 6). 오류 이름·코드만 남긴다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/", "packages/"]
+      exclude: ["*.test.ts", "scripts/"]
+    patterns:
+      - pattern-either:
+          - pattern: console.$F(..., $A.body, ...)
+          - pattern: console.$F(..., $A.prompt, ...)
+          - pattern: console.$F(..., $A.messages, ...)
+          - pattern: console.$F(..., $A.content, ...)
+          - pattern: console.$F(..., $A.system, ...)
+          - pattern: console.$F(..., body, ...)
+          - pattern: console.$F(..., prompt, ...)
+          - pattern: console.$F(..., messages, ...)
+          - pattern: console.$F(..., $ERR.message, ...)
+          - pattern: console.$F(..., err, ...)
+          - pattern: console.$F(..., error, ...)
+          - pattern: console.$F(..., JSON.stringify(...), ...)
+      # 오류를 요약 함수로 줄여 펼친 것(...providerErrorInfo(err))은 허용
+      - pattern-not: console.$F(..., ...$FN(...), ...)
+      - metavariable-regex:
+          metavariable: $F
+          regex: ^(log|info|warn|error|debug)$
+
+  - id: danchuai-no-send-tool-for-agent
+    message: >-
+      에이전트에 보내기 도구를 주지 않는다(CLAUDE.md 1). 상대에게 나가는 것은 사람이 승인한 본문만, 승인 경로로만 보낸다.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["apps/server/src/agent/"]
+      exclude: ["*.test.ts"]
+    pattern-regex: name:\s*["'`](send|send_[a-z_]+|submit_[a-z_]+|deliver[a-z_]*)["'`]

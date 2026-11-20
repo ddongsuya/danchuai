@@ -1,0 +1,7 @@
+# Maestro E2E 흐름. 앱 ID는 app.json 의 kr.danchu.agent
+# 실행(에뮬레이터·시뮬레이터에 개발 빌드를 깐 뒤): maestro test apps/mobile/.maestro -e EMAIL=<시험 계정> -e PASSWORD=<비밀번호>
+# 운영 계정은 쓰지 않는다. 시험 서버·시험 계정만.
+flows:
+  - "*.yaml"
+excludeTags:
+  - wip

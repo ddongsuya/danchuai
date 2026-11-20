@@ -3,7 +3,7 @@
 //   서명: HMAC-SHA256(AGENT_PURGE_SECRET, `${timestamp}.${본문}`) 16진수, x-danchu-timestamp(초)·x-danchu-signature 머리글.
 //   5분 안의 요청만 받는다. 여러 번 받아도 결과가 같다.
 // - 에이전트 앱에서 철회하면(/account/consent/revoke) 같은 지우기를 바로 한다.
-// 지우는 것: 그 사람이 연 대화(메시지·단계 포함), 그 대화의 보내기 초안(승인·발송 기록 포함),
+// 지우는 것: 그 사람이 연 대화(메시지·단계 포함), 그 사람의 비서 실행 기록, 그 대화의 보내기 초안(승인·발송 기록 포함),
 //   의뢰자 작업 공간(user:<id>)의 초안 전부, 그 사람이 승인한 대화 없는 단추 동작 초안.
 //   같은 기관 동료의 초안에 남긴 승인은 기관 기록이라 두고 결정자만 비운다.
 // 탈퇴면 더해서: 에이전트 쪽 동의 사본, 계정별 이용량, 의뢰자 작업 공간 이름(이름·이메일일 수 있다).
@@ -79,6 +79,8 @@ export class PgPurgeRepo implements PurgeRepo {
         [userId, ws],
       );
       await c.query(`update approvals set decided_by = null where decided_by = $1`, [userId]);
+      // 기관 비서 바로 실행 기록(0012)도 그 사람의 기록이다
+      await c.query(`delete from assist_runs where user_id = $1`, [userId]);
       const convs = await c.query(`delete from conversations where created_by = $1 or ($2::uuid is not null and org_id = $2::uuid)`, [userId, ws]);
       await c.query(`update agent_consents set revoked_at = now() where danchu_user_id = $1 and revoked_at is null`, [userId]);
       if (reason === "account_deleted") {

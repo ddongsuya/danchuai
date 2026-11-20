@@ -27,7 +27,8 @@ export default function RequesterInbox() {
 
   if (status === 'signedOut') return <Redirect href="/welcome" />;
   if (status === 'needsConsent') return <Redirect href={'/consent' as Href} />;
-  if (org?.kind === 'cro') return <Redirect href="/lab" />;
+  // 기관의 첫 화면은 비서(받은 요청은 메뉴에서)
+  if (org?.kind === 'cro') return <Redirect href="/lab/assist" />;
   return (
     <InboxScreen
       role="requester"
@@ -37,7 +38,7 @@ export default function RequesterInbox() {
       onRetry={() => void reload()}
       filters={FILTERS}
       hrefOf={hrefOf}
-      switchTo="/lab"
+      switchTo="/lab/assist"
       switchLabel="기관 화면으로 바꾸기"
     />
   );

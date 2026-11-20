@@ -96,6 +96,9 @@ function fakeApi(): Fake {
       if (no === "DC-2026-0143") return { ok: true as const, data: QUOTE_BRIEF(no, "not_joined") };
       return { ok: false as const, error: "not_found" as const };
     },
+    catalog: async () => ({ ok: true as const, data: { version: "t", role: "cro" as const, actions: [] } }),
+    run: async () => ({ status: 404, body: { error: "not_found" } }),
+    undo: async () => ({ status: 404, body: { error: "not_found" } }),
     recordConsent: async (t: string, version: string) => {
       calls.push(`consent:${t}:${version}`);
       if (api.consentDown) return { ok: false as const, error: "unavailable" as const };

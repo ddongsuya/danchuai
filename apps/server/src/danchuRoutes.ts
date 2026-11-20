@@ -9,11 +9,13 @@ import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from
 import { RFQ_NO, type DanchuApi, type DanchuError } from "./danchu";
 import type { MarketRepo, RequesterListItem } from "./db/market";
 import { randomUUID } from "node:crypto";
-import { canLinkConversation, checkAction } from "./danchuActions";
+import { canLinkConversation, checkAction, checkCatalogAction, isKnownAction } from "./danchuActions";
 import type { ConversationRepo } from "./agent/store";
 import { sha256 } from "./hash";
 import type { OutboundRepo } from "./repo";
 import type { PurgeRepo } from "./purge";
+import { runAuto, runView, type CatalogCache } from "./danchuAssist";
+import type { RunRepo } from "./runs";
 
 const STATUS: Record<DanchuError, 401 | 403 | 404 | 429 | 503> = {
   unauthorized: 401,
@@ -191,7 +193,7 @@ export function danchuMarketRoutes(deps: { api: DanchuApi; market?: MarketRepo }
  * POST /danchu/actions { action, rfqNo?, body } → 초안(drafted). 보내기는 기존 장부 흐름(decision → dispatch)을 그대로 쓴다.
  * GET /danchu/actions/:id → 상태와 단추 응답
  */
-export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations?: ConversationRepo }) {
+export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations?: ConversationRepo; catalogs?: CatalogCache }) {
   const app = new Hono<{ Variables: { session: Session } }>();
   app.post("/actions", async (c) => {
     const s = c.get("session");
@@ -200,7 +202,11 @@ export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations
     const raw = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
     const { conversationId, ...input } = raw && typeof raw === "object" ? raw : { conversationId: undefined };
     if (conversationId !== undefined && (typeof conversationId !== "string" || !/^[0-9a-f-]{36}$/.test(conversationId))) return c.json({ error: "bad_request" }, 400);
-    const r = checkAction(s.role, raw ? input : null);
+    // 고정 목록 밖의 동작은 단추 액션 목록에서 승인(confirm) 동작인지 본다(등록부에 새로 생긴 승인 동작)
+    const known = isKnownAction(s.role, (input as { action?: unknown }).action);
+    const r = known || !deps.catalogs
+      ? checkAction(s.role, raw ? input : null)
+      : checkCatalogAction(s.role, raw ? input : null, await deps.catalogs.get(BEARER.exec(c.req.header("authorization") ?? "")?.[1] ?? "", s.orgId));
     if (!r.ok) return c.json({ error: r.error }, r.error === "forbidden" ? 403 : r.error === "too_long" ? 413 : 400);
     if (conversationId) {
       const conv = deps.conversations ? await deps.conversations.get(conversationId) : null;
@@ -218,4 +224,88 @@ export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations
     return c.json({ id: d.id, text: d.text, textHash: d.textHash, epoch: d.epoch, status: d.status, result: await deps.outbound.getResult(d.id) });
   });
   return app;
+}
+
+/**
+ * 단추 액션 바로 실행 (에이전트 액션 등록부, 2026-11-19).
+ * GET  /danchu/catalog            이 사용자가 할 수 있는 액션 목록(단추가 정한다)
+ * POST /danchu/run                읽기(read)·바로 실행(auto)만. 승인이 필요한 것은 409 needs_approval(확인 카드: POST /danchu/actions)
+ * GET  /danchu/runs               최근 실행 기록
+ * POST /danchu/runs/:id/undo      바로 실행한 기관 기록 되돌리기(시킨 사람만, 단추가 7일·변경 여부를 본다)
+ */
+export function danchuRunRoutes(deps: { api: DanchuApi; runs: RunRepo; catalogs: CatalogCache; conversations?: ConversationRepo }) {
+  const app = new Hono<{ Variables: { session: Session } }>();
+  const token = (h: string | undefined) => BEARER.exec(h ?? "")?.[1] ?? "";
+  const RunBody = z
+    .object({
+      action: z.string().regex(/^[a-z][a-z_]{1,39}$/),
+      rfqNo: z.string().regex(RFQ_NO).optional(),
+      body: z.record(z.string(), z.unknown()).optional(),
+      conversationId: z.string().uuid().optional(),
+    })
+    .strict();
+
+  app.get("/catalog", async (c) => {
+    const s = c.get("session");
+    const cat = await deps.catalogs.get(token(c.req.header("authorization")), s.orgId);
+    if (!cat) return c.json({ error: "unavailable" }, 503);
+    return c.json(cat);
+  });
+
+  app.post("/run", async (c) => {
+    const s = c.get("session");
+    const p = RunBody.safeParse(await c.req.json().catch(() => null));
+    if (!p.success) return c.json({ error: "bad_request" }, 400);
+    const t = token(c.req.header("authorization"));
+    const cat = await deps.catalogs.get(t, s.orgId);
+    if (!cat) return c.json({ error: "unavailable" }, 503);
+    const a = cat.actions.find((x) => x.name === p.data.action);
+    if (!a) return c.json({ error: "unknown_action" }, 404);
+    if (a.level === "confirm") return c.json({ error: "needs_approval" }, 409);
+    if (a.level === "human") return c.json({ error: "human_only" }, 403);
+    if ((a.scope === "rfq") !== !!p.data.rfqNo) return c.json({ error: "bad_request" }, 400);
+    if (p.data.conversationId) {
+      const conv = deps.conversations ? await deps.conversations.get(p.data.conversationId) : null;
+      if (!conv || conv.orgId !== s.orgId) return c.json({ error: "not_found" }, 404);
+    }
+    const body = p.data.body ?? {};
+    if (a.level === "read") {
+      const r = await deps.api.run(t, { action: a.name, rfqNo: p.data.rfqNo ?? null, body });
+      if (r.status === 0) return c.json({ error: "unavailable" }, 503);
+      return c.json({ result: r.body }, readStatus(r.status));
+    }
+    // 바로 실행은 요청 번호 없는 기관 기록만(요청 단위 동작은 견적 확인 카드에서)
+    if (a.scope !== "org") return c.json({ error: "needs_approval" }, 409);
+    const done = await runAuto({ api: deps.api, runs: deps.runs }, s, t, a, body, p.data.conversationId ?? null);
+    return c.json({ run: runView(done.run), result: done.result }, done.run.outcome === "done" ? 200 : done.run.outcome === "failed" ? 422 : 502);
+  });
+
+  app.get("/runs", async (c) => {
+    const s = c.get("session");
+    return c.json({ items: (await deps.runs.recent(s.orgId, s.userId, 30)).map(runView) });
+  });
+
+  app.post("/runs/:id/undo", async (c) => {
+    const s = c.get("session");
+    const run = await deps.runs.get(c.req.param("id"), s.orgId, s.userId);
+    if (!run) return c.json({ error: "not_found" }, 404);
+    if (run.undoneAt) return c.json({ error: "already_undone" }, 409);
+    if (!run.undoable || !run.danchuLogId || run.outcome !== "done") return c.json({ error: "not_undoable" }, 409);
+    if (!(await deps.runs.markUndone(run.id, new Date().toISOString()))) return c.json({ error: "already_undone" }, 409);
+    const r = await deps.api.undo(token(c.req.header("authorization")), run.danchuLogId);
+    if (r.status >= 200 && r.status < 300) return c.json({ run: runView({ ...run, undoneAt: new Date().toISOString() }) });
+    const code = r.body && typeof r.body === "object" && typeof (r.body as { error?: unknown }).error === "string" ? (r.body as { error: string }).error : "unavailable";
+    // 단추가 이미 되돌린 것으로 알면 표시를 둔다. 그 밖에는 표시를 푼다
+    if (code !== "already_undone") await deps.runs.clearUndone(run.id);
+    const known = ["already_undone", "not_undoable", "expired", "changed", "not_found"];
+    return c.json({ error: known.includes(code) ? code : "unavailable" }, known.includes(code) ? 409 : 503);
+  });
+  return app;
+}
+
+/** 단추 읽기 응답 상태 → 앱에 돌려줄 상태 */
+function readStatus(status: number): 200 | 400 | 401 | 403 | 404 | 503 {
+  if (status >= 200 && status < 300) return 200;
+  if (status === 401 || status === 403 || status === 404) return status;
+  return status >= 500 ? 503 : 400;
 }

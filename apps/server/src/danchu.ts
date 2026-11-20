@@ -57,6 +57,25 @@ export type DanchuError = "unauthorized" | "forbidden" | "org_not_ready" | "plan
 
 export type DanchuResult<T> = { ok: true; data: T } | { ok: false; error: DanchuError };
 
+/** 단추 액션 등록부 한 줄 (단추 lib/agent-actions.ts catalogFor). 실행 수준: read·auto(바로)·confirm(사람 승인 뒤)·human(사람만) */
+export interface DanchuCatalogAction {
+  name: string;
+  scope: "rfq" | "org";
+  level: "read" | "auto" | "confirm" | "human";
+  area: string;
+  label: string;
+  description: string;
+  /** JSON Schema. 다른 행을 가리키는 칸에는 "x-ref"(deal·task·event·contact·company·member) */
+  input: Record<string, unknown>;
+  /** 비서(AI)가 대화에서 부를 수 있는지 */
+  tool: boolean;
+}
+export interface DanchuCatalog {
+  version: string;
+  role: DanchuRole;
+  actions: DanchuCatalogAction[];
+}
+
 export interface DanchuApi {
   me(token: string): Promise<DanchuResult<DanchuMe>>;
   requesterList(token: string): Promise<DanchuResult<DanchuRequesterItem[]>>;
@@ -73,10 +92,18 @@ export interface DanchuApi {
   revokeConsent(token: string, version: string): Promise<DanchuResult<{ version: string }>>;
   /** 승인된 동작 실행(연동 4·5단계). 응답 상태와 본문을 그대로. 연결 실패·시간 초과는 status 0 */
   act(token: string, a: { action: string; rfqNo: string | null; body: Record<string, unknown> }): Promise<{ status: number; body: unknown }>;
+  /** 액션 목록(단추 /api/agent/actions) */
+  catalog(token: string): Promise<DanchuResult<DanchuCatalog>>;
+  /** 읽기·바로 실행 액션(단추 /api/agent/act). 승인이 필요한 액션은 act(보내기 장부)로만 */
+  run(token: string, a: { action: string; rfqNo: string | null; body: Record<string, unknown> }): Promise<{ status: number; body: unknown }>;
+  /** 바로 실행한 기록 되돌리기(단추 /api/agent/undo) */
+  undo(token: string, danchuLogId: string): Promise<{ status: number; body: unknown }>;
 }
 
 const ERRORS: DanchuError[] = ["unauthorized", "forbidden", "org_not_ready", "plan_required", "not_found", "rate_limited", "unavailable"];
 export const RFQ_NO = /^DC-\d{4}-\d{4,6}$/;
+/** 단추 액션 등록부 전에 생긴 동작(전용 입구가 있다) */
+const LEGACY_ACT = new Set(["create", "crm_activity", "ask", "answer", "select", "detail", "contract_confirm", "contract_result", "join", "decline", "quote_draft", "quote_upload", "quote_submit", "detail_reply", "contract_report"]);
 
 /** 단추 주소. 운영은 https만 받는다. 없으면 danchu.kr */
 export function danchuBaseFromEnv(env: Record<string, string | undefined>): string {
@@ -106,6 +133,20 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     if (!body) return { ok: false, error: "unavailable" };
     return { ok: true, data: body as T };
   }
+  /** 상태와 본문을 그대로. 연결 실패·시간 초과는 status 0 */
+  async function post(token: string, path: string, payload: unknown, ms: number): Promise<{ status: number; body: unknown }> {
+    try {
+      const res = await fetchImpl(`${base}${path}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, accept: "application/json", "content-type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(ms),
+      });
+      return { status: res.status, body: await res.json().catch(() => null) };
+    } catch {
+      return { status: 0, body: null };
+    }
+  }
   const pick = <T, K extends string>(r: DanchuResult<Record<K, T>>, key: K): DanchuResult<T> => (r.ok ? { ok: true, data: r.data[key] } : r);
   return {
     me: async (t) => pick(await get<{ me: DanchuMe }>(t, "/api/agent/me"), "me"),
@@ -115,6 +156,8 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
     croDetail: async (t, no) => pick(await get<{ request: DanchuCroItem }>(t, `/api/agent/requests/${encodeURIComponent(no)}`), "request"),
     croQuote: async (t, no) => pick(await get<{ quote: DanchuQuoteBrief }>(t, `/api/agent/requests/${encodeURIComponent(no)}/quote`), "quote"),
     act: async (t, a) => {
+      // 처음부터 있던 동작은 그 입구로, 단추 액션 등록부에 새로 생긴 승인 동작은 /api/agent/act 로
+      if (!LEGACY_ACT.has(a.action)) return post(t, "/api/agent/act", { action: a.action, ...(a.rfqNo ? { rfqNo: a.rfqNo } : {}), body: a.body }, actTimeoutMs);
       const path =
         a.action === "create" ? "/api/agent/requests" : a.action === "crm_activity" ? "/api/agent/crm" : `/api/agent/requests/${encodeURIComponent(a.rfqNo ?? "")}/act`;
       const payload = a.action === "create" ? { payload: a.body } : a.action === "crm_activity" ? a.body : { ...a.body, action: a.action };
@@ -130,6 +173,9 @@ export function danchuApi(base: string, fetchImpl: typeof fetch = fetch, timeout
         return { status: 0, body: null };
       }
     },
+    catalog: (t) => get<DanchuCatalog>(t, "/api/agent/actions"),
+    run: (t, a) => post(t, "/api/agent/act", { action: a.action, ...(a.rfqNo ? { rfqNo: a.rfqNo } : {}), body: a.body }, actTimeoutMs),
+    undo: (t, id) => post(t, "/api/agent/undo", { id }, timeoutMs),
     recordConsent: async (t, version) => pick(await get<{ consent: { version: string } }>(t, "/api/agent/consent", { version }), "consent"),
     consents: async (t) => pick(await get<{ consents: { version: string; agreedAt: string }[] }>(t, "/api/agent/consent"), "consents"),
     revokeConsent: async (t, version) => pick(await get<{ revoked: { version: string } }>(t, "/api/agent/consent", { version }, "DELETE"), "revoked"),

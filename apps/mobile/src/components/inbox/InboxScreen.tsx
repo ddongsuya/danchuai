@@ -2,7 +2,7 @@
 // 진단 문서 A05 "② 새 요청 버튼 하나"(사용자 선택 2026-11-17): 새 요청은 바닥에 붙은 버튼 하나, 질문하기는 머리줄, 검색은 없음.
 // 기관(A06)은 앱에서 요청을 만들지 않으므로 바닥 버튼이 없다.
 import { router, type Href } from 'expo-router';
-import { ChatCircle, Dna, Drop, Flask, Plus, User, UserSwitch } from 'phosphor-react-native';
+import { CaretLeft, ChatCircle, Dna, Drop, Flask, Plus, User, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,7 +59,12 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.root}>
         <View style={styles.nav}>
-          {status === 'disabled' ? (
+          {role === 'cro' ? (
+            // 기관의 받은 요청은 비서 메뉴에서 연다. 계정·화면 바꾸기도 비서 메뉴에 있다
+            <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/lab/assist'))}>
+              <CaretLeft size={u(22)} color={tokens.text} />
+            </IconButton>
+          ) : status === 'disabled' ? (
             // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
             <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
               <UserSwitch size={u(20)} color={tokens.text} />
@@ -157,6 +162,7 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
             <Button title="새 요청" tall icon={<Plus size={u(18)} weight="bold" color={tokens.onInk} />} onPress={() => router.push({ pathname: '/requester/[id]', params: { id: 'new' } })} />
           </View>
         )}
+
       </View>
     </SafeAreaView>
   );

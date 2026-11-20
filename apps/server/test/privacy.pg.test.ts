@@ -78,8 +78,11 @@ describe.skipIf(!BASE)("탈퇴·철회 지우기와 이용량 (Postgres)", () =>
     const myDraft = await draft(croWs, mine, croUser);
     const loose = await draft(croWs, null, croUser);
     const colleagueDraft = await draft(croWs, theirs, croUser); // 동료 초안을 내가 승인
+    await pool.query(`insert into assist_runs (id, org_id, user_id, action, label, outcome) values ($1, $2, $3, 'crm_activity', '통화 기록', 'done'), ($4, $2, $5, 'crm_activity', '통화 기록', 'done')`, [randomUUID(), croWs, croUser, randomUUID(), croColleague]);
     const r = await new PgPurgeRepo(pool).purge(croUser, "consent_revoked");
     expect(r).toEqual({ conversations: 1, drafts: 2 });
+    expect(await count(`select count(*) n from assist_runs where user_id = $1`, [croUser])).toBe(0);
+    expect(await count(`select count(*) n from assist_runs where user_id = $1`, [croColleague])).toBe(1);
     expect(await count(`select count(*) n from conversations where id = $1`, [mine])).toBe(0);
     expect(await count(`select count(*) n from messages where conversation_id = $1`, [mine])).toBe(0);
     expect(await count(`select count(*) n from outbound_drafts where id = any($1)`, [[myDraft, loose]])).toBe(0);
