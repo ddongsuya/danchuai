@@ -4,15 +4,22 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Spinner } from '@/components/ui/Spinner';
 import { Txt } from '@/components/ui/Txt';
+import { splitAnswer } from '@/lib/chat';
 import { lineEnter } from '@/lib/motion';
 import { tokens, uc } from '@/constants/theme';
 
 /** 내 메시지만 말풍선. 에이전트 글은 말풍선 없이 본문으로 쓴다. fresh 면 아래에서 8px 올라오며 나타난다. */
 export function UserMessage({ text, fresh }: { text: string; fresh?: boolean }) {
   const reduced = useReducedMotion();
+  const answer = splitAnswer(text);
   return (
     <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined} style={styles.me}>
-      <Txt variant="chatBody">{text}</Txt>
+      {answer && (
+        <Txt variant="chatCaption" color={tokens.muted}>
+          {answer.field}
+        </Txt>
+      )}
+      <Txt variant="chatBody">{answer ? answer.value : text}</Txt>
     </Animated.View>
   );
 }

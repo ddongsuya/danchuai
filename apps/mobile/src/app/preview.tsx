@@ -1,7 +1,7 @@
 // 화면 미리보기. 예시 값만 쓰고 서버를 부르지 않는다. 로그인 없이 열린다(_layout).
 // /preview 는 목록, /preview?view=<이름> 은 그 화면 하나. 실제 화면과 같은 컴포넌트를 그대로 쓴다.
 // 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
-import { applyQuotePatch, quoteDraftFromBrief, type RequestSheet } from '@danchuai/core';
+import { applyQuotePatch, quoteDraftFromBrief, SHEET_LABELS, type RequestSheet, type SheetField } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { CaretRight, X } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
@@ -16,7 +16,7 @@ import { LogoutDialog } from '@/components/auth/LogoutDialog';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { DraftCard } from '@/components/chat/DraftCard';
-import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
+import { AgentText, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
@@ -34,6 +34,7 @@ import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
+import type { AgentQuestion } from '@/lib/chat';
 import type { QuoteSubmitPreview } from '@/lib/danchuQuote';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
@@ -223,6 +224,57 @@ const CHAT_HEAD = (
   </>
 );
 const CHAT_FILLED = <AgentText>요청서를 다 채웠어요.</AgentText>;
+
+// 질문 카드 예시(시안 danchuai-question-card). 근거 원문 조각은 지식 검색 결과 그대로(ICH M3 5.1, 앞 220자).
+const IND_HEAD = (
+  <>
+    <UserMessage text="IND 제출 목적으로 합성의약품 독성시험 견적 받고 싶어요" />
+    <AgentText>합성의약품 IND라고 하셨으니 물질 종류와 제출 목적은 그 말대로 채울게요. ICH M3 기준으로 반복투여독성 기간은 임상 투여기간에 맞춰 정해져요. 2주 이내 임상은 2주, 2주~6개월 임상은 임상 기간과 같은 기간이 기본이에요. 그래서 임상 기간부터 확인할게요.</AgentText>
+  </>
+);
+const M3_51 = {
+  doc: 'ICH M3',
+  name: 'ICH M3(R2) 임상시험 및 품목허가를 위한 비임상 안전성시험',
+  section: '5.1 Clinical Development Trials',
+  url: 'https://database.ich.org/sites/default/files/M3_R2__Guideline.pdf',
+  version: 'Step 4, 11 June 2009',
+  excerpt:
+    'Repeated-dose toxicity studies in two species (one non-rodent) for a minimum duration of 2 weeks (Table 1) would generally support any clinical development trial up to 2 weeks in duration. Clinical trials of longer durat…',
+};
+const Q_CLINICAL: AgentQuestion = {
+  field: 'clinicalPlan',
+  question: '계획 중인 임상시험의 최대 투여 기간은요?',
+  options: [
+    { label: '2주 이내', effect: '반복투여독성 2주' },
+    { label: '1개월 이내', effect: '반복투여독성 4주' },
+    { label: '3개월 이내', effect: '반복투여독성 13주' },
+    { label: '6개월 이내', effect: '반복투여독성 26주' },
+  ],
+  basis: [M3_51],
+};
+const Q_PRIOR: AgentQuestion = {
+  field: 'priorStudies',
+  question: '이미 끝낸 비임상 시험이 있나요?',
+  options: [
+    { label: '아직 없음', effect: '처음부터 전부 견적' },
+    { label: '용량결정(DRF)만', effect: '본시험부터 견적' },
+    { label: '단회·유전독성 일부', effect: '남은 시험만 견적' },
+  ],
+};
+const Q_RECHECK: AgentQuestion = {
+  field: 'duration',
+  question: '임상 3개월 계획에 맞춰 기간을 어떻게 할까요?',
+  options: [
+    { label: '4주 그대로', effect: '임상 1개월까지 해당' },
+    { label: '13주로 바꾸기', effect: '임상 3개월까지 해당' },
+    { label: '4주·13주 둘 다', effect: '두 안을 함께 견적' },
+  ],
+  basis: [M3_51],
+  recheck: true,
+};
+const qCard = (q: AgentQuestion, left: string, initial?: Parameters<typeof QuestionCard>[0]['initial']) => (
+  <QuestionCard question={q} field={SHEET_LABELS[q.field as SheetField]} left={left} initial={initial} onAnswer={() => router.push(toView('q-next'))} />
+);
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 // 기관 비서 예시(가상의 고객사·담당자)
@@ -281,6 +333,12 @@ const VIEWS: View_[] = [
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
   { key: 'inbox-error', label: '요청함, 불러오기 실패', group: '요청함' },
   { key: 'chat', label: '새 요청 대화, 질문 카드', group: '새 요청' },
+  { key: 'q-press', label: '질문 카드, 고른 순간', group: '새 요청' },
+  { key: 'q-next', label: '질문 카드, 다음 질문', group: '새 요청' },
+  { key: 'q-recheck', label: '질문 카드, 어긋난 칸 다시 묻기', group: '새 요청' },
+  { key: 'q-type', label: '질문 카드, 직접 입력', group: '새 요청' },
+  { key: 'q-sheet', label: '질문 카드, 근거 원문', group: '새 요청' },
+  { key: 'q-fold', label: '질문 카드, 접힘', group: '새 요청' },
   { key: 'draft', label: '요청 본문 초안', group: '새 요청' },
   { key: 'approve', label: '요청서 확인(승인 카드)', group: '새 요청' },
   { key: 'approve-sending', label: '요청서 확인, 요청하는 중', group: '새 요청' },
@@ -396,10 +454,47 @@ function PreviewView({ view }: { view: string }) {
       );
     case 'chat':
       return (
-        <ChatShell title="새 요청" bottom={<Composer onSend={noop} />}>
-          {CHAT_HEAD}
-          <StepLog steps={[{ label: '요청서 항목 맞추는 중', state: 'now' }]} />
-          <QuestionCard title="투여 경로" questions={[{ id: 'route', label: '어떤 경로로 투여해요?', options: ['경구', '정맥', '피하'] }]} onSubmit={() => router.push(toView('approve'))} onSkip={noop} />
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음')}>
+          {IND_HEAD}
+        </ChatShell>
+      );
+    case 'q-press':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음', { picked: '3개월 이내' })}>
+          {IND_HEAD}
+        </ChatShell>
+      );
+    case 'q-next':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_PRIOR, '필수 7칸 남음')}>
+          <UserMessage text="임상 계획: 3개월 이내" />
+          <AgentText>임상이 3개월이면 설치류·비설치류 모두 13주 반복투여독성이 기본이에요 (근거: ICH M3 5.1). 이미 끝낸 시험에 따라 견적 범위가 달라져요.</AgentText>
+        </ChatShell>
+      );
+    case 'q-recheck':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_RECHECK, '지금 4주')}>
+          <UserMessage text="반복투여는 4주로 해 주세요" />
+          <AgentText>반복투여 4주로 채울게요. 다만 임상이 3개월이면 ICH M3 기준으로 설치류·비설치류 모두 임상과 같은 기간의 반복투여독성이 보통 필요해요. 4주 시험은 그보다 짧은 임상까지만 뒷받침해요.</AgentText>
+        </ChatShell>
+      );
+    case 'q-type':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음', { text: '건강인 2주, 이후 환자 3개월' })}>
+          {IND_HEAD}
+        </ChatShell>
+      );
+    case 'q-sheet':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음', { sources: true })}>
+          {IND_HEAD}
+        </ChatShell>
+      );
+    case 'q-fold':
+      return (
+        <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음', { folded: true })}>
+          <AgentText>어떤 시험 견적이 필요해요?</AgentText>
+          {IND_HEAD}
         </ChatShell>
       );
     case 'draft':

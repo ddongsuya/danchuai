@@ -1,7 +1,7 @@
 import { EMPTY_SHEET } from '@danchuai/core';
 import { describe, expect, it } from 'vitest';
 
-import { chatReducer, initialChat, type ChatAction, type ChatState } from './chat';
+import { asQuestion, chatReducer, initialChat, splitAnswer, type ChatAction, type ChatState } from './chat';
 import { createSseParser, type SseEvent } from './sse';
 
 const run = (actions: ChatAction[], from: ChatState = initialChat) => actions.reduce(chatReducer, from);
@@ -175,5 +175,37 @@ describe('서버가 보낸 오류는 끊김으로 덮지 않는다', () => {
     expect(s.error).toBeNull();
     s = chatReducer(s, { type: 'failed', code: 'network', at: 4 });
     expect(s.error).toBe('network');
+  });
+});
+
+describe('질문 카드', () => {
+  it('글자 선택지는 이름으로 바꾸고 미정·모르겠어요는 뺀다', () => {
+    const q = asQuestion({ field: 'route', question: '경로는요?', options: ['경구', { label: '정맥', effect: '정맥 투여군' }, '미정', '모르겠어요'] });
+    expect(q?.options).toEqual([{ label: '경구' }, { label: '정맥', effect: '정맥 투여군' }]);
+  });
+
+  it('선택지가 미정뿐이면 질문을 받지 않는다', () => {
+    expect(asQuestion({ field: 'route', question: '경로는요?', options: ['미정'] })).toBeNull();
+    expect(run([opened, { type: 'server', event: 'question', data: { field: 'route', question: '?', options: ['미정'] } }]).question).toBeNull();
+  });
+
+  it('근거는 https 원문만, 조각은 400자까지, 다시 묻기 표시는 true일 때만', () => {
+    const q = asQuestion({
+      field: 'duration',
+      question: '기간은요?',
+      options: ['4주'],
+      basis: [{ doc: 'ICH M3', section: '5.1', url: 'http://x', version: 'Step 4', excerpt: 'a'.repeat(500) }, 'x'],
+      recheck: 'yes',
+    });
+    expect(q?.basis).toHaveLength(1);
+    expect(q?.basis?.[0]?.url).toBeNull();
+    expect(q?.basis?.[0]?.excerpt).toHaveLength(400);
+    expect(q?.recheck).toBeUndefined();
+  });
+
+  it('카드로 보낸 답은 칸 이름과 값으로 나뉜다', () => {
+    expect(splitAnswer('임상 계획: 3개월 이내')).toEqual({ field: '임상 계획', value: '3개월 이내' });
+    expect(splitAnswer('참고: 이건 그냥 글')).toBeNull();
+    expect(splitAnswer('임상 계획: ')).toBeNull();
   });
 });

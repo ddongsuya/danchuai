@@ -298,6 +298,7 @@ export function agentRoutes(deps: AgentDeps) {
               conv,
               request: { system: danchuQuote ? CRO_DANCHU_SYSTEM : SYSTEM[conv.role], messages, tools: toolsFor(conv), maxTokens: LIMITS.maxTokens, signal: abort.signal },
               onText,
+              evidence,
             });
         await writes;
 

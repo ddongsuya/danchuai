@@ -1,15 +1,28 @@
 import { ArrowUp } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Press } from '@/components/ui/Press';
 import { fonts, tokens, uc } from '@/constants/theme';
 
-export function Composer({ onSend, disabled, placeholder = '메시지' }: { onSend?: (text: string) => void; disabled?: boolean; placeholder?: string }) {
-  const [text, setText] = useState('');
+export function Composer({
+  onSend,
+  disabled,
+  placeholder = '메시지',
+  initial = '',
+  style,
+}: {
+  onSend?: (text: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  /** 미리보기용 처음 글 */
+  initial?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const [text, setText] = useState(initial);
   const ready = text.trim().length > 0 && !disabled;
   return (
-    <View style={styles.box}>
+    <View style={[styles.box, style]}>
       <TextInput
         value={text}
         onChangeText={setText}

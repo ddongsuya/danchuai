@@ -13,11 +13,21 @@ export const UpdateSheet = z
   >)
   .strict();
 
+// 선택지: 고르는 값(label)과 고르면 요청서·시험에서 달라지는 것(effect). 예전 형식(글자만)도 받는다.
+const QuestionOption = z.union([
+  z.string().min(1).max(40),
+  z.object({ label: z.string().min(1).max(40), effect: z.string().min(1).max(24).optional() }).strict(),
+]);
+
 export const AskQuestion = z
   .object({
     field: z.enum(SHEET_FIELDS),
     question: z.string().min(1).max(80),
-    options: z.array(z.string().min(1).max(40)).min(2).max(6),
+    options: z.array(QuestionOption).min(2).max(6),
+    /** 질문 근거로 쓴 원문 "문서 조항"(예: "ICH M3 5.1"). 이번 참고자료에 있는 것만 서버가 받는다. */
+    basis: z.array(z.string().min(1).max(60)).max(3).optional(),
+    /** 이미 채운 칸이 상황과 어긋나 다시 묻는 질문 */
+    recheck: z.boolean().optional(),
   })
   .strict();
 
@@ -68,7 +78,8 @@ export type ToolName = keyof typeof SCHEMAS;
 const DESCRIPTIONS: Record<ToolName, string> = {
   update_sheet:
     "사용자 말에서 확인된 요청서 칸을 채운다. 확인되지 않은 칸은 null. 회사명·연락처·금액은 넣지 않는다.",
-  ask_question: "요청서의 빈 칸 하나를 묻는 질문 카드. 질문은 짧게, 선택지는 2~5개.",
+  ask_question:
+    "요청서 칸 하나를 묻는 질문 카드. 질문은 짧게, 선택지는 2~5개. 선택지마다 label(고르는 값)과, 원문 근거가 있으면 effect(고르면 달라지는 것, 24자 이내). 미정·모르겠어요는 카드가 붙이니 넣지 않는다. basis에는 근거로 쓴 참고자료 조각의 \"문서 조항\". 채운 칸이 상황과 어긋나 다시 물을 때만 recheck=true.",
   summarize_request: "기관 담당자를 위한 요청 요점 1~6개. 금액·의뢰자 신원은 넣지 않는다.",
   draft_body:
     "상대에게 보낼 본문 초안. 사람이 확인하고 승인해야 나간다. 금액 숫자·기관 비교·추천·연락처는 쓰지 않는다.",
