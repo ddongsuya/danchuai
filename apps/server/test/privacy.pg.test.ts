@@ -46,7 +46,16 @@ describe.skipIf(!BASE)("탈퇴·철회 지우기와 이용량 (Postgres)", () =>
   afterAll(async () => {
     await pool?.end();
     if (admin) {
-      await admin.query(`drop database if exists ${dbName} with (force)`);
+      // with (force) 는 막 닫히는 연결에 FATAL 을 보내 처리되지 않은 오류가 된다(pg.test.ts 와 같은 방식으로 기다렸다 지운다)
+      for (let i = 0; i < 50; i++) {
+        try {
+          await admin.query(`drop database if exists ${dbName}`);
+          break;
+        } catch (e) {
+          if ((e as { code?: string }).code !== "55006" || i === 49) throw e;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
       await admin.end();
     }
   });
