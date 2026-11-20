@@ -61,10 +61,10 @@ export interface AgentDeps {
   outbound: OutboundRepo;
   /** 있으면 받는 곳이 가입 기관인지 확인하고, 의뢰자 요청 행을 만든다 */
   market?: MarketRepo;
-  /** 단추 연동 모드의 기관 비서(액션 목록·바로 실행). 없으면 비서 대화는 열지 않는다 */
-  assist?: AssistDeps;
   /** AI 이용량 상한(계정 하루·조직 한 달·전체 한 달). 넘으면 429 usage_limit */
   usage?: UsageMeter;
+  /** 단추 연동 모드의 기관 비서(액션 목록·바로 실행). 없으면 비서 대화는 열지 않는다 */
+  assist?: AssistDeps;
 }
 
 type Env = { Variables: { session: Session } };

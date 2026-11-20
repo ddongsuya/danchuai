@@ -13,9 +13,9 @@ import { canLinkConversation, checkAction, checkCatalogAction, isKnownAction } f
 import type { ConversationRepo } from "./agent/store";
 import { sha256 } from "./hash";
 import type { OutboundRepo } from "./repo";
+import type { PurgeRepo } from "./purge";
 import { runAuto, runView, type CatalogCache } from "./danchuAssist";
 import type { RunRepo } from "./runs";
-import type { PurgeRepo } from "./purge";
 
 const STATUS: Record<DanchuError, 401 | 403 | 404 | 429 | 503> = {
   unauthorized: 401,

@@ -46,7 +46,16 @@ describe.skipIf(!BASE)("탈퇴·철회 지우기와 이용량 (Postgres)", () =>
   afterAll(async () => {
     await pool?.end();
     if (admin) {
-      await admin.query(`drop database if exists ${dbName} with (force)`);
+      // with (force) 는 막 닫히는 연결에 FATAL 을 보내 처리되지 않은 오류가 된다(pg.test.ts 와 같은 방식으로 기다렸다 지운다)
+      for (let i = 0; i < 50; i++) {
+        try {
+          await admin.query(`drop database if exists ${dbName}`);
+          break;
+        } catch (e) {
+          if ((e as { code?: string }).code !== "55006" || i === 49) throw e;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
       await admin.end();
     }
   });
@@ -78,10 +87,7 @@ describe.skipIf(!BASE)("탈퇴·철회 지우기와 이용량 (Postgres)", () =>
     const myDraft = await draft(croWs, mine, croUser);
     const loose = await draft(croWs, null, croUser);
     const colleagueDraft = await draft(croWs, theirs, croUser); // 동료 초안을 내가 승인
-    // 비서 실행 기록(0012): 내 줄은 지우고 동료 줄은 둔다
-    const run = (user: string) => pool.query(`insert into assist_runs (id, org_id, user_id, conversation_id, action, label, outcome) values (gen_random_uuid(), $1, $2, null, 'task_create', '할 일 만들기', 'done')`, [croWs, user]);
-    await run(croUser);
-    await run(croColleague);
+    await pool.query(`insert into assist_runs (id, org_id, user_id, action, label, outcome) values ($1, $2, $3, 'crm_activity', '통화 기록', 'done'), ($4, $2, $5, 'crm_activity', '통화 기록', 'done')`, [randomUUID(), croWs, croUser, randomUUID(), croColleague]);
     const r = await new PgPurgeRepo(pool).purge(croUser, "consent_revoked");
     expect(await count(`select count(*) n from assist_runs where user_id = $1`, [croUser])).toBe(0);
     expect(await count(`select count(*) n from assist_runs where user_id = $1`, [croColleague])).toBe(1);

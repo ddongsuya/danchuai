@@ -187,8 +187,8 @@ export function createApp(deps: Deps) {
       requests: deps.requests ?? new MemoryRequestDirectory(),
       outbound: deps.outbound,
       market: deps.market,
-      assist: deps.danchu && catalogs ? { api: deps.danchu.api, runs, catalogs } : undefined,
       usage: deps.usage,
+      assist: deps.danchu && catalogs ? { api: deps.danchu.api, runs, catalogs } : undefined,
     }),
   );
 
