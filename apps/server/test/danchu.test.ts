@@ -480,6 +480,12 @@ describe("말로 맡기는 견적 2단계", () => {
     expect((await approveAndDispatch(call, T_CRO, await json(await submit()))).status).toBe("sent");
     const done = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
     expect(done.quote.submittedVersion).toBe(done.quote.version);
+    // 승인한 줄 금액(견적서 금액)을 초안에 남긴다
+    expect(done.quote.items.find((it: { seq: number }) => it.seq === 2).amount).toBe("32000000");
+    expect(done.quote.priced).toEqual(expect.arrayContaining([1, 2]));
+    // 견적서 판(docUpdatedAt)은 받아서 단추로 그대로 넘긴다
+    expect((await approveAndDispatch(call, T_CRO, await json(await submit({ body: { ...QUOTE_BODY, docUpdatedAt: "2026-11-20T00:00:00Z" } })))).status).toBe("sent");
+    expect((api.acted.at(-1)!.a as { body: { docUpdatedAt?: string } }).body.docUpdatedAt).toBe("2026-11-20T00:00:00Z");
     // 대화 id 는 단추로 보내는 본문에 들어가지 않는다
     expect(JSON.stringify(api.acted.at(-1))).not.toContain(String(conv.id));
     // 다른 요청 번호로는 이 대화를 붙일 수 없고, 다른 역할(의뢰자)도 못 붙인다

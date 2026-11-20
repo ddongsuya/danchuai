@@ -34,6 +34,7 @@ import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
+import type { QuoteSubmitPreview } from '@/lib/danchuQuote';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
 import type { DanchuCompare, DanchuLabItem, DanchuRequest } from '@/lib/marketClient';
@@ -148,6 +149,25 @@ const QUOTE = applyQuotePatch(
     common: { startDate: day(21), validUntil: day(60), payTerms: '30, 40, 30' },
   },
 ).draft;
+
+// 단추 제출 미리보기(quote_submit_preview) 모양 그대로의 예시 값. 금액은 계산 확인용 가상의 값
+const QUOTE_DOC: QuoteSubmitPreview = {
+  docId: 'doc-preview', docNo: 'Q-2026-0142', updatedAt: '2026-11-20T09:00:00Z', path: '/cro/docs/doc-preview/fill', discount: 0, mismatched: [], unlinked: [],
+  rows: [
+    { seq: 1, amount: 48_500_000, weeks: 14, extra: { exp_groups: '대조 1군, 시험 3군(군당 암수 각 10)', exp_why: '임상 4주 투여에 맞춘 기간' }, tests: [{ uid: 't1', title: '랫드 4주 반복투여독성', total: 48_500_000, manual: false }] },
+    { seq: 2, amount: 6_200_000, weeks: 6, extra: { exp_samples: '시험 3군 6마리 × 8시점 = 144검체' }, tests: [{ uid: 't2', title: 'TK 분석', total: 6_200_000, manual: false }] },
+    { seq: 3, amount: null, weeks: 4, extra: {}, tests: [{ uid: 't3', title: '회복군 추가(4주)', total: 0, manual: true }] },
+    { seq: 4, amount: null, weeks: null, extra: {}, tests: [] },
+  ],
+};
+const QUOTE_DOC_READY: QuoteSubmitPreview = { ...QUOTE_DOC, rows: QUOTE_DOC.rows.map((r) => (r.seq === 3 ? { ...r, amount: 32_000_000, tests: [{ ...r.tests[0]!, total: 32_000_000 }] } : r)) };
+// 할인 300만 원을 줄 금액 비율로 나눈 값(단추 spreadDiscount 와 같은 결과)
+const QUOTE_DOC_DISCOUNT: QuoteSubmitPreview = {
+  ...QUOTE_DOC_READY,
+  discount: 3_000_000,
+  unlinked: ['조직병리 추가 판독'],
+  rows: QUOTE_DOC_READY.rows.map((r) => (r.seq === 1 ? { ...r, amount: 46_821_799 } : r.seq === 2 ? { ...r, amount: 5_985_468 } : r.seq === 3 ? { ...r, amount: 30_892_733 } : r)),
+};
 
 const LAB_WORK: DanchuLabItem = {
   ...LAB_TODO,
@@ -273,9 +293,9 @@ const VIEWS: View_[] = [
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
   { key: 'lab-work', label: '받은 요청, 참여 뒤(AI 견적)', group: '기관' },
-  { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
+  { key: 'lab-quote', label: '견적 확인, 금액 넣기 남음', group: '기관' },
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
-  { key: 'lab-quote-calc', label: '견적 확인, 단추 계산으로 채움', group: '기관' },
+  { key: 'lab-quote-calc', label: '견적 확인, 할인·제출 제외', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
@@ -439,11 +459,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuLabView it={LAB_TODO} initialSheet="decline" />;
     case 'lab-work':
       return <DanchuLabView it={LAB_WORK} />;
-    case 'lab-quote-calc':
-      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialCalc={{ 3: 31_500_000 }} onBack={() => router.back()} />;
     case 'lab-quote':
     case 'lab-quote-ready':
-      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
+    case 'lab-quote-calc':
+      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialPreview={view === 'lab-quote' ? QUOTE_DOC : view === 'lab-quote-ready' ? QUOTE_DOC_READY : QUOTE_DOC_DISCOUNT} onBack={() => router.back()} />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
     case 'lab-won':

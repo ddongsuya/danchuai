@@ -75,6 +75,8 @@ const QuoteBody = z
       .strict(),
     steps: z.array(z.object({ seq: z.number().int(), name: z.string().max(60), weeks: z.string().max(3), after: z.array(z.number().int()).max(20) }).strict()).max(20),
     pdf: z.object({ path: z.string().max(400), name: z.string().max(200), size: z.number().int().positive() }).strict().optional(),
+    // 앱 확인 카드가 본 견적서 판(단추 quote_submit_preview). 단추는 판이 바뀌었거나 줄 금액이 견적서와 다르면 제출을 막는다(단추 #142)
+    docUpdatedAt: z.string().min(1).max(64).optional(),
   })
   .strict();
 const UploadBody = z.object({ name: z.string().min(1).max(200), size: z.number().int().positive(), type: z.string().max(60).optional() }).strict();
@@ -158,7 +160,7 @@ export function canLinkConversation(conv: Conversation | null, s: { orgId: strin
 /**
  * 단추가 받은 동작(전송 결과 sent)을 대화 상태에 반영한다(순수 함수). 바뀐 것이 없으면 null.
  * - 의뢰자 요청 접수(create): 본문 초안을 보낸 것으로 표시하고 단추 요청 번호를 남긴다. 요청함에 "작성 중·대기"로 다시 보이지 않는다.
- * - 기관 견적 제출(quote_submit): 지금 판을 제출한 판으로 남긴다. 그 뒤 대화로 고치면 다시 제출할 것으로 보인다.
+ * - 기관 견적 제출(quote_submit): 지금 판을 제출한 판으로 남기고, 승인한 줄 금액·기간(견적서 금액)을 초안에 옮긴다. 그 뒤 대화로 고치면 다시 제출할 것으로 보인다.
  * 임시 저장(quote_draft)·PDF 주소(quote_upload)는 상태를 바꾸지 않는다.
  */
 export function afterDanchuSent(conv: Conversation, a: DanchuAction, result: unknown): Conversation | null {
@@ -171,6 +173,15 @@ export function afterDanchuSent(conv: Conversation, a: DanchuAction, result: unk
       question: null,
     };
   }
-  if (a.action === "quote_submit" && conv.quote) return { ...conv, quote: { ...conv.quote, submittedVersion: conv.quote.version } };
+  if (a.action === "quote_submit" && conv.quote) {
+    // 단추는 줄 금액을 견적서로 채운다. 사람이 승인한 본문(견적서 금액 그대로)을 대화 초안에도 남겨, 다시 열었을 때 제출한 금액과 견적서를 견준다
+    const sent = new Map((Array.isArray(a.body.items) ? (a.body.items as { seq?: unknown; amount?: unknown; weeks?: unknown }[]) : []).filter((it) => typeof it?.seq === "number").map((it) => [it.seq as number, it]));
+    const items = conv.quote.items.map((it) => {
+      const s = sent.get(it.seq);
+      return s ? { ...it, amount: typeof s.amount === "string" ? s.amount : it.amount, weeks: typeof s.weeks === "string" ? s.weeks : it.weeks } : it;
+    });
+    const priced = items.filter((it) => /^\d{1,13}$/.test(it.amount) && Number(it.amount) > 0).map((it) => it.seq);
+    return { ...conv, quote: { ...conv.quote, items, priced, submittedVersion: conv.quote.version } };
+  }
   return null;
 }
