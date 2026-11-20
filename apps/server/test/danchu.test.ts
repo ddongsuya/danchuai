@@ -1,4 +1,5 @@
 import type { CompletionRequest, CompletionResult, DanchuQuoteBrief, LlmProvider } from "@danchuai/core";
+import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
 import { CRO_DANCHU_SYSTEM } from "../src/agent/prompts";
@@ -6,6 +7,8 @@ import { DanchuRequestDirectory, MemoryConversationRepo } from "../src/agent/sto
 import { danchuApi, type DanchuApi, type DanchuMe } from "../src/danchu";
 import { CONSENT_VERSION, danchuIdentity, MemoryWorkspaceRepo, workspaceKey } from "../src/danchuAuth";
 import { MemoryOutboundRepo } from "../src/repo";
+import { purgeSignature, verifyPurge, type PurgeReason, type PurgeRepo } from "../src/purge";
+import { costMicros, MemoryUsageRepo, periods, usageConfigFromEnv, usageMeter, type UsageMeter } from "../src/usage";
 import { afterDanchuSent, canonical, checkAction, outcomeOf, parseActionText } from "../src/danchuActions";
 
 /* 단추 계정 연동(연동 2단계): 신원은 단추에서만, 동의 전 AI 금지, 읽기는 단추에서 */
@@ -57,7 +60,7 @@ const ME: Record<string, DanchuMe> = {
   [T_CRO]: { id: "22222222-2222-4222-8222-222222222222", role: "cro", name: "나", email: "b@example.test", org: { id: "33333333-3333-4333-8333-333333333333", name: "나기관", plan: "plus" } },
 };
 
-type Fake = DanchuApi & { calls: string[]; consentDown: boolean; actReply: { status: number; body: unknown }; acted: Array<{ token: string; a: unknown }> };
+type Fake = DanchuApi & { calls: string[]; consentDown: boolean; danchuConsents: Map<string, string[]>; actReply: { status: number; body: unknown }; acted: Array<{ token: string; a: unknown }> };
 function fakeApi(): Fake {
   const calls: string[] = [];
   const me = async (t: string) => {
@@ -69,6 +72,7 @@ function fakeApi(): Fake {
   const api: Fake = {
     calls,
     consentDown: false,
+    danchuConsents: new Map(),
     actReply: { status: 200, body: { rfqNo: "DC-2026-0011", started: true } },
     acted: [],
     act: async (token, a) => {
@@ -97,18 +101,45 @@ function fakeApi(): Fake {
     undo: async () => ({ status: 404, body: { error: "not_found" } }),
     recordConsent: async (t: string, version: string) => {
       calls.push(`consent:${t}:${version}`);
-      return api.consentDown ? { ok: false as const, error: "unavailable" as const } : { ok: true as const, data: { version } };
+      if (api.consentDown) return { ok: false as const, error: "unavailable" as const };
+      api.danchuConsents.set(t, [...(api.danchuConsents.get(t) ?? []), version]);
+      return { ok: true as const, data: { version } };
+    },
+    consents: async (t: string) => {
+      calls.push(`consents:${t}`);
+      if (api.consentDown) return { ok: false as const, error: "unavailable" as const };
+      return { ok: true as const, data: (api.danchuConsents.get(t) ?? []).map((version) => ({ version, agreedAt: "2026-11-19T00:00:00Z" })) };
+    },
+    revokeConsent: async (t: string, version: string) => {
+      calls.push(`revoke:${t}:${version}`);
+      if (api.consentDown) return { ok: false as const, error: "unavailable" as const };
+      api.danchuConsents.set(t, (api.danchuConsents.get(t) ?? []).filter((v) => v !== version));
+      return { ok: true as const, data: { version } };
     },
   };
   return api;
 }
 
-function setup(provider?: LlmProvider) {
+/** 지우기 요청을 기록하고, 메모리 대화 저장소에서 그 사람이 연 대화를 지운다 */
+class MemoryPurge implements PurgeRepo {
+  calls: Array<{ userId: string; reason: PurgeReason }> = [];
+  constructor(private workspaces: MemoryWorkspaceRepo) {}
+  async purge(userId: string, reason: PurgeReason) {
+    this.calls.push({ userId, reason });
+    await this.workspaces.revoke(userId);
+    return { conversations: 0, drafts: 0 };
+  }
+}
+
+function setup(provider?: LlmProvider, opts: { usage?: UsageMeter; secret?: string; now?: () => number } = {}) {
   const api = fakeApi();
   const workspaces = new MemoryWorkspaceRepo();
   const id = danchuIdentity(api, workspaces);
   const conversations = new MemoryConversationRepo();
+  const purge = new MemoryPurge(workspaces);
   const app = createApp({
+    purge: { repo: purge, secret: opts.secret, now: opts.now },
+    usage: opts.usage,
     auth: id.resolver,
     outbound: new MemoryOutboundRepo(),
     transport: { deliver: async () => "unknown" },
@@ -123,7 +154,7 @@ function setup(provider?: LlmProvider) {
       headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  return { api, call, workspaces, conversations };
+  return { api, call, workspaces, conversations, purge, app };
 }
 
 describe("단추 신원", () => {
@@ -478,5 +509,139 @@ describe("말로 맡기는 견적 2단계", () => {
     expect(afterDanchuSent(base, { action: "create", rfqNo: null, body: {} }, { rfqNo: "../x" })?.danchuNo).toBeNull();
     expect(afterDanchuSent(base, { action: "quote_draft", rfqNo: "DC-2026-0142", body: {} }, null)).toBeNull();
     expect(afterDanchuSent(base, { action: "quote_upload", rfqNo: "DC-2026-0142", body: {} }, null)).toBeNull();
+  });
+});
+
+describe("동의 철회와 지우기 (처리방침 3항)", () => {
+  it("앱에서 철회: 단추에 먼저 철회, 에이전트 동의도 철회, 대화 지우기. 그 뒤 AI 대화는 403", async () => {
+    const { call, api, purge } = setup();
+    await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION });
+    expect((await call("POST", "/v1/agent/conversations", T_REQ, {})).status).not.toBe(403);
+    const r = await call("POST", "/account/consent/revoke", T_REQ, { version: CONSENT_VERSION });
+    expect(r.status).toBe(200);
+    expect(api.calls).toContain(`revoke:${T_REQ}:${CONSENT_VERSION}`);
+    expect(purge.calls).toEqual([{ userId: ME[T_REQ]!.id, reason: "consent_revoked" }]);
+    expect((await call("POST", "/v1/agent/conversations", T_REQ, {})).status).toBe(403);
+  });
+
+  it("단추 철회가 안 되면 503, 에이전트 쪽은 그대로(다시 시도)", async () => {
+    const { call, api, purge } = setup();
+    await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION });
+    api.consentDown = true;
+    expect((await call("POST", "/account/consent/revoke", T_REQ, { version: CONSENT_VERSION })).status).toBe(503);
+    expect(purge.calls).toHaveLength(0);
+    expect((await call("POST", "/account/consent/revoke", T_REQ, { version: "1999-01-01" })).status).toBe(400);
+  });
+
+  it("단추 웹에서 철회했으면 다음 AI 호출에서 알아채고 지운 뒤 403. 단추 장애면 에이전트 사본으로 판단", async () => {
+    const { call, api, purge } = setup();
+    await call("POST", "/account/consent", T_CRO, { version: CONSENT_VERSION });
+    api.consentDown = true;
+    expect((await call("POST", "/v1/agent/conversations", T_CRO, { mode: "ask" })).status).not.toBe(403);
+    api.consentDown = false;
+    api.danchuConsents.set(T_CRO, []);
+    const r = await call("POST", "/v1/agent/conversations", T_CRO, { mode: "ask" });
+    expect(r.status).toBe(403);
+    expect(await r.json()).toEqual({ error: "consent_required" });
+    expect(purge.calls).toEqual([{ userId: ME[T_CRO]!.id, reason: "consent_revoked" }]);
+  });
+
+  it("단추 동의 확인은 계정별로 잠깐 기억한다", async () => {
+    const { call, api } = setup();
+    await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION });
+    await call("GET", "/v1/agent/asks", T_REQ);
+    await call("GET", "/v1/agent/asks", T_REQ);
+    expect(api.calls.filter((c) => c === `consents:${T_REQ}`)).toHaveLength(1);
+  });
+});
+
+describe("단추 → 에이전트 삭제 요청 (서명)", () => {
+  const SECRET = "test-secret-0123456789";
+  const NOW = 1_763_500_000_000;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  function signed(body: string, ts = String(Math.floor(NOW / 1000)), secret = SECRET) {
+    return { "content-type": "application/json", "x-danchu-timestamp": ts, "x-danchu-signature": purgeSignature(secret, ts, body) };
+  }
+
+  it("단추와 같은 서명 규칙: HMAC-SHA256(비밀값, '시각.본문') 16진수", () => {
+    // 단추 lib/agent-purge.ts purgeSignature 와 같은 값이어야 한다
+    expect(purgeSignature("k", "1700000000", '{"a":1}')).toBe(createHmac("sha256", "k").update('1700000000.{"a":1}').digest("hex"));
+    expect(verifyPurge("k", "1700000000", purgeSignature("k", "1700000000", "x"), "x", 1700000100)).toBe(true);
+    expect(verifyPurge("k", "1700000000", purgeSignature("k", "1700000000", "x"), "x", 1700000400)).toBe(false);
+    expect(verifyPurge("k", "1700000000", purgeSignature("other", "1700000000", "x"), "x", 1700000000)).toBe(false);
+    expect(verifyPurge("k", "1700000000", purgeSignature("k", "1700000000", "x"), "y", 1700000000)).toBe(false);
+  });
+
+  it("맞는 서명이면 지우고, 틀린 서명·오래된 요청·비밀값 미설정은 거절", async () => {
+    const { app, purge } = setup(undefined, { secret: SECRET, now: () => NOW });
+    const body = JSON.stringify({ userId, reason: "account_deleted" });
+    const ok = await app.request("/internal/danchu/purge", { method: "POST", headers: signed(body), body });
+    expect(ok.status).toBe(200);
+    expect(purge.calls).toEqual([{ userId, reason: "account_deleted" }]);
+    // 같은 요청을 다시 받아도 된다(여러 번 받아도 결과가 같다)
+    expect((await app.request("/internal/danchu/purge", { method: "POST", headers: signed(body), body })).status).toBe(200);
+
+    expect((await app.request("/internal/danchu/purge", { method: "POST", headers: signed(body, undefined, "wrong-secret-xxxxxxxx"), body })).status).toBe(401);
+    expect((await app.request("/internal/danchu/purge", { method: "POST", headers: signed(body, String(Math.floor(NOW / 1000) - 600)), body })).status).toBe(401);
+    expect((await app.request("/internal/danchu/purge", { method: "POST", headers: { "content-type": "application/json" }, body })).status).toBe(401);
+    const bad = JSON.stringify({ userId: "x", reason: "account_deleted" });
+    expect((await app.request("/internal/danchu/purge", { method: "POST", headers: signed(bad), body: bad })).status).toBe(400);
+    expect(purge.calls).toHaveLength(2);
+
+    const off = setup(undefined, { secret: undefined, now: () => NOW });
+    expect((await off.app.request("/internal/danchu/purge", { method: "POST", headers: signed(body), body })).status).toBe(503);
+  });
+});
+
+describe("AI 이용량 상한", () => {
+  it("비용은 코드가 단가로 계산(백만분의 1달러, 올림). 기간은 한국 시간", () => {
+    const { prices } = usageConfigFromEnv({});
+    expect(costMicros({ inputTokens: 1_000_000, outputTokens: 0 }, prices)).toBe(3_000_000);
+    expect(costMicros({ inputTokens: 0, outputTokens: 1000, cacheReadTokens: 1000, cacheWriteTokens: 1000 }, prices)).toBe(15_000 + 300 + 3_750);
+    expect(periods(new Date("2026-11-30T15:30:00Z"))).toEqual({ day: "2026-12-01", month: "2026-12" });
+  });
+
+  it("환경 변수로 단가·상한을 바꾸고, off 는 그 상한을 끈다. 이상한 값은 시작할 때 막는다", () => {
+    const c = usageConfigFromEnv({ AGENT_CAP_USER_DAY_USD: "0.5", AGENT_CAP_ALL_MONTH_USD: "off", AGENT_PRICE_OUTPUT_PER_MTOK: "75" });
+    expect(c.caps).toEqual({ userDay: 500_000, orgMonth: 30_000_000, allMonth: null });
+    expect(c.prices.output).toBe(75);
+    expect(() => usageConfigFromEnv({ AGENT_CAP_ORG_MONTH_USD: "abc" })).toThrow();
+  });
+
+  it("계정 하루 상한을 넘으면 다음 턴은 429 usage_limit(user_day), 모델은 부르지 않는다. 다른 계정은 그대로", async () => {
+    const repo = new MemoryUsageRepo();
+    // 한 턴(입력 1·출력 1 토큰)이 상한을 넘도록 아주 낮게
+    const meter = usageMeter(repo, { prices: { input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, caps: { userDay: 1_000_000, orgMonth: null, allMonth: null } });
+    const provider = new FakeProvider([{ text: "네" }, { text: "네" }]);
+    const { call } = setup(provider, { usage: meter });
+    await call("POST", "/account/consent", T_REQ, { version: CONSENT_VERSION });
+    const conv = (await (await call("POST", "/v1/agent/conversations", T_REQ, { mode: "ask" })).json()) as { id: string };
+    const first = await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_REQ, { text: "4주 반복투여 몇 마리?" });
+    expect(first.status).toBe(200);
+    await first.text();
+    const second = await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_REQ, { text: "회복군은?" });
+    expect(second.status).toBe(429);
+    expect(await second.json()).toEqual({ error: "usage_limit", scope: "user_day" });
+    expect(provider.calls).toHaveLength(1);
+
+    await call("POST", "/account/consent", T_CRO, { version: CONSENT_VERSION });
+    const other = (await (await call("POST", "/v1/agent/conversations", T_CRO, { mode: "ask" })).json()) as { id: string };
+    expect((await call("POST", `/v1/agent/conversations/${other.id}/turn`, T_CRO, { text: "질문" })).status).toBe(200);
+  });
+
+  it("조직 한 달·전체 한 달 상한도 같은 방식", async () => {
+    const repo = new MemoryUsageRepo();
+    const cfg = { prices: { input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, caps: { userDay: null, orgMonth: 2_000_000, allMonth: 3_000_000 } };
+    const meter = usageMeter(repo, cfg);
+    const a = { userId: "a", orgId: "11111111-1111-4111-8111-111111111111", role: "cro" as const };
+    const b = { userId: "b", orgId: "22222222-2222-4222-8222-222222222222", role: "cro" as const };
+    const now = new Date("2026-11-19T00:00:00Z");
+    await meter.record(a, { inputTokens: 2, outputTokens: 0 }, now);
+    expect(await meter.over(a, now)).toBe("org_month");
+    expect(await meter.over(b, now)).toBeNull();
+    await meter.record(b, { inputTokens: 1, outputTokens: 0 }, now);
+    expect(await meter.over(b, now)).toBe("all_month");
+    // 다음 달에는 다시 열린다
+    expect(await meter.over(a, new Date("2026-12-05T00:00:00Z"))).toBeNull();
   });
 });

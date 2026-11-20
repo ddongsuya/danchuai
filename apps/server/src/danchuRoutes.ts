@@ -2,7 +2,7 @@
 // - /account: 내 정보(단추 계정·역할·기관)와 국외 이전·AI 처리 동의. 가입·조직·초대는 단추 웹에서 한다.
 // - /v1/requests, /v1/lab/requests: 단추에서 읽는다. 에이전트 DB에는 아직 보내지 않은 대화(작성 중)만 있다.
 // 공개 규칙은 단추가 이미 적용해 보낸다(선정 전 의뢰자 신원 숨김, 비교표 열리기 전 기관명·금액 숨김). 여기서 더 붙이지 않는다.
-import { Hono } from "hono";
+import { Hono, type Context, type Next } from "hono";
 import { z } from "zod";
 import type { Session } from "./auth";
 import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from "./danchuAuth";
@@ -13,6 +13,7 @@ import { canLinkConversation, checkAction, checkCatalogAction, isKnownAction } f
 import type { ConversationRepo } from "./agent/store";
 import { sha256 } from "./hash";
 import type { OutboundRepo } from "./repo";
+import type { PurgeRepo } from "./purge";
 import { runAuto, runView, type CatalogCache } from "./danchuAssist";
 import type { RunRepo } from "./runs";
 
@@ -30,7 +31,7 @@ type Lookup = (authorization: string | undefined) => Promise<DanchuIdentity | Da
 
 const ConsentBody = z.object({ version: z.literal(CONSENT_VERSION) }).strict();
 
-export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo; api: DanchuApi }) {
+export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo; api: DanchuApi; purge?: PurgeRepo }) {
   const app = new Hono<{ Variables: { id: DanchuIdentity } }>();
   app.use("*", async (c, next) => {
     const r = await deps.lookup(c.req.header("authorization"));
@@ -64,16 +65,54 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
     return c.json({ consent: await deps.workspaces.consent(c.get("id").me.id) });
   });
 
+  // 동의 철회(처리방침 3항). 단추에 먼저 철회를 남기고(단추는 기록을 3년 보관), 에이전트 쪽 동의를 철회로 표시한 뒤
+  // 이 사람의 대화·초안·승인 기록을 지운다. 단추 철회가 안 되면 아무것도 바꾸지 않고 503(다시 시도)
+  app.post("/consent/revoke", async (c) => {
+    const parsed = ConsentBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    const token = BEARER.exec(c.req.header("authorization") ?? "")![1]!;
+    const r = await deps.api.revokeConsent(token, parsed.data.version);
+    if (!r.ok) return c.json({ error: r.error }, STATUS[r.error]);
+    const userId = c.get("id").me.id;
+    await deps.workspaces.revoke(userId);
+    const removed = deps.purge ? await deps.purge.purge(userId, "consent_revoked") : { conversations: 0, drafts: 0 };
+    return c.json({ revoked: { version: parsed.data.version }, removed });
+  });
+
   // 가입·조직·초대·이름은 단추 계정에서 관리한다
   app.all("*", (c) => c.json({ error: "managed_by_danchu" }, 404));
   return app;
 }
 
-/** AI를 부르는 경로 앞에 둔다. 이번 판 동의가 없으면 403 consent_required */
-export function requireConsent(workspaces: WorkspaceRepo) {
-  return async (c: { get: (k: "session") => Session; json: (b: unknown, s: 403) => Response }, next: () => Promise<void>) => {
+/**
+ * AI를 부르는 경로 앞에 둔다. 이번 판 동의가 없으면 403 consent_required.
+ * 단추 연동이면 단추 동의 기록도 본다(계정별로 잠깐 기억, 기본 60초). 단추에서 철회됐으면 여기서도 철회로 표시하고
+ * 대화·초안을 지운 뒤 403. 단추가 응답하지 않으면 에이전트 쪽 사본으로 판단한다(철회는 단추가 따로 알린다).
+ */
+export function requireConsent(workspaces: WorkspaceRepo, opts: { api?: DanchuApi; purge?: PurgeRepo; ttlMs?: number; now?: () => number } = {}) {
+  const ttl = opts.ttlMs ?? 60_000;
+  const now = opts.now ?? (() => Date.now());
+  const checked = new Map<string, number>();
+  return async (c: Context<{ Variables: { session: Session } }>, next: Next) => {
     const s = c.get("session");
     if (!(await workspaces.consent(s.userId))) return c.json({ error: "consent_required" }, 403);
+    if (opts.api) {
+      const t = now();
+      if ((checked.get(s.userId) ?? 0) <= t) {
+        const token = BEARER.exec(c.req.header("authorization") ?? "")?.[1];
+        const r = token ? await opts.api.consents(token) : null;
+        if (r?.ok) {
+          if (!r.data.some((x) => x.version === CONSENT_VERSION)) {
+            checked.delete(s.userId);
+            await workspaces.revoke(s.userId);
+            if (opts.purge) await opts.purge.purge(s.userId, "consent_revoked");
+            return c.json({ error: "consent_required" }, 403);
+          }
+          if (checked.size > 5000) for (const [k, v] of checked) if (v <= t) checked.delete(k);
+          checked.set(s.userId, t + ttl);
+        }
+      }
+    }
     await next();
   };
 }
