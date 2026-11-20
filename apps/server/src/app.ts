@@ -19,6 +19,7 @@ import { marketRoutes } from "./market";
 import type { DanchuApi } from "./danchu";
 import { purgeRoutes, type PurgeRepo } from "./purge";
 import type { UsageMeter } from "./usage";
+import { transcribeRoutes, type SttProvider } from "./transcribe";
 import type { DanchuIdentity, WorkspaceRepo } from "./danchuAuth";
 import type { DanchuError } from "./danchu";
 import { danchuAccountRoutes, danchuActionRoutes, danchuMarketRoutes, danchuRunRoutes, requireConsent } from "./danchuRoutes";
@@ -51,6 +52,8 @@ export interface Deps {
   purge?: { repo: PurgeRepo; secret: string | undefined; now?: () => number };
   /** AI 이용량 상한. 없으면 상한 없음 */
   usage?: UsageMeter;
+  /** 회의 녹음 전사(임시 토큰 발급). 없으면 /v1/agent/transcribe/token 은 404 not_configured */
+  stt?: { provider: SttProvider; pricePerMin: number; maxMinutes: number };
 }
 
 type Env = { Variables: { session: Session } };
@@ -175,6 +178,7 @@ export function createApp(deps: Deps) {
     return c.json(action ? { status: done.status, result: result ?? null } : { status: done.status });
   });
 
+  app.route("/v1/agent/transcribe", transcribeRoutes({ stt: deps.stt?.provider, pricePerMin: deps.stt?.pricePerMin, maxMinutes: deps.stt?.maxMinutes, usage: deps.usage }));
   app.route(
     "/v1/agent",
     agentRoutes({

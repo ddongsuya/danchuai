@@ -98,6 +98,8 @@ export interface UsageMeter {
   /** 넘은 상한이 있으면 그 이름. 없으면 null */
   over(s: Session, now?: Date): Promise<CapScope | null>;
   record(s: Session, u: Usage, now?: Date): Promise<void>;
+  /** 토큰이 아닌 비용(녹음 전사 등)을 백만분의 1달러로 더한다 */
+  recordCost(s: Session, micros: number, now?: Date): Promise<void>;
 }
 
 export function usageMeter(repo: UsageRepo, cfg: { prices: Prices; caps: Caps }): UsageMeter {
@@ -115,6 +117,11 @@ export function usageMeter(repo: UsageRepo, cfg: { prices: Prices; caps: Caps })
     async record(s, u, now = new Date()) {
       const k = keys(s, now);
       await repo.add(order.map((x) => k[x]), u, costMicros(u, cfg.prices));
+    },
+    async recordCost(s, micros, now = new Date()) {
+      if (!(micros > 0)) return;
+      const k = keys(s, now);
+      await repo.add(order.map((x) => k[x]), { inputTokens: 0, outputTokens: 0 }, Math.round(micros));
     },
   };
 }

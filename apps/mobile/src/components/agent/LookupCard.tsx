@@ -33,7 +33,6 @@ function QuoteHits({ card, initial }: { card: Card; initial?: QuoteHitView[] }) 
   useEffect(() => {
     if (initial) return;
     let live = true;
-    setLoad({ kind: 'loading' });
     readDanchu<{ hits: QuoteHitView[] }>(card.action, card.body)
       .then((r) => live && setLoad({ kind: 'done', data: Array.isArray(r.hits) ? r.hits : [] }))
       .catch(() => live && setLoad({ kind: 'error' }));
@@ -56,7 +55,10 @@ function QuoteHits({ card, initial }: { card: Card; initial?: QuoteHitView[] }) 
         )}
       </View>
       {load.kind === 'loading' && <StepLog steps={[{ label: '단추에서 찾는 중', state: 'now' }]} />}
-      {load.kind === 'error' && <ErrorLine label="견적을 불러오지 못했어요" onRetry={() => setTick((t) => t + 1)} />}
+      {load.kind === 'error' && <ErrorLine label="견적을 불러오지 못했어요" onRetry={() => {
+            setLoad({ kind: 'loading' });
+            setTick((t) => t + 1);
+          }} />}
       {load.kind === 'done' && !load.data.length && (
         <Txt variant="chatSmall" color={tokens.muted} style={styles.empty}>
           맞는 견적 없음

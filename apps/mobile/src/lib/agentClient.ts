@@ -6,6 +6,7 @@ import { fetch } from 'expo/fetch';
 import type { ChatErrorCode } from './chat';
 import { createSseParser, type SseEvent } from './sse';
 import { accessToken, authEnabled } from './supabase';
+import type { SttTicket } from './transcribe';
 
 const BASE = process.env.EXPO_PUBLIC_AGENT_URL?.replace(/\/$/, '');
 // 로그인(Supabase)이 켜져 있으면 그 세션 토큰을 쓰고, 아니면 개발용 토큰(로컬 실행)을 쓴다.
@@ -113,9 +114,12 @@ export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {
 export const runDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
   call<{ run: AssistRunView; result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) });
 
+/** 회의 녹음 전사 임시 토큰. 녹음 길이(분)와 참석자 동의 확인(attest)을 보낸다 */
+export const getSttTicket = (minutes: number) => call<SttTicket>('cro', '/v1/agent/transcribe/token', { minutes: Math.max(1, Math.ceil(minutes)), attest: true });
+
 /** 단추 견적서 툴 계산 금액(요청 행별, 부가세 별도). 금액이 없는 행은 amount null */
 export interface QuotePriceView {
-  rows: { seq: number; name: string; kind: string | null; amount: number | null; changes: number; priced: boolean; why: 'no_match' | 'no_price' | 'missing_item' | null }[];
+  rows: { seq: number; name: string; kind: string | null; amount: number | null; changes: number; priced: boolean; why: 'no_match' | 'no_price' | 'missing_item' | 'check' | null; checks?: string[] }[];
   sum: number;
   complete: boolean;
   source: 'doc' | 'catalog';
@@ -146,13 +150,14 @@ export const getConversation = (role: AgentRole, id: string) => call<Conversatio
 /**
  * 한 턴. 서버 이벤트를 오는 대로 넘긴다. done이 오면 정상 종료, 오기 전에 끊기면 network 오류.
  */
-export async function sendTurn(role: AgentRole, id: string, text: string, onEvent: (e: SseEvent) => void, signal?: AbortSignal) {
+export async function sendTurn(role: AgentRole, id: string, text: string, onEvent: (e: SseEvent) => void, signal?: AbortSignal, transcript?: string) {
   let res;
   try {
     res = await fetch(`${BASE}/v1/agent/conversations/${encodeURIComponent(id)}/turn`, {
       method: 'POST',
       headers: { ...(await headers(role)), accept: 'text/event-stream' },
-      body: JSON.stringify({ text }),
+      // 회의 전사본(기관 비서)은 이 턴에만 붙인다. 서버는 대화 기록에 남기지 않는다
+      body: JSON.stringify(transcript ? { text, transcript } : { text }),
       signal,
     });
   } catch {

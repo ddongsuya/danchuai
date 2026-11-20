@@ -282,6 +282,7 @@ const VIEWS: View_[] = [
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
   { key: 'lab-assist-menu', label: '비서, 메뉴 열림', group: '기관' },
   { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
+  { key: 'lab-assist-record', label: '비서, 회의 녹음', group: '기관' },
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -452,6 +453,8 @@ function PreviewView({ view }: { view: string }) {
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-find':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={FIND_MESSAGES} actions={[]} lookups={FIND_LOOKUPS} lookupPreview={FIND_HITS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-record':
+      return <AssistView menu={ASSIST_MENU} initialRecordOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onTranscript={noop} onUndo={noop} />;
     case 'lab-assist-menu':
       return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-runs':

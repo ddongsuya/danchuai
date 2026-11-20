@@ -4,7 +4,7 @@
 // 기관의 첫 화면이다(시안 2026-11-20): 가운데 위에 비서 캐릭터, 왼쪽 위 메뉴(받은 요청·실행 기록·질문하기·계정),
 // 답을 준비하는 동안 말풍선에 점 셋이 튄다.
 import { router } from 'expo-router';
-import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, MinusCircle, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import { TypingBubble } from '@/components/chat/TypingBubble';
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { LookupCard } from '@/components/agent/LookupCard';
+import { RecordSheet } from '@/components/agent/RecordSheet';
 import { IconButton } from '@/components/ui/IconButton';
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from '@/components/agent/LiveChat';
 import { Press } from '@/components/ui/Press';
@@ -73,6 +74,7 @@ export function AssistChat() {
       onRetry={undoError ? undefined : RETRYABLE.includes(state.error as ChatErrorCode) ? retry : undefined}
       undoing={undoing}
       onSend={(t) => void send(t)}
+      onTranscript={(t, minutes) => void send(`회의 녹음 정리해 줘 (${minutes}분)`, t)}
       onUndo={(id) => void undo(id)}
     />
   );
@@ -107,12 +109,17 @@ export interface AssistViewProps {
   onRetry?: () => void;
   undoing?: string | null;
   onSend: (text: string) => void;
+  /** 회의 녹음 전사본을 비서에게 맡긴다. 없으면 마이크 버튼을 숨긴다 */
+  onTranscript?: (transcript: string, minutes: number) => void;
+  /** 미리보기에서 녹음 시트를 연 채로 보여 줄 때만 */
+  initialRecordOpen?: boolean;
   onUndo: (runId: string) => void;
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onUndo }: AssistViewProps) {
+export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo }: AssistViewProps) {
   const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
+  const [recordOpen, setRecordOpen] = useState(initialRecordOpen);
   const empty = !messages.length && !streaming;
   const cardsAt = (i: number) => actions.filter((a) => a.at === i);
   const findsAt = (i: number) => lookups.filter((a) => a.at === i);
@@ -127,12 +134,19 @@ export function AssistView({ menu, initialMenuOpen = false, brief, messages, act
         <List size={u(22)} color={tokens.text} />
       </IconButton>
       <View style={styles.navMid}>{!empty && <AgentAvatar size={uc(30)} state={streaming ? 'thinking' : 'idle'} />}</View>
-      <View style={styles.navSpacer} />
+      {onTranscript ? (
+        <IconButton label="회의 녹음" onPress={() => canSend && setRecordOpen(true)}>
+          <Microphone size={u(22)} color={canSend ? tokens.text : tokens.faint} />
+        </IconButton>
+      ) : (
+        <View style={styles.navSpacer} />
+      )}
     </View>
   );
   return (
     <ChatShell title="비서" nav={nav} bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
       <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
+      {onTranscript && <RecordSheet visible={recordOpen} onClose={() => setRecordOpen(false)} onTranscript={onTranscript} />}
       {empty && (
         <View style={styles.hero}>
           <AgentAvatar size={uc(64)} state={starting ? 'thinking' : 'idle'} />

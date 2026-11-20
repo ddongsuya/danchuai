@@ -295,6 +295,26 @@ describe("기관 비서 대화", () => {
     expect(view.messages.at(-1).text).toBe("28일 랫드 견적을 찾아볼게요.");
   });
 
+  it("회의 전사본: 이번 턴에만 모델에 붙이고(연락처 지움) 대화 기록에는 사용자 글만. 비서 대화가 아니면 400", async () => {
+    const provider = new FakeProvider([{ text: "회의 기록과 할 일로 정리할게요." }]);
+    const { call, consent } = setup(provider);
+    await consent(T_CRO);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_CRO, { mode: "assist" }));
+    const transcript = "화자 0: 가람 PK 일정은 12월 초로 하죠. 연락은 010-1234-5678 로 주세요.\n화자 1: 네, 다음 주까지 시험계획서 초안 보낼게요.";
+    const r = await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "회의 녹음 정리해 줘 (12분)", transcript });
+    expect(r.status).toBe(200);
+    await r.text();
+    const sent = String(provider.calls[0]!.messages.at(-1)?.content);
+    expect(sent).toContain("<회의 전사본>");
+    expect(sent).toContain("시험계획서 초안");
+    expect(sent).not.toContain("010-1234-5678");
+    const view = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
+    expect(JSON.stringify(view.messages)).not.toContain("시험계획서 초안");
+    expect(view.messages.at(-2).text).toBe("회의 녹음 정리해 줘 (12분)");
+    const ask = await json(await call("POST", "/v1/agent/conversations", T_CRO, { mode: "ask" }));
+    expect((await call("POST", `/v1/agent/conversations/${ask.id}/turn`, T_CRO, { text: "질문", transcript: "x" })).status).toBe(400);
+  });
+
   it("비서 대화에서는 보내기 초안을 만들지 않는다", async () => {
     const { call, consent } = setup(new FakeProvider());
     await consent(T_CRO);
