@@ -119,6 +119,14 @@ export function providerErrorInfo(err: unknown): (string | number)[] {
   return [err instanceof Error ? err.name : "unknown", status, type, msg];
 }
 
+/** 공급사 계정의 사용 한도·크레딧이 다 됐는지(서비스 운영 쪽 한도). 앱에는 ai_quota 로 알린다 */
+export function providerErrorCode(err: unknown): "ai_quota" | "provider_error" {
+  const e = err as { status?: unknown; error?: { error?: { type?: unknown; message?: unknown } } };
+  const msg = typeof e.error?.error?.message === "string" ? e.error.error.message : "";
+  const quota = (e.status === 400 && /usage limit|credit balance/i.test(msg)) || e.status === 402 || e.error?.error?.type === "billing_error";
+  return quota ? "ai_quota" : "provider_error";
+}
+
 /** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
 const stripNotes = (t: string) =>
   t
@@ -311,7 +319,7 @@ export function agentRoutes(deps: AgentDeps) {
         // 본문·프롬프트는 남기지 않는다. 오류 종류만.
         console.error("agent_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
-        await send("error", { code: "provider_error" });
+        await send("error", { code: providerErrorCode(err) });
       } finally {
         await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
       }
@@ -372,7 +380,7 @@ export function agentRoutes(deps: AgentDeps) {
       } catch (err) {
         console.error("assist_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
-        await send("error", { code: "provider_error" });
+        await send("error", { code: providerErrorCode(err) });
       } finally {
         await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
       }

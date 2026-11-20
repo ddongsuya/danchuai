@@ -26,6 +26,7 @@ const codeOf = (status: number, body: unknown): ChatErrorCode => {
   const e = (body as { error?: string } | null)?.error;
   if (status === 401) return 'unauthorized';
   if (status === 503 || e === 'agent_unavailable') return 'agent_unavailable';
+  if (e === 'usage_limit') return 'usage_limit';
   if (status === 429 || e === 'turn_limit') return 'turn_limit';
   if (e === 'turn_in_progress') return 'turn_in_progress';
   // 단추 견적 대화를 열 수 없음(quote_not_joined·quote_closed 등), 단추가 찾지 못함·막음

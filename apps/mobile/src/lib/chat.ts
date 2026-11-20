@@ -13,7 +13,11 @@ export type ChatErrorCode =
   /** 단추 견적 대화를 열 수 없다(참여 전·불참·회신 닫힘·찾을 수 없음 등) */
   | 'quote_unavailable'
   /** 기관 비서: 되돌릴 수 없다(이미 되돌림·기간 지남·그 뒤 바뀜) */
-  | 'undo_unavailable';
+  | 'undo_unavailable'
+  /** 계정·기관 AI 이용량 상한(서버 usage_limit) */
+  | 'usage_limit'
+  /** 서비스의 AI 사용 한도·크레딧이 다 됨(공급사 쪽) */
+  | 'ai_quota';
 
 /** 기관 비서가 단추에서 바로 실행한 것 한 장(서버 action 이벤트). at: 이 카드가 붙는 메시지 자리 */
 export interface ActionCard {
@@ -116,7 +120,7 @@ export type ChatAction =
   | { type: 'ended'; at: number }
   | { type: 'failed'; code: ChatErrorCode; at: number };
 
-const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable', 'undo_unavailable'];
+const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable', 'undo_unavailable', 'usage_limit', 'ai_quota'];
 const asCode = (c: unknown): ChatErrorCode => (typeof c === 'string' && KNOWN.includes(c) ? (c as ChatErrorCode) : 'provider_error');
 
 /** 출처는 모양이 맞는 것만, 원문 주소는 https만 받는다. */
@@ -229,6 +233,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
     case 'ended':
       return settle(s, a.at);
     case 'failed':
-      return { ...settle(s, a.at), error: a.code };
+      // 서버가 먼저 보낸 오류(사용 한도 등)가 있으면 그것을 둔다. 스트림이 끊긴 것(network)으로 덮지 않는다
+      return { ...settle(s, a.at), error: s.error ?? a.code };
   }
 }
