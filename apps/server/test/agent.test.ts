@@ -140,7 +140,7 @@ describe("에이전트 대화: 기본", () => {
     const sheet = events.find((e) => e.event === "sheet")!.data;
     expect(sheet.sheet.species).toBe("랫드");
     expect(sheet.missing).toContain("route");
-    expect(events.find((e) => e.event === "question")!.data.options).toEqual(["경구", "정맥", "피하"]);
+    expect(events.find((e) => e.event === "question")!.data.options).toEqual([{ label: "경구" }, { label: "정맥" }, { label: "피하" }]);
   });
 
   it("다른 조직의 대화는 404", async () => {

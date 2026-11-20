@@ -5,7 +5,7 @@ import { EMPTY_SHEET, redactContacts, retrievalQuery, sheetContext } from "@danc
 import { contextBlock, retrieve } from "@danchuai/knowledge";
 import { runToolTurn } from "../src/agent/repair";
 import { ASK_SYSTEM, SYSTEM } from "../src/agent/prompts";
-import type { Conversation } from "../src/agent/store";
+import type { Conversation, Question } from "../src/agent/store";
 import type { Role } from "../src/agent/tools";
 import { TOOLS } from "../src/agent/tools";
 import { providerFromEnv } from "../src/providers";
@@ -52,13 +52,14 @@ async function main() {
       tools: TOOLS[input.role],
       maxTokens: 1500,
     },
+    evidence,
   });
   // 사용자가 보게 되는 것: 답 글, 질문·선택지, 요약, 본문 초안
   const out = [result.text, ...result.notes];
   for (const e of result.events) {
     if (e.event === "question") {
-      const q = e.data as { question: string; options: string[] };
-      out.push(`[질문] ${q.question}`, `[선택지] ${q.options.join(" / ")}`);
+      const q = e.data as Question;
+      out.push(`[질문] ${q.question}`, `[선택지] ${q.options.map((o) => (o.effect ? `${o.label}(${o.effect})` : o.label)).join(" / ")}`);
     } else if (e.event === "summary") out.push(`[요약] ${JSON.stringify(e.data)}`);
     else if (e.event === "draft") out.push(`[본문] ${(e.data as { body?: string }).body ?? JSON.stringify(e.data)}`);
   }

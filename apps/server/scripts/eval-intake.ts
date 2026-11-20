@@ -29,7 +29,7 @@ interface Scenario {
   /** 첫 답에 (근거: …)가 있어야 하는지 */
   cite?: boolean;
   /** 몇 번째 턴 답에서 어긋남을 짚어야 하는지(0부터)와 그 말 */
-  mismatch?: { turn: number; pattern: RegExp };
+  mismatch?: { turn: number; pattern: RegExp; fields?: SheetField[] };
   /** 첫 턴 뒤 요청서에 들어가 있어야 하는 값 */
   sheetAfterFirst?: Partial<Record<SheetField, RegExp>>;
 }
@@ -56,7 +56,7 @@ const SCENARIOS: Scenario[] = [
   {
     id: 4, name: "임상 기간과 어긋난 요청",
     turns: ["합성의약품 IND용 독성시험 견적이요. 1상은 3개월 반복 투여 예정이에요", "반복투여는 4주로 해 주세요"],
-    cite: true, mismatch: { turn: 1, pattern: /3개월|13주|짧|맞지|부족/ },
+    cite: true, mismatch: { turn: 1, pattern: /3개월|13주|짧|맞지|부족/, fields: ["testType", "duration"] },
   },
   {
     id: 5, name: "건강기능식품 개별인정",
@@ -101,7 +101,12 @@ const REPAIR = { retried: 0, leaked: 0 };
 
 const BANNED = [/추천/, /\d[\d,]*\s*(만\s*원|억|원(?![문료본가칙]))/];
 
-interface TurnLog { user: string; text: string; question: { field: string; question: string; options: string[] } | null; sheet: Record<string, string | null> }
+interface TurnLog {
+  user: string;
+  text: string;
+  question: { field: string; question: string; options: { label: string; effect?: string }[]; basis?: { doc: string; section: string }[]; recheck?: boolean } | null;
+  sheet: Record<string, string | null>;
+}
 
 async function run(s: Scenario, provider: NonNullable<ReturnType<typeof providerFromEnv>>) {
   let conv: Conversation = {
@@ -124,6 +129,7 @@ async function run(s: Scenario, provider: NonNullable<ReturnType<typeof provider
         tools: TOOLS.requester,
         maxTokens: 1200,
       },
+      evidence,
     });
     USAGE.inputTokens += result.usage.inputTokens;
     USAGE.outputTokens += result.usage.outputTokens;
@@ -147,7 +153,7 @@ async function run(s: Scenario, provider: NonNullable<ReturnType<typeof provider
 
 function grade(s: Scenario, logs: TurnLog[]) {
   const checks: [string, boolean][] = [];
-  const all = logs.map((l) => [l.text, l.question?.question ?? "", ...(l.question?.options ?? [])].join(" ")).join(" ");
+  const all = logs.map((l) => [l.text, l.question?.question ?? "", ...(l.question?.options ?? []).flatMap((o) => [o.label, o.effect ?? ""])].join(" ")).join(" ");
   checks.push(["추천·금액 표현 없음", !BANNED.some((r) => r.test(all))]);
   checks.push(["선택지 6개 이하", logs.every((l) => !l.question || l.question.options.length <= 6)]);
   // 도구 호출을 답 글에 태그로 써 버리면 요청서·질문이 반영되지 않고 사용자에게 태그가 보인다.
@@ -160,10 +166,13 @@ function grade(s: Scenario, logs: TurnLog[]) {
   if (s.mismatch) {
     const l = logs[s.mismatch.turn];
     checks.push(["어긋남 짚기", !!l && s.mismatch.pattern.test(`${l.text} ${l.question?.question ?? ""}`)]);
+    if (s.mismatch.fields) checks.push([`어긋난 칸 다시 묻기 ∈ {${s.mismatch.fields.join(", ")}}`, !!l?.question && s.mismatch.fields.includes(l.question.field as SheetField)]);
   }
   for (const [f, re] of Object.entries(s.sheetAfterFirst ?? {})) checks.push([`첫 턴 뒤 ${f} 채움`, re!.test(first.sheet[f] ?? "")]);
   const situationQs = logs.filter((l) => l.question && (SITUATION_FIELDS as readonly string[]).includes(l.question.field));
-  checks.push(["상황 질문에 미정·모르겠어요 선택지", situationQs.every((l) => l.question!.options.some((o) => /미정|모르/.test(o)))]);
+  // "미정"은 카드가 붙인다. 상황 질문은 고르면 달라지는 것(effect)이 하나 이상 보여야 한다.
+  checks.push(["상황 질문에 달라지는 것 표시", situationQs.every((l) => l.question!.options.some((o) => !!o.effect))]);
+  if (s.cite) checks.push(["첫 두 턴 안에 질문 근거(basis)", logs.slice(0, 2).some((l) => !!l.question?.basis?.length)]);
   return checks;
 }
 
@@ -195,7 +204,11 @@ async function main() {
     console.log(checks.map(([n, ok]) => `- ${ok ? "통과" : "실패"} ${n}`).join("\n"), "\n");
     for (const l of logs) {
       console.log(`**사용자** ${l.user}\n\n**에이전트** ${l.text || "(글 없음)"}\n`);
-      if (l.question) console.log(`> 질문(${l.question.field}): ${l.question.question}\n> 선택지: ${l.question.options.join(" / ")}\n`);
+      if (l.question) {
+        const opts = l.question.options.map((o) => (o.effect ? `${o.label}(${o.effect})` : o.label)).join(" / ");
+        const basis = l.question.basis?.map((b) => `${b.doc} ${b.section}`).join(", ");
+        console.log(`> 질문(${l.question.field}${l.question.recheck ? ", 다시 묻기" : ""}): ${l.question.question}\n> 선택지: ${opts}${basis ? `\n> 근거: ${basis}` : ""}\n`);
+      }
     }
     const filled = Object.entries(logs.at(-1)!.sheet).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join(", ");
     console.log(`요청서: ${filled || "(비어 있음)"} / 남은 필수 칸: ${missingFields(logs.at(-1)!.sheet as never).join(", ") || "없음"}\n`);
