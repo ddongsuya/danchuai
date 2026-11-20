@@ -6,7 +6,7 @@
 // 레퍼런스: Mobbin Snapchat 홍보 검토(구역별 확인 + 아래 합계·주 버튼), Instacart 항목 목록(줄마다 금액 강조).
 import { CheckCircle, WarningCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Button } from '@/components/ui/Button';
@@ -14,7 +14,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { approveDanchuAction, draftDanchuAction, readDanchu, runDanchu, type QuotePriceView } from '@/lib/agentClient';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { blockedLabel, buildQuoteBody, formatWonInput, parseWonInput, quoteSubmittedNow, reviewLines, type DanchuQuoteDraft } from '@/lib/danchuQuote';
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
@@ -73,7 +73,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
       const path = typeof r.result?.path === 'string' && r.result.path.startsWith('/cro/docs/') ? r.result.path : null;
       if (!path) throw new Error('no_path');
       setTool('idle');
-      await Linking.openURL(`${DANCHU_URL}${path}`);
+      await openWeb(`${DANCHU_URL}${path}`);
     } catch {
       setTool('error');
     }

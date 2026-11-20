@@ -1,14 +1,14 @@
 // 단추 계정 로그인(이메일·비밀번호). 틀리면 어느 쪽이 틀렸는지 밝히지 않는다.
 // 이메일 확인·비밀번호 재설정은 단추 웹에서 한다.
 import { useRef, useState } from 'react';
-import { Linking, type TextInput, View } from 'react-native';
+import { type TextInput, View } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { space } from '@/constants/theme';
 import { authErrorText, isEmail, loginEmails } from '@/lib/authRules';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { supabase } from '@/lib/supabase';
 
 type InputRef = React.ComponentRef<typeof TextInput>;
@@ -43,7 +43,7 @@ export default function Login() {
       footer={
         <>
           <Button title="로그인" tall disabled={!ready} loading={busy} onPress={submit} />
-          <Button title="비밀번호 찾기" kind="text" disabled={busy} onPress={() => Linking.openURL(`${DANCHU_URL}/forgot`)} />
+          <Button title="비밀번호 찾기" kind="text" disabled={busy} onPress={() => openWeb(`${DANCHU_URL}/forgot`)} />
         </>
       }
       keyboardFooter={<Button title="로그인" bar disabled={!ready} loading={busy} onPress={submit} />}

@@ -50,3 +50,5 @@ export interface Me {
 export const fetchMe = () => call<Me>('/me');
 /** 국외 이전·AI 처리 동의. 서버가 판(version)을 확인한다 */
 export const agreeConsent = (version: string) => call<{ consent: { version: string; agreedAt: string } }>('/consent', { version });
+/** 동의 철회(처리방침 3항). 단추에 철회를 남기고 에이전트의 대화·초안·실행 기록을 지운다. 단추 계정은 그대로 */
+export const revokeConsent = (version: string) => call<{ revoked: { version: string } }>('/consent/revoke', { version });

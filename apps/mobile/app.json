@@ -8,18 +8,27 @@
     "scheme": "danchuai",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "kr.danchu.agent"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "kr.danchu.agent",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#f7f8fa",
+        "backgroundColor": "#1e1f22",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "kr.danchu.agent"
+      "package": "kr.danchu.agent",
+      "blockedPermissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "output": "single",
@@ -30,7 +39,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f7f8fa",
+          "backgroundColor": "#f6f6f5",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
@@ -39,7 +48,9 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "회의를 녹음해 글로 옮기려면 마이크 권한이 필요해요."
+          "microphonePermission": "회의를 녹음해 글로 옮기려면 마이크 권한이 필요해요.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
         }
       ]
     ],

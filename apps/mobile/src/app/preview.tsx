@@ -398,7 +398,7 @@ function PreviewView({ view }: { view: string }) {
         </ChatShell>
       );
     case 'account':
-      return <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} onManage={noop} onLogout={() => router.push(toView('logout'))} />;
+      return <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} onManage={noop} onDelete={noop} onRevoke={noop} onLogout={() => router.push(toView('logout'))} />;
     case 'approve':
       return (
         <ChatShell

@@ -19,6 +19,8 @@ interface AuthState {
   danchu: boolean;
   /** 국외 이전 동의 시각(ISO). 계정 화면에 날짜로 보인다 */
   consentAt: string | null;
+  /** 동의한 판(철회할 때 보낸다) */
+  consentVersion: string | null;
   /** 조직을 만들거나 참여한 뒤 다시 읽는다. */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -33,6 +35,7 @@ const Ctx = createContext<AuthState>({
   blocked: null,
   danchu: false,
   consentAt: null,
+  consentVersion: null,
   refresh: async () => undefined,
   signOut: async () => undefined,
   setRecovery: () => undefined,
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [blocked, setBlocked] = useState<BlockedReason | null>(null);
   const [danchu, setDanchu] = useState(false);
   const [consentAt, setConsentAt] = useState<string | null>(null);
+  const [consentVersion, setConsentVersion] = useState<string | null>(null);
   const [base, setStatus] = useState<AuthStatus>(supabase ? 'loading' : 'disabled');
   const [recovery, setRecovery] = useState(false);
   const status: AuthStatus = recovery ? 'recovery' : base;
@@ -55,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!s) {
       setOrg(null);
       setConsentAt(null);
+      setConsentVersion(null);
       setStatus('signedOut');
       return;
     }
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setOrg(me.org);
       setDanchu(me.source === 'danchu');
       setConsentAt(me.consent?.agreedAt ?? null);
+      setConsentVersion(me.consent?.version ?? null);
       setBlocked(null);
       if (!me.org) return setStatus('needsOrg');
       setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
@@ -100,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       blocked,
       danchu,
       consentAt,
+      consentVersion,
       refresh: async () => load((await supabase?.auth.getSession())?.data.session ?? null),
       // 서버 로그아웃이 실패해도(연결 끊김 등) 기기의 세션은 지우고 바로 첫 화면으로 간다.
       signOut: async () => {
@@ -111,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       setRecovery,
     }),
-    [status, session, org, blocked, danchu, consentAt, load],
+    [status, session, org, blocked, danchu, consentAt, consentVersion, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
