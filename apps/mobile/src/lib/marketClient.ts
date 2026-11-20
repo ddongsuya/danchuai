@@ -109,6 +109,8 @@ export interface DanchuCompareColumn {
   revision?: number | null;
   selectable?: boolean;
   selected?: boolean;
+  /** 기관 견적서(견적서 툴, 제출 금액과 같음)를 여는 단추 웹 경로. 없으면 null */
+  docPath?: string | null;
 }
 
 export interface DanchuLabItem {

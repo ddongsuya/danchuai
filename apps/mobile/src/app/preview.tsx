@@ -86,7 +86,7 @@ const WAITING: DanchuCompare = { open: false, joined: 4, submitted: 2, replyBy: 
 const OPEN: DanchuCompare = {
   open: true,
   columns: [
-    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4), quoteId: 'q-demo-1', revision: 1, selectable: true },
+    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4), quoteId: 'q-demo-1', revision: 1, selectable: true, docPath: '/app/r/DC-2026-0142/q/q-demo-1/doc' },
     { lab: '나 기관', total: 51_200_000, weeks: 12, submittedAt: day(5), quoteId: 'q-demo-2', revision: 2, selectable: true },
     { lab: '다 기관', total: 49_800_000, weeks: 16, submittedAt: day(7), quoteId: 'q-demo-3', revision: 1, selectable: false },
   ],
