@@ -604,8 +604,12 @@ def main():
                     "topic": "guide", "products": [], "lang": "ko", "version": version, "chunks": len(got),
                     "license": "공공저작물(저작권법 제24조의2). 식약처 민원인 안내서 원문을 조항 단위로 나눈 것이며 내용은 바꾸지 않았다."}
             if e["ocr"]:
-                meta["license"] += " 스캔본을 OCR로 읽은 글이라 글자 오류가 있을 수 있어 수치는 원본으로 확인한다."
-            if not got:
+                # 2026-11-21 사용자 결정: 스캔본은 수치를 원문으로 명확히 제시할 수 없어 지식에서 뺀다.
+                got = []
+                meta["chunks"] = 0
+                meta["license"] = "원문 미수록(스캔본이라 수치를 원문으로 명확히 제시할 수 없어 제외). 공식 주소만 연결"
+                gaps.append(e["name"])
+            elif not got:
                 meta["license"] = "원문 미수록(스캔본 또는 암호화 문서). 공식 주소만 연결"
                 gaps.append(e["name"])
             docs.append(meta)
