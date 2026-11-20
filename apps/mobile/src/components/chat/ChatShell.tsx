@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { motion, space, tokens, u } from '@/constants/theme';
+import { motion, space, tokens, u, uc } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
 import { NavBar } from './NavBar';
@@ -35,7 +35,7 @@ export function ChatShell({ title, children, bottom, dim, nav }: { title: string
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  content: { paddingHorizontal: space.xl, paddingTop: u(6), paddingBottom: space.lg },
-  stack: { gap: u(18) },
+  content: { paddingHorizontal: uc(18), paddingTop: u(6), paddingBottom: space.lg },
+  stack: { gap: uc(16) },
   bottom: { paddingBottom: space.md },
 });

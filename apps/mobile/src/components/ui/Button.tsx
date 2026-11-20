@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { fonts, radius, space, tokens, u } from '@/constants/theme';
+import { fonts, radius, space, tokens, u, uc } from '@/constants/theme';
 
 import { Dots } from './Dots';
 import { Press } from './Press';
@@ -26,11 +26,14 @@ interface Props {
   loadingTitle?: string;
   /** 키보드 바로 위에 붙는 폭 전체 막대 */
   bar?: boolean;
+  /** 대화 화면 크기(1.1배, theme CHAT_SCALE) */
+  chat?: boolean;
 }
 
 const fg: Record<ButtonKind, string> = { ink: tokens.onInk, soft: tokens.text, text: tokens.muted };
 
-export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading, loadingTitle, bar }: Props) {
+export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading, loadingTitle, bar, chat }: Props) {
+  const label = chat ? 'chatLabel' : 'label';
   const off = disabled && !loading;
   const color = off ? tokens.faint : fg[kind];
   return (
@@ -39,19 +42,19 @@ export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disable
       onPress={onPress}
       disabled={disabled || loading}
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
-      style={[styles.base, styles[kind], tall && styles.tall, bar && styles.bar, off && kind !== 'text' && styles.off, flex != null && { flex }]}
+      style={[styles.base, chat && styles.chat, styles[kind], kind === 'text' && chat && styles.chatText, tall && (chat ? styles.chatTall : styles.tall), bar && styles.bar, off && kind !== 'text' && styles.off, flex != null && { flex }]}
     >
       {/* 글자는 자리만 지켜 폭이 바뀌지 않게 한다 */}
       <View style={[styles.row, loading && styles.hide]}>
         {icon}
-        <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+        <Txt variant={label} color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
           {title}
         </Txt>
       </View>
       {loading && (
         <View style={styles.over}>
           {loadingTitle ? (
-            <Txt variant="label" color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+            <Txt variant={label} color={color} style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
               {loadingTitle}
             </Txt>
           ) : null}
@@ -65,6 +68,9 @@ export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disable
 const styles = StyleSheet.create({
   base: { height: u(44), paddingHorizontal: u(18), borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   tall: { height: u(52) },
+  chat: { height: uc(38), paddingHorizontal: uc(16) },
+  chatTall: { height: uc(46) },
+  chatText: { paddingHorizontal: uc(10) },
   bar: { height: u(56), borderRadius: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   hide: { opacity: 0 },

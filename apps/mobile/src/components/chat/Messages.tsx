@@ -5,14 +5,14 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { Spinner } from '@/components/ui/Spinner';
 import { Txt } from '@/components/ui/Txt';
 import { lineEnter } from '@/lib/motion';
-import { radius, space, tokens, u } from '@/constants/theme';
+import { tokens, uc } from '@/constants/theme';
 
 /** 내 메시지만 말풍선. 에이전트 글은 말풍선 없이 본문으로 쓴다. fresh 면 아래에서 8px 올라오며 나타난다. */
 export function UserMessage({ text, fresh }: { text: string; fresh?: boolean }) {
   const reduced = useReducedMotion();
   return (
     <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined} style={styles.me}>
-      <Txt variant="body">{text}</Txt>
+      <Txt variant="chatBody">{text}</Txt>
     </Animated.View>
   );
 }
@@ -21,7 +21,7 @@ export function AgentText({ children, fresh }: { children: string; fresh?: boole
   const reduced = useReducedMotion();
   return (
     <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined}>
-      <Txt variant="agent">{children}</Txt>
+      <Txt variant="chatAgent">{children}</Txt>
     </Animated.View>
   );
 }
@@ -40,15 +40,15 @@ export function StepLog({ steps }: { steps: Step[] }) {
       {steps.map((s) =>
         s.state === 'done' ? (
           <View key={s.label} style={styles.step}>
-            <CheckCircle size={u(16)} color={tokens.muted} />
-            <Txt variant="caption" color={tokens.muted}>
+            <CheckCircle size={uc(15)} color={tokens.muted} />
+            <Txt variant="chatCaption" color={tokens.muted}>
               {s.label}
             </Txt>
           </View>
         ) : (
           <View key={s.label} style={styles.step} accessibilityLiveRegion="polite">
-            <Spinner size={u(16)} color={tokens.accent} />
-            <Txt variant="caption" color={tokens.accent}>
+            <Spinner size={uc(15)} color={tokens.accent} />
+            <Txt variant="chatCaption" color={tokens.accent}>
               {s.label}
             </Txt>
           </View>
@@ -59,8 +59,8 @@ export function StepLog({ steps }: { steps: Step[] }) {
 }
 
 const styles = StyleSheet.create({
-  me: { alignSelf: 'flex-end', maxWidth: '82%', backgroundColor: tokens.sunken, borderRadius: radius.bubble, paddingVertical: u(11), paddingHorizontal: space.lg },
-  steps: { gap: u(9), marginBottom: space.md },
+  me: { alignSelf: 'flex-end', maxWidth: '82%', backgroundColor: tokens.sunken, borderRadius: uc(18), paddingVertical: uc(9), paddingHorizontal: uc(14) },
+  steps: { gap: uc(7), marginBottom: uc(10) },
   // 시안 .step: 13 중간 굵기, 진행 중은 청록
-  step: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  step: { flexDirection: 'row', alignItems: 'center', gap: uc(6) },
 });

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { Txt } from '@/components/ui/Txt';
-import { radius, space, tokens, u } from '@/constants/theme';
+import { tokens, uc } from '@/constants/theme';
 import { KEEP, linear } from '@/lib/motion';
 
 export function TypingBubble({ label }: { label?: string | null }) {
@@ -24,7 +24,7 @@ export function TypingBubble({ label }: { label?: string | null }) {
         ))}
       </View>
       {label ? (
-        <Txt variant="caption" color={tokens.muted}>
+        <Txt variant="chatCaption" color={tokens.muted}>
           {label}
         </Txt>
       ) : null}
@@ -37,24 +37,24 @@ function Dot({ i, t, still }: { i: number; t: SharedValue<number>; still: boolea
     // 각 점은 자기 차례(0.12초씩 늦게)에 0.3초 동안 올라갔다 내려온다
     const p = (t.get() - i * 0.12 + 1) % 1;
     const up = p < 0.3 ? Math.sin((p / 0.3) * Math.PI) : 0;
-    return { opacity: 0.35 + 0.65 * up, transform: [{ translateY: still ? 0 : -u(4) * up }] };
+    return { opacity: 0.35 + 0.65 * up, transform: [{ translateY: still ? 0 : -uc(4) * up }] };
   });
   return <Animated.View style={[styles.dot, style]} />;
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: uc(8) },
   bubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: u(5),
-    height: u(40),
-    paddingHorizontal: u(16),
-    borderRadius: radius.bubble,
-    borderBottomLeftRadius: u(6),
+    gap: uc(4),
+    height: uc(36),
+    paddingHorizontal: uc(14),
+    borderRadius: uc(18),
+    borderBottomLeftRadius: uc(6),
     backgroundColor: tokens.surface,
     borderWidth: 1,
     borderColor: tokens.border,
   },
-  dot: { width: u(7), height: u(7), borderRadius: u(4), backgroundColor: tokens.muted },
+  dot: { width: uc(6), height: uc(6), borderRadius: uc(3), backgroundColor: tokens.muted },
 });
