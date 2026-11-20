@@ -9,14 +9,30 @@ import { KEEP, easeIn, easeOut } from '@/lib/motion';
 import { NavBar } from './NavBar';
 
 /** 대화 화면 틀. bottom 자리에 입력창이나 승인 카드가 들어간다. 승인 카드가 뜨면 대화는 0.24초에 걸쳐 흐려진다(투명도만이라 동작 줄이기에서도 같다). */
-export function ChatShell({ title, children, bottom, dim, nav }: { title: string; children: ReactNode; bottom: ReactNode; dim?: boolean; /** 기본 뒤로 가기 막대 대신 쓸 위 막대(비서 홈) */ nav?: ReactNode }) {
+export function ChatShell({
+  title,
+  children,
+  bottom,
+  dim,
+  nav,
+  flushBottom,
+}: {
+  title: string;
+  children: ReactNode;
+  bottom: ReactNode;
+  dim?: boolean;
+  /** 기본 뒤로 가기 막대 대신 쓸 위 막대(비서 홈) */
+  nav?: ReactNode;
+  /** bottom 이 화면 아래 끝까지 닿는다(질문 카드). 아래 안전 영역은 bottom 이 직접 띄운다 */
+  flushBottom?: boolean;
+}) {
   const o = useSharedValue(dim ? 0.45 : 1);
   useEffect(() => {
     o.set(withTiming(dim ? 0.45 : 1, { duration: dim ? motion.ms.scrimIn : motion.ms.popOut, easing: dim ? easeOut : easeIn, reduceMotion: KEEP }));
   }, [dim, o]);
   const fade = useAnimatedStyle(() => ({ opacity: o.get() }));
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.root} edges={flushBottom ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {nav ?? <NavBar title={title} />}
         <ScrollView
@@ -27,7 +43,7 @@ export function ChatShell({ title, children, bottom, dim, nav }: { title: string
         >
           <Animated.View style={[styles.stack, fade]}>{children}</Animated.View>
         </ScrollView>
-        <View style={styles.bottom}>{bottom}</View>
+        <View style={!flushBottom && styles.bottom}>{bottom}</View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

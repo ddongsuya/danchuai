@@ -1,6 +1,7 @@
 import { applyQuotePatch, guardDraft, mergeSheet, missingFields, redactContacts, type DanchuQuoteDraft, type DanchuQuotePatch, type RequestSheet, type ToolCall } from "@danchuai/core";
+import { NOTES_DOC, type Retrieved } from "@danchuai/knowledge";
 import { SCHEMAS, toolNamesFor, type ToolName } from "./tools";
-import type { Conversation, Question } from "./store";
+import type { Conversation, Question, QuestionBasis, QuestionOption } from "./store";
 
 export type AgentEvent =
   | { event: "sheet"; data: { sheet: RequestSheet; missing: string[] } }
@@ -15,7 +16,7 @@ export type AgentEvent =
  * 역할에 없는 도구, 스키마에 안 맞는 입력은 버린다(프롬프트만 믿지 않는다).
  * 같은 도구는 한 턴에 한 번만 받는다.
  */
-export function interpret(conv: Conversation, calls: readonly ToolCall[]): { conv: Conversation; events: AgentEvent[]; notes: string[] } {
+export function interpret(conv: Conversation, calls: readonly ToolCall[], evidence?: Retrieved): { conv: Conversation; events: AgentEvent[]; notes: string[] } {
   const allowed = new Set<string>(toolNamesFor(conv));
   const seen = new Set<string>();
   const events: AgentEvent[] = [];
@@ -42,13 +43,23 @@ export function interpret(conv: Conversation, calls: readonly ToolCall[]): { con
       events.push({ event: "sheet", data: { sheet: next.sheet, missing: missingFields(next.sheet) } });
       notes.push("(요청서 갱신)");
     } else if (name === "ask_question") {
-      const q = parsed.data as Question;
-      // 이미 채워진 칸은 다시 묻지 않는다.
-      if (next.sheet[q.field as keyof RequestSheet]) continue;
+      const q = parsed.data as { field: string; question: string; options: (string | QuestionOption)[]; basis?: string[]; recheck?: boolean };
+      const filled = !!next.sheet[q.field as keyof RequestSheet];
+      // 이미 채워진 칸은 다시 묻지 않는다. 상황과 어긋나 다시 묻는 질문(recheck)만 받는다.
+      if (filled && !q.recheck) continue;
+      const options = q.options
+        .map((o) => (typeof o === "string" ? { label: o } : o))
+        .map((o) => ({ label: redactContacts(o.label), ...(o.effect ? { effect: redactContacts(o.effect) } : {}) }))
+        // "미정"은 카드가 늘 붙인다. 모델이 넣은 미정·모르겠어요는 뺀다.
+        .filter((o) => !UNSURE.test(o.label.trim()));
+      if (!options.length) continue;
+      const basis = matchBasis(q.basis ?? [], evidence);
       const question: Question = {
         field: q.field,
         question: redactContacts(q.question),
-        options: q.options.map(redactContacts),
+        options,
+        ...(basis.length ? { basis } : {}),
+        ...(filled ? { recheck: true } : {}),
       };
       next = { ...next, question };
       events.push({ event: "question", data: question });
@@ -95,3 +106,32 @@ export function interpret(conv: Conversation, calls: readonly ToolCall[]): { con
 
 const ORDER: Record<string, number> = { update_sheet: 0, update_quote: 0, summarize_request: 1, ask_question: 2, draft_body: 3 };
 const order = (n: string) => ORDER[n] ?? 9;
+
+/** 카드가 따로 붙이는 "미정" 줄과 겹치는 선택지 */
+export const UNSURE = /^(미정|모름|모르겠어요|잘 모르겠어요|아직 몰라요|아직 미정|미정이에요|미정으로 두기)$/;
+
+/** 조항 이름의 앞 번호("5.1 Clinical Development Trials" → "5.1", "제2조(적용범위)" → "제2조"). 괄호 제목은 뗀다 */
+const sectionNo = (section: string) => (section.trim().split(/[\s(（]+/)[0] ?? "").replace(/[.:]+$/, "");
+
+/** 근거 글에서 문서 이름 뒤의 낱말들("ICH M3 5.1 표 1" → ["5.1", "표", "1"]). 끝 마침표는 뗀다 */
+const tokensAfter = (b: string, doc: string) => b.slice(b.indexOf(doc) + doc.length).split(/[\s,()（）]+/).map((t) => t.replace(/[.:]+$/, "")).filter(Boolean);
+
+/**
+ * 모델이 적은 근거("ICH M3 5.1")를 이번 턴 참고자료 조각과 맞춘다. 문서 이름과 조항 번호가 모두 맞는 원문만 받는다.
+ * 정리본은 원문이 아니라 뺀다. 참고자료에 없는 근거는 버린다(짐작한 근거를 보여 주지 않는다).
+ */
+export function matchBasis(basis: readonly string[], evidence?: Retrieved): QuestionBasis[] {
+  if (!evidence) return [];
+  const out: QuestionBasis[] = [];
+  const seen = new Set<number>();
+  for (const raw of basis) {
+    const b = raw.replace(/\s+/g, " ").trim();
+    const i = evidence.sources.findIndex((s, k) => !seen.has(k) && s.doc !== NOTES_DOC && b.includes(s.doc) && sectionNo(s.section) !== "" && tokensAfter(b, s.doc).includes(sectionNo(s.section)));
+    if (i < 0) continue;
+    seen.add(i);
+    const s = evidence.sources[i]!;
+    const text = evidence.hits[i]?.text.replace(/\s+/g, " ").trim() ?? "";
+    out.push({ doc: s.doc, name: s.name, section: s.section, url: s.url, version: s.version, excerpt: text.length > 220 ? `${text.slice(0, 220)}…` : text });
+  }
+  return out;
+}

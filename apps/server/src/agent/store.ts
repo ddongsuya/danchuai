@@ -24,10 +24,30 @@ export interface AskListItem {
   updatedAt: string;
 }
 
+/** 질문 선택지: 고르는 값과, 원문 근거가 있을 때 고르면 달라지는 것 */
+export interface QuestionOption {
+  label: string;
+  effect?: string;
+}
+
+/** 질문 근거(이번 턴 참고자료에서 찾은 원문 조각) */
+export interface QuestionBasis {
+  doc: string;
+  name: string;
+  section: string;
+  url: string | null;
+  version: string;
+  /** 원문 조각 앞부분 */
+  excerpt: string;
+}
+
 export interface Question {
   field: string;
   question: string;
-  options: string[];
+  options: QuestionOption[];
+  basis?: QuestionBasis[];
+  /** 이미 채운 칸을 다시 묻는 질문 */
+  recheck?: boolean;
 }
 
 export interface Conversation {

@@ -1,6 +1,6 @@
 // 서버와 연결된 대화 화면. 답은 흐르는 대로 보이고, 질문 카드·요약·보내기 전 승인 카드가 이어진다.
 // 보내기는 사람이 승인 카드에서 누를 때만 일어난다. 에이전트는 보내지 못한다.
-import { amountBlock, computeTotals, formatWonShort, SHEET_LABELS, type QuoteLine, type SheetField } from '@danchuai/core';
+import { amountBlock, computeTotals, formatWonShort, SHEET_LABELS, type QuoteLine, type RequestSheet, type SheetField } from '@danchuai/core';
 import { ArrowClockwise, CheckCircle, WarningCircle } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -26,7 +26,7 @@ import { shortDate } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
 import { useAuth } from '@/lib/session';
-import type { ChatErrorCode } from '@/lib/chat';
+import type { AgentQuestion, ChatErrorCode } from '@/lib/chat';
 
 export const ERROR_LABEL: Record<ChatErrorCode, string> = {
   agent_unavailable: '에이전트 연결 전이에요',
@@ -99,6 +99,8 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const made = useRef<{ version: number; requestId: string | null; drafts: OutboundDraftView[]; sent: Set<string> } | null>(null);
   const [sentRequestId, setSentRequestId] = useState<string | null>(null);
   const busy = state.status !== 'idle';
+  // 질문 카드는 입력창 자리에 뜬다(시안 B). 답을 기다리는 동안·승인 카드가 뜬 동안은 숨긴다.
+  const asking = state.question && !busy && state.conversationId ? state.question : null;
   // 단추 연동 모드의 의뢰자: 받는 기관을 고르지 않고 단추 요청서로 보낸다(연동 4단계)
   const { danchu } = useAuth();
   const viaDanchu = danchu && role === 'requester';
@@ -214,12 +216,20 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         onEdit={() => setReviewing(false)}
         onApprove={approve}
       />
+    ) : asking ? (
+      <QuestionCard
+        key={`${asking.field}-${state.messages.length}`}
+        question={asking}
+        field={labelOf(asking.field)}
+        left={questionLeft(asking, state.sheet, state.missing)}
+        onAnswer={(v) => void send(`${labelOf(asking.field)}: ${v}`)}
+      />
     ) : (
       <Composer disabled={busy || !state.conversationId} onSend={(t) => void send(t)} />
     );
 
   return (
-    <ChatShell title={heading} bottom={bottom} dim={reviewing}>
+    <ChatShell title={heading} bottom={bottom} dim={reviewing} flushBottom={Boolean(asking) && !(reviewing && draft)}>
       {role === 'cro' && state.sheet && <SheetCard sheet={state.sheet} message={requestMessage} />}
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
         <AgentText>어떤 시험 견적이 필요해요?</AgentText>
@@ -249,15 +259,6 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
             </Txt>
           ))}
         </View>
-      )}
-
-      {state.question && !busy && (
-        <QuestionCard
-          title={SHEET_LABELS[state.question.field as SheetField] ?? '확인할 항목'}
-          questions={[{ id: state.question.field, label: state.question.question, options: state.question.options }]}
-          onSubmit={(a) => void send(`${labelOf(state.question!.field)}: ${a[state.question!.field]}`)}
-          onSkip={() => void send(`${labelOf(state.question!.field)}: 미정`)}
-        />
       )}
 
       {/* 기관: 초안 전에도 다음 할 일이 보이게. 금액은 사람이 넣고, 본문은 AI가 쓴다. */}
@@ -342,6 +343,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
 const sheetTitle = (s: Record<string, string | null>) => [s.species, s.duration, s.testType].filter(Boolean).join(' ') || null;
 
 const labelOf = (f: string) => SHEET_LABELS[f as SheetField] ?? f;
+
+/** 질문 카드 위 오른쪽: 다시 묻는 칸은 지금 값, 아니면 남은 필수 칸 수 */
+export function questionLeft(q: AgentQuestion, sheet: RequestSheet | null, missing: string[]): string | null {
+  if (q.recheck) {
+    const now = sheet?.[q.field as SheetField];
+    return now ? `지금 ${now.length > 14 ? `${now.slice(0, 13)}…` : now}` : null;
+  }
+  return missing.length ? `필수 ${missing.length}칸 남음` : null;
+}
 
 /** 받은 요청을 코드가 짧은 줄로 묶는다(AI 요약 전 원문). */
 function SheetCard({ sheet, message }: { sheet: Record<string, string | null>; message?: string | null }) {

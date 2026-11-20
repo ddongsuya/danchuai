@@ -1,6 +1,7 @@
 import { missingFields, sheetContext, type AgentMessage, type CompletionRequest, type LlmProvider, type Usage } from "@danchuai/core";
 import { interpret, type AgentEvent } from "./interpret";
 import type { Conversation } from "./store";
+import type { Retrieved } from "@danchuai/knowledge";
 
 // 모델이 가끔 (1) 도구 호출을 답 글에 태그로 써 버리거나 (2) 빈 칸이 남았는데 다음 질문 없이 턴을 끝낸다.
 // 지시문만으로는 다 막히지 않아서(2026-11-17 평가) 서버가 바로잡는다.
@@ -83,13 +84,15 @@ export async function runToolTurn(args: {
   conv: Conversation;
   request: CompletionRequest;
   onText?: (delta: string) => void;
+  /** 이번 턴 참고자료(질문 근거를 맞출 때 쓴다) */
+  evidence?: Retrieved;
 }): Promise<TurnResult> {
-  const { provider, conv, request, onText } = args;
+  const { provider, conv, request, onText, evidence } = args;
   const filter = new MarkupFilter();
   const first = await provider.complete({ ...request, onText: onText && ((d) => emit(onText, filter.push(d))) });
   if (onText) emit(onText, filter.flush());
   const firstText = stripToolMarkup(first.text.trim());
-  const a = interpret(conv, first.toolCalls);
+  const a = interpret(conv, first.toolCalls, evidence);
   const usage = addUsage(zero(), first.usage);
   let leaked = TOOL_TAG.test(first.text);
   // 도구 없이 글로만 답한 턴은 가이드라인 답으로 본다(지시문 7번: 요청서 진행은 다음 턴).
@@ -115,7 +118,7 @@ export async function runToolTurn(args: {
   addUsage(usage, second.usage);
   leaked ||= TOOL_TAG.test(second.text);
   const secondText = second.stop === "done" ? stripToolMarkup(second.text.trim()) : "";
-  const b = second.stop === "done" ? interpret(a.conv, second.toolCalls) : { conv: a.conv, events: [], notes: [] };
+  const b = second.stop === "done" ? interpret(a.conv, second.toolCalls, evidence) : { conv: a.conv, events: [], notes: [] };
   if (onText && secondText) onText(firstText ? `\n\n${secondText}` : secondText);
   return {
     text: [firstText, secondText].filter(Boolean).join("\n\n"),
