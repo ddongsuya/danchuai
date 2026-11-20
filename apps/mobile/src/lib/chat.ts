@@ -1,5 +1,5 @@
 // 대화 화면 상태. 서버 이벤트를 받아 바꾸는 순수 함수라 테스트할 수 있다.
-import type { DanchuQuoteDraft, RequestSheet } from '@danchuai/core';
+import { SHEET_LABELS, type DanchuQuoteDraft, type RequestSheet } from '@danchuai/core';
 
 export type ChatErrorCode =
   | 'agent_unavailable'
@@ -40,10 +40,68 @@ export interface LookupCard {
   body: Record<string, unknown>;
 }
 
+export interface QuestionOption {
+  label: string;
+  /** 고르면 요청서에서 달라지는 것(짧게). 근거가 있을 때만 온다 */
+  effect?: string;
+}
+
+/** 질문의 근거 원문 조각(서버가 검색한 조각과 맞춘 것만) */
+export interface QuestionBasis extends SourceRef {
+  excerpt: string;
+}
+
 export interface AgentQuestion {
   field: string;
   question: string;
-  options: string[];
+  options: QuestionOption[];
+  basis?: QuestionBasis[];
+  /** 이미 채운 칸을 다시 묻는 질문(상황과 어긋남) */
+  recheck?: boolean;
+}
+
+/** 카드가 맨 아래 줄로 따로 두는 답. 선택지에 섞여 오면 뺀다 */
+const UNSURE = /^(미정|모름|모르겠어요|잘 모르겠어요|아직 몰라요|아직 미정|미정이에요|미정으로 두기)$/;
+
+/** 서버 질문을 모양이 맞는 것만 받는다. 예전 기록의 문자열 선택지도 받는다 */
+export function asQuestion(q: unknown): AgentQuestion | null {
+  if (!q || typeof q !== 'object') return null;
+  const x = q as Record<string, unknown>;
+  if (typeof x.field !== 'string' || typeof x.question !== 'string' || !Array.isArray(x.options)) return null;
+  const options = x.options
+    .map((o): QuestionOption | null => {
+      if (typeof o === 'string') return { label: o };
+      if (o && typeof o === 'object' && typeof (o as QuestionOption).label === 'string') {
+        const { label, effect } = o as QuestionOption;
+        return typeof effect === 'string' && effect ? { label, effect } : { label };
+      }
+      return null;
+    })
+    .filter((o): o is QuestionOption => !!o && !UNSURE.test(o.label.trim()));
+  if (!options.length) return null;
+  const basis = (Array.isArray(x.basis) ? x.basis : []).slice(0, 3).flatMap((b): QuestionBasis[] => {
+    const [ref] = asSources([b]);
+    const excerpt = (b as { excerpt?: unknown }).excerpt;
+    return ref ? [{ ...ref, excerpt: typeof excerpt === 'string' ? excerpt.slice(0, 400) : '' }] : [];
+  });
+  return {
+    field: x.field,
+    question: x.question,
+    options,
+    ...(basis.length ? { basis } : {}),
+    ...(x.recheck === true ? { recheck: true } : {}),
+  };
+}
+
+const LABELS = new Set<string>(Object.values(SHEET_LABELS));
+
+/** 질문 카드로 보낸 답("임상 계획: 3개월 이내")을 칸 이름과 값으로 나눈다. 말풍선이 칸 이름을 작게 위에 쓴다 */
+export function splitAnswer(text: string): { field: string; value: string } | null {
+  const i = text.indexOf(': ');
+  if (i < 1) return null;
+  const field = text.slice(0, i);
+  const value = text.slice(i + 2).trim();
+  return LABELS.has(field) && value ? { field, value } : null;
 }
 
 /** 답이 인용한 가이드라인 원문(서버 sources 이벤트) */
@@ -120,7 +178,7 @@ export type ChatAction =
       missing: string[];
       /** 이어서 열 때 서버가 돌려준 기록 */
       messages?: { role: 'user' | 'assistant'; text: string; sources?: unknown }[];
-      question?: AgentQuestion | null;
+      question?: unknown;
       summary?: string[] | null;
       draft?: { body: string; dropped: number; version: number; sent?: boolean } | null;
       quote?: DanchuQuoteDraft | null;
@@ -180,7 +238,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           const sources = m.role === 'user' ? [] : asSources(m.sources);
           return { id: `h${i}`, role: m.role === 'user' ? 'user' : 'agent', text: m.text, ...(sources.length ? { sources } : {}) };
         }),
-        question: a.question ?? null,
+        question: asQuestion(a.question),
         summary: a.summary ?? null,
         draft: a.draft ? { body: a.draft.body, dropped: a.draft.dropped, version: a.draft.version } : null,
         draftSent: Boolean(a.draft?.sent),
@@ -209,7 +267,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
         case 'sheet':
           return { ...s, sheet: d.sheet, missing: d.missing ?? [] };
         case 'question':
-          return { ...s, question: d };
+          return { ...s, question: asQuestion(d) };
         case 'summary':
           return { ...s, summary: d.points ?? null };
         case 'draft':

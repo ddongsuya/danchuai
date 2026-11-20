@@ -5,7 +5,7 @@ import { interpret, matchBasis } from "../src/agent/interpret";
 import type { Conversation, Question } from "../src/agent/store";
 
 const conv = (sheet: Partial<Conversation["sheet"]> = {}): Conversation => ({
-  id: "c1", orgId: "o1", createdBy: "u1", role: "requester", mode: "request", requestId: null,
+  id: "c1", orgId: "o1", createdBy: "u1", role: "requester", mode: "request", requestId: null, danchuNo: null, quote: null,
   sheet: { ...EMPTY_SHEET, ...sheet }, messages: [], question: null, summary: null, draft: null, turns: 0,
   usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
 });
@@ -62,6 +62,14 @@ describe("질문 근거", () => {
     expect(basis[0]!.section).toBe(src.section);
     expect(basis[0]!.excerpt.length).toBeGreaterThan(0);
     expect(basis[0]!.excerpt.length).toBeLessThanOrEqual(221);
+  });
+
+  it("조항 번호는 낱말 단위로 맞춘다(5.1을 5장으로 잡지 않는다)", () => {
+    const evidence = retrieve("clinical trial duration repeated dose toxicity ICH M3");
+    const basis = matchBasis(["ICH M3 5.1"], evidence);
+    for (const b of basis) expect(b.section.split(/\s+/)[0]).toBe("5.1");
+    const chapter = evidence.sources.find((s) => s.doc === "ICH M3" && /^5\.\s/.test(s.section));
+    if (chapter) expect(matchBasis(["ICH M3 5.1"], evidence).some((b) => b.section === chapter.section)).toBe(false);
   });
 
   it("참고자료가 없으면 근거를 붙이지 않는다", () => {

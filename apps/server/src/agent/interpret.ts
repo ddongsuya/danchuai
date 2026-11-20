@@ -111,7 +111,10 @@ const order = (n: string) => ORDER[n] ?? 9;
 export const UNSURE = /^(미정|모름|모르겠어요|잘 모르겠어요|아직 몰라요|아직 미정|미정이에요|미정으로 두기)$/;
 
 /** 조항 이름의 앞 번호("5.1 Clinical Development Trials" → "5.1") */
-const sectionNo = (section: string) => section.trim().split(/\s+/)[0] ?? "";
+const sectionNo = (section: string) => (section.trim().split(/\s+/)[0] ?? "").replace(/[.:]+$/, "");
+
+/** 근거 글에서 문서 이름 뒤의 낱말들("ICH M3 5.1 표 1" → ["5.1", "표", "1"]). 끝 마침표는 뗀다 */
+const tokensAfter = (b: string, doc: string) => b.slice(b.indexOf(doc) + doc.length).split(/[\s,()]+/).map((t) => t.replace(/[.:]+$/, "")).filter(Boolean);
 
 /**
  * 모델이 적은 근거("ICH M3 5.1")를 이번 턴 참고자료 조각과 맞춘다. 문서 이름과 조항 번호가 모두 맞는 원문만 받는다.
@@ -123,7 +126,7 @@ export function matchBasis(basis: readonly string[], evidence?: Retrieved): Ques
   const seen = new Set<number>();
   for (const raw of basis) {
     const b = raw.replace(/\s+/g, " ").trim();
-    const i = evidence.sources.findIndex((s, k) => !seen.has(k) && s.doc !== NOTES_DOC && b.includes(s.doc) && b.slice(b.indexOf(s.doc) + s.doc.length).includes(sectionNo(s.section)));
+    const i = evidence.sources.findIndex((s, k) => !seen.has(k) && s.doc !== NOTES_DOC && b.includes(s.doc) && sectionNo(s.section) !== "" && tokensAfter(b, s.doc).includes(sectionNo(s.section)));
     if (i < 0) continue;
     seen.add(i);
     const s = evidence.sources[i]!;

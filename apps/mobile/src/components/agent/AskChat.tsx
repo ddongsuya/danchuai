@@ -1,17 +1,16 @@
 // 가이드라인 질문하기. 요청과 따로 여는 대화로, 답마다 인용한 원문(근거)을 붙인다.
 // 의뢰자는 답을 본 뒤 같은 질문으로 견적 요청 대화를 바로 열 수 있다. 보내기는 여기서 일어나지 않는다.
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import { ArrowSquareOut, BookOpenText, CaretRight, ClockCounterClockwise } from 'phosphor-react-native';
+import { BookOpenText, CaretRight, ClockCounterClockwise } from 'phosphor-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { StepLog, UserMessage } from '@/components/chat/Messages';
+import { SourcesSheet } from '@/components/chat/SourcesSheet';
 import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
-import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
@@ -173,39 +172,6 @@ function SourcesPill({ sources, onPress }: { sources: SourceRef[]; onPress: () =
   );
 }
 
-function SourcesSheet({ sources, onClose }: { sources: SourceRef[] | null; onClose: () => void }) {
-  // 닫히는 동안에도 마지막 목록을 그대로 보여 준다.
-  const [last, setLast] = useState<SourceRef[] | null>(sources);
-  if (sources && sources !== last) setLast(sources);
-  const shown = sources ?? last;
-  return (
-    <Sheet visible={!!sources} onClose={onClose}>
-      {/* 할 일이 읽기뿐이라 주 버튼 없이 글자 닫기만 */}
-      <SheetBody title={`근거 ${(shown ?? []).length}건`} onClose={onClose}>
-        <ScrollView style={{ maxHeight: u(420) }}>
-          {(shown ?? []).map((s, i) => (
-            <Press
-              key={`${s.doc}-${s.section}`}
-              label={`${s.doc} ${s.section}${s.url ? ', 원문 열기' : ''}`}
-              disabled={!s.url}
-              onPress={s.url ? () => void WebBrowser.openBrowserAsync(s.url!) : undefined}
-              style={[styles.src, i > 0 && styles.line]}
-            >
-              <View style={{ flex: 1, gap: u(2) }}>
-                <Txt variant="label">{s.doc}</Txt>
-                <Txt variant="caption" color={tokens.muted} numberOfLines={2}>
-                  {[s.section, s.name, s.version].filter(Boolean).join(', ')}
-                </Txt>
-              </View>
-              {s.url && <ArrowSquareOut size={u(18)} color={tokens.muted} />}
-            </Press>
-          ))}
-        </ScrollView>
-      </SheetBody>
-    </Sheet>
-  );
-}
-
 const styles = StyleSheet.create({
   ask: { marginTop: space.lg, marginBottom: space.md },
   sugs: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border },
@@ -227,5 +193,4 @@ const styles = StyleSheet.create({
     borderColor: tokens.border,
   },
   next: { flexDirection: 'row' },
-  src: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: u(60), paddingVertical: space.md },
 });
