@@ -14,15 +14,16 @@ import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { TypingBubble } from '@/components/chat/TypingBubble';
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
+import { LookupCard } from '@/components/agent/LookupCard';
 import { IconButton } from '@/components/ui/IconButton';
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from '@/components/agent/LiveChat';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, tokens, u, uc } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import { AgentHttpError, readDanchu, undoRun, type AssistBriefView } from '@/lib/agentClient';
+import { AgentHttpError, readDanchu, undoRun, type AssistBriefView, type QuoteHitView } from '@/lib/agentClient';
 import { useAuth } from '@/lib/session';
-import type { ActionCard, ChatErrorCode, ChatMessage } from '@/lib/chat';
+import type { ActionCard, ChatErrorCode, ChatMessage, LookupCard as LookupItem } from '@/lib/chat';
 
 /** 빈 대화에서 바로 보낼 말 */
 const STARTERS = ['아침 브리핑', '이번 주 보고'] as const;
@@ -64,6 +65,7 @@ export function AssistChat() {
       brief={brief}
       messages={state.messages}
       actions={state.actions}
+      lookups={state.lookups}
       streaming={state.status === 'streaming' ? { step: state.step, text: state.streaming } : null}
       starting={state.status === 'starting'}
       canSend={!busy && !!state.conversationId}
@@ -94,6 +96,10 @@ export interface AssistViewProps {
   brief: AssistBriefView | null | 'error';
   messages: ChatMessage[];
   actions: ActionCard[];
+  /** 찾기 카드(과거 견적 등). 카드가 단추를 직접 읽는다 */
+  lookups?: LookupItem[];
+  /** 미리보기에서 찾기 결과를 채워 보여 줄 때만 */
+  lookupPreview?: QuoteHitView[];
   streaming: { step: string | null; text: string } | null;
   starting?: boolean;
   canSend: boolean;
@@ -105,12 +111,14 @@ export interface AssistViewProps {
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, streaming, starting, canSend, error, onRetry, undoing, onSend, onUndo }: AssistViewProps) {
+export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onUndo }: AssistViewProps) {
   const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
   const empty = !messages.length && !streaming;
   const cardsAt = (i: number) => actions.filter((a) => a.at === i);
+  const findsAt = (i: number) => lookups.filter((a) => a.at === i);
   // 답 글 없이 끝난 턴의 카드는 맨 뒤에
   const tail = actions.filter((a) => a.at >= messages.length);
+  const findTail = lookups.filter((a) => a.at >= messages.length);
   const thinking = !!streaming && !streaming.text;
   // 위 막대: 왼쪽 메뉴, 가운데는 대화가 시작되면 작은 캐릭터(처음에는 본문 가운데 큰 캐릭터)
   const nav = (
@@ -148,12 +156,14 @@ export function AssistView({ menu, initialMenuOpen = false, brief, messages, act
         <Fragment key={m.id}>
           {m.role === 'user' ? <UserMessage text={m.text} /> : <AgentText>{m.text}</AgentText>}
           {m.role === 'agent' && cardsAt(i).map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} />)}
+          {m.role === 'agent' && findsAt(i).map((a) => <LookupCard key={a.key} card={a} initial={lookupPreview} />)}
         </Fragment>
       ))}
 
       {thinking && <TypingBubble label={streaming!.step} />}
       {streaming?.text ? <AgentText>{streaming.text}</AgentText> : null}
       {!streaming && tail.map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} />)}
+      {!streaming && findTail.map((a) => <LookupCard key={a.key} card={a} initial={lookupPreview} />)}
 
       {error && <ErrorLine label={ERROR_LABEL[error]} onRetry={onRetry} />}
     </ChatShell>

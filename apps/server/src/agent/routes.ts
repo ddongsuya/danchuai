@@ -131,7 +131,7 @@ export function providerErrorCode(err: unknown): "ai_quota" | "provider_error" {
 const stripNotes = (t: string) =>
   t
     .split("\n")
-    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*|실행: .*|실행 안 함: .*)\)$/.test(l.trim()))
+    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*|실행: .*|실행 안 함: .*|찾기: .*)\)$/.test(l.trim()))
     .join("\n")
     .trim();
 
@@ -361,6 +361,7 @@ export function agentRoutes(deps: AgentDeps) {
         if (calls.length) await send("step", { label: "단추에 반영" });
         const applied = await applyAssistCalls(a, s, token, conv.id, calls, prep);
         for (const e of applied.events) await send("action", e);
+        for (const l of applied.lookups) await send("lookup", l);
         const reply = [text, ...applied.notes].filter(Boolean).join("\n") || "(응답 없음)";
         const saved: Conversation = {
           ...conv,

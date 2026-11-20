@@ -42,6 +42,8 @@ const CATALOG: DanchuCatalog = {
       input: { type: "object", properties: { id: ref("deal"), stage: { type: "string", enum: ["inquiry", "quote", "negotiation"] } }, required: ["id"], additionalProperties: false },
     },
     { name: "quote_draft", scope: "rfq", level: "auto", area: "quote", label: "견적 임시 저장", description: "", input: { type: "object" }, tool: false },
+    { name: "quote_doc", scope: "rfq", level: "auto", area: "quote", label: "견적서 만들기", description: "", input: { type: "object", properties: {}, additionalProperties: false }, tool: false },
+    { name: "quote_history", scope: "org", level: "read", area: "quote", label: "과거 견적 찾기", description: "견적서를 찾는다.", tool: true, input: { type: "object", properties: { q: { type: "string", maxLength: 100 } }, required: ["q"], additionalProperties: false } },
     { name: "quote_submit", scope: "rfq", level: "confirm", area: "quote", label: "견적 제출", description: "", input: { type: "object" }, tool: false },
     { name: "price_book_apply", scope: "org", level: "confirm", area: "price", label: "단가표 반영", description: "", input: { type: "object" }, tool: false },
     { name: "crm_delete", scope: "org", level: "human", area: "crm", label: "기록 지우기", description: "", input: { type: "object" }, tool: false },
@@ -129,7 +131,8 @@ const json = async (r: Response) => (await r.json()) as Record<string, any>;
 describe("단추 목록 → 비서 도구", () => {
   it("바로 실행·tool 만, 보내기 계열 이름은 빼고, 참조 칸은 번호 문자열로(모델 API 가 받지 않는 칸 없음)", () => {
     const tools = assistTools(CATALOG);
-    expect(tools.map((t) => t.name)).toEqual(["task_create", "deal_move"]);
+    // 찾기(read + tool)는 도구로 주되 결과는 앱 카드가 읽는다
+    expect(tools.map((t) => t.name)).toEqual(["task_create", "deal_move", "quote_history"]);
     const props = (tools[0]!.inputSchema as { properties: Record<string, Record<string, unknown>> }).properties;
     expect(props.deal_id).toEqual({ type: "string", description: expect.stringContaining("D1") });
     expect(JSON.stringify(tools)).not.toMatch(/"format"|x-ref/);
@@ -177,6 +180,16 @@ describe("바로 실행·되돌리기 (/v1/danchu/run)", () => {
     expect((await call("POST", "/v1/danchu/run", T_CRO, { action: "nope", body: {} })).status).toBe(404);
     const r = await json(await call("POST", "/v1/danchu/run", T_CRO, { action: "brief" }));
     expect(r.result.brief.date).toBe("2026-11-19");
+  });
+
+  it("요청 단위 바로 실행은 견적서 만들기(의뢰자에게 안 보임)만", async () => {
+    const { call, consent, ran } = setup();
+    await consent(T_CRO);
+    expect((await call("POST", "/v1/danchu/run", T_CRO, { action: "quote_doc", body: {} })).status).toBe(400);
+    const r = await call("POST", "/v1/danchu/run", T_CRO, { action: "quote_doc", rfqNo: "DC-2026-0142", body: {} });
+    expect(r.status).toBe(200);
+    expect((await json(r)).run.label).toBe("견적서 만들기");
+    expect(ran.map((x) => x.action)).toEqual(["quote_doc"]);
   });
 
   it("바로 실행은 기록하고, 시킨 사람만 한 번 되돌린다", async () => {
@@ -255,7 +268,7 @@ describe("기관 비서 대화", () => {
     const sse = await (await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "가람 건 다음 주 화요일에 후속 연락 잡고 협의로 옮겨 줘" })).text();
     const req = provider.calls[0]!;
     expect(req.system).toBe(CRO_ASSIST_SYSTEM);
-    expect(req.tools?.map((t) => t.name)).toEqual(["task_create", "deal_move"]);
+    expect(req.tools?.map((t) => t.name)).toEqual(["task_create", "deal_move", "quote_history"]);
     expect(String(req.messages.at(-1)?.content)).toContain("<오늘 브리핑");
     expect(ran).toEqual([
       { action: "task_create", body: { title: "가람바이오 후속 연락", due_on: "2026-11-25", deal_id: "d-1" } },
@@ -266,6 +279,20 @@ describe("기관 비서 대화", () => {
     // 기록 표시는 화면에 보이지 않는다
     const view = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
     expect(view.messages.at(-1).text).toBe("가람바이오 후속 연락을 11월 25일 할 일로 잡고, 안건은 협의로 옮길게요.");
+  });
+
+  it("찾기 도구: 단추를 서버에서 읽지 않고 찾기 카드(입력만)로 보낸다. 모델 맥락에도 결과가 없다", async () => {
+    const provider = new FakeProvider([{ text: "28일 랫드 견적을 찾아볼게요.", toolCalls: [{ id: "1", name: "quote_history", input: { q: "28일 랫드" } }, { id: "2", name: "quote_history", input: { nope: 1 } }] }]);
+    const { call, consent, ran } = setup(provider);
+    await consent(T_CRO);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_CRO, { mode: "assist" }));
+    const sse = await (await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "작년 28일 랫드 견적 찾아줘" })).text();
+    expect(ran).toEqual([]);
+    expect(sse.match(/event: lookup/g)).toHaveLength(1);
+    expect(sse).toContain('"action":"quote_history","label":"과거 견적 찾기","body":{"q":"28일 랫드"}');
+    expect(sse).not.toContain("event: action");
+    const view = await json(await call("GET", `/v1/agent/conversations/${conv.id}`, T_CRO));
+    expect(view.messages.at(-1).text).toBe("28일 랫드 견적을 찾아볼게요.");
   });
 
   it("비서 대화에서는 보내기 초안을 만들지 않는다", async () => {

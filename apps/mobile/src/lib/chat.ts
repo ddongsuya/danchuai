@@ -31,6 +31,15 @@ export interface ActionCard {
   undone: boolean;
 }
 
+/** 기관 비서 찾기 카드(서버 lookup 이벤트). 카드가 이 입력으로 단추를 직접 읽는다(결과는 모델·대화 기록에 없다) */
+export interface LookupCard {
+  key: string;
+  at: number;
+  action: string;
+  label: string;
+  body: Record<string, unknown>;
+}
+
 export interface AgentQuestion {
   field: string;
   question: string;
@@ -77,6 +86,8 @@ export interface ChatState {
   quote: DanchuQuoteDraft | null;
   /** 기관 비서 실행 카드(이번에 연 동안 받은 것) */
   actions: ActionCard[];
+  /** 기관 비서 찾기 카드(이번에 연 동안 받은 것) */
+  lookups: LookupCard[];
 }
 
 export const initialChat: ChatState = {
@@ -97,6 +108,7 @@ export const initialChat: ChatState = {
   pendingSources: [],
   quote: null,
   actions: [],
+  lookups: [],
 };
 
 export type ChatAction =
@@ -221,6 +233,11 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
             undone: false,
           };
           return { ...s, actions: [...s.actions, card] };
+        }
+        case 'lookup': {
+          if (typeof d.action !== 'string' || !/^[a-z][a-z_]{1,39}$/.test(d.action) || !d.body || typeof d.body !== 'object' || Array.isArray(d.body)) return s;
+          const card: LookupCard = { key: `l${s.lookups.length}`, at: s.messages.length, action: d.action, label: typeof d.label === 'string' ? d.label.slice(0, 60) : '찾기', body: d.body as Record<string, unknown> };
+          return { ...s, lookups: [...s.lookups, card] };
         }
         case 'error':
           return { ...s, error: asCode(d.code) };

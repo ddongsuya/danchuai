@@ -105,8 +105,35 @@ export interface AssistBriefView {
   need: { dealId: string; title: string; company: string | null; reason: string; tone: 'warn' | 'due'; suggest: string }[];
 }
 
-/** 읽기 액션(브리핑 등)을 단추에서 읽는다 */
-export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}) => call<{ result: T }>('cro', '/v1/danchu/run', { action, body }).then((r) => r.result);
+/** 읽기 액션(브리핑 등)을 단추에서 읽는다. 요청 단위 읽기는 요청 번호를 함께 */
+export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
+  call<{ result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) }).then((r) => r.result);
+
+/** 바로 실행 액션을 앱 버튼으로(견적서 만들기 등). 서버가 실행 기록을 남긴다 */
+export const runDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
+  call<{ run: AssistRunView; result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) });
+
+/** 단추 견적서 툴 계산 금액(요청 행별, 부가세 별도). 금액이 없는 행은 amount null */
+export interface QuotePriceView {
+  rows: { seq: number; name: string; kind: string | null; amount: number | null; changes: number; priced: boolean; why: 'no_match' | 'no_price' | 'missing_item' | null }[];
+  sum: number;
+  complete: boolean;
+  source: 'doc' | 'catalog';
+  doc: { id: string; docNo: string } | null;
+}
+
+/** 단추 과거 견적 찾기 결과 한 줄(금액은 단추 견적서 툴 계산) */
+export interface QuoteHitView {
+  id: string;
+  docNo: string;
+  title: string;
+  client: string;
+  substance: string;
+  rfqNo: string | null;
+  issuedOn: string;
+  supply: number;
+  tests: { name: string; total: number }[];
+}
 
 /** 비서·앱이 바로 실행한 기록(최근 30건, 최근 순) */
 export const listRuns = () => call<{ items: AssistRunView[] }>('cro', '/v1/danchu/runs').then((r) => r.items);

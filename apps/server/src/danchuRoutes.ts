@@ -274,9 +274,9 @@ export function danchuRunRoutes(deps: { api: DanchuApi; runs: RunRepo; catalogs:
       if (r.status === 0) return c.json({ error: "unavailable" }, 503);
       return c.json({ result: r.body }, readStatus(r.status));
     }
-    // 바로 실행은 요청 번호 없는 기관 기록만(요청 단위 동작은 견적 확인 카드에서)
-    if (a.scope !== "org") return c.json({ error: "needs_approval" }, 409);
-    const done = await runAuto({ api: deps.api, runs: deps.runs }, s, t, a, body, p.data.conversationId ?? null);
+    // 바로 실행은 요청 번호 없는 기관 기록과, 요청 단위 가운데 의뢰자에게 보이지 않는 것(RFQ_AUTO_RUN)만. 나머지 요청 단위 동작은 견적 확인 카드에서
+    if (a.scope !== "org" && !RFQ_AUTO_RUN.has(a.name)) return c.json({ error: "needs_approval" }, 409);
+    const done = await runAuto({ api: deps.api, runs: deps.runs }, s, t, a, body, p.data.conversationId ?? null, undefined, p.data.rfqNo ?? null);
     return c.json({ run: runView(done.run), result: done.result }, done.run.outcome === "done" ? 200 : done.run.outcome === "failed" ? 422 : 502);
   });
 
@@ -302,6 +302,9 @@ export function danchuRunRoutes(deps: { api: DanchuApi; runs: RunRepo; catalogs:
   });
   return app;
 }
+
+/** 요청 번호가 있는 바로 실행 가운데 앱 버튼으로 바로 하는 것: 기관 견적서 툴 견적서 만들기(의뢰자에게 보이지 않는다) */
+export const RFQ_AUTO_RUN: ReadonlySet<string> = new Set(["quote_doc"]);
 
 /** 단추 읽기 응답 상태 → 앱에 돌려줄 상태 */
 function readStatus(status: number): 200 | 400 | 401 | 403 | 404 | 503 {
