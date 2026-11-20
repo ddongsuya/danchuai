@@ -1,19 +1,27 @@
 // 기관 비서(에이전트 액션 등록부 1~3단계). 단추 고객관리·일정·할 일을 말로 맡긴다.
 // 비서는 기관 안 기록만 바로 하고(실행 카드, 되돌리기), 밖으로 나가는 일은 받은 요청 화면의 확인 카드로만 나간다.
 // 처음 열면 단추 브리핑(오늘 할 일·손이 필요한 안건)을 보여 준다. 숫자·금액은 단추가 계산한 화면에서 본다.
-import { ArrowCounterClockwise, CheckCircle, MinusCircle, Question, WarningCircle } from 'phosphor-react-native';
+// 기관의 첫 화면이다(시안 2026-11-20): 가운데 위에 비서 캐릭터, 왼쪽 위 메뉴(받은 요청·실행 기록·질문하기·계정),
+// 답을 준비하는 동안 말풍선에 점 셋이 튄다.
+import { router } from 'expo-router';
+import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, MinusCircle, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
+import { TypingBubble } from '@/components/chat/TypingBubble';
+import { AgentAvatar } from '@/components/agent/AgentAvatar';
+import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
+import { IconButton } from '@/components/ui/IconButton';
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from '@/components/agent/LiveChat';
-import { Button } from '@/components/ui/Button';
+import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, space, tokens, u } from '@/constants/theme';
+import { fonts, radius, tokens, u, uc } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { AgentHttpError, readDanchu, undoRun, type AssistBriefView } from '@/lib/agentClient';
+import { useAuth } from '@/lib/session';
 import type { ActionCard, ChatErrorCode, ChatMessage } from '@/lib/chat';
 
 /** 빈 대화에서 바로 보낼 말 */
@@ -49,8 +57,10 @@ export function AssistChat() {
   };
 
   const busy = state.status !== 'idle';
+  const { org, status } = useAuth();
   return (
     <AssistView
+      menu={{ title: '비서', sub: org?.name ?? null, items: croMenu(), footer: status === 'disabled' ? [{ key: 'switch', label: '의뢰자 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/') }] : [] }}
       brief={brief}
       messages={state.messages}
       actions={state.actions}
@@ -66,7 +76,21 @@ export function AssistChat() {
   );
 }
 
+/** 기관 메뉴: 받은 요청(목록), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
+export function croMenu(newCount = 0): MenuItem[] {
+  const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
+  return [
+    { key: 'inbox', label: '받은 요청', icon: ic(Tray), count: newCount, onPress: () => router.push('/lab') },
+    { key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') },
+    { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: () => router.push({ pathname: '/ask', params: { role: 'cro' } }) },
+    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
+  ];
+}
+
 export interface AssistViewProps {
+  menu: { title: string; sub?: string | null; items: MenuItem[]; footer?: MenuItem[] };
+  /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
+  initialMenuOpen?: boolean;
   brief: AssistBriefView | null | 'error';
   messages: ChatMessage[];
   actions: ActionCard[];
@@ -81,22 +105,44 @@ export interface AssistViewProps {
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ brief, messages, actions, streaming, starting, canSend, error, onRetry, undoing, onSend, onUndo }: AssistViewProps) {
+export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, streaming, starting, canSend, error, onRetry, undoing, onSend, onUndo }: AssistViewProps) {
+  const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
   const empty = !messages.length && !streaming;
   const cardsAt = (i: number) => actions.filter((a) => a.at === i);
   // 답 글 없이 끝난 턴의 카드는 맨 뒤에
   const tail = actions.filter((a) => a.at >= messages.length);
+  const thinking = !!streaming && !streaming.text;
+  // 위 막대: 왼쪽 메뉴, 가운데는 대화가 시작되면 작은 캐릭터(처음에는 본문 가운데 큰 캐릭터)
+  const nav = (
+    <View style={styles.nav}>
+      <IconButton label="메뉴" onPress={() => setMenuOpen(true)}>
+        <List size={u(22)} color={tokens.text} />
+      </IconButton>
+      <View style={styles.navMid}>{!empty && <AgentAvatar size={uc(30)} state={streaming ? 'thinking' : 'idle'} />}</View>
+      <View style={styles.navSpacer} />
+    </View>
+  );
   return (
-    <ChatShell title="비서" bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
-      {starting && <StepLog steps={[{ label: '단추에서 오늘 일정 읽는 중', state: 'now' }]} />}
-      {empty && <BriefCard brief={brief} />}
+    <ChatShell title="비서" nav={nav} bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
+      <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
+      {empty && (
+        <View style={styles.hero}>
+          <AgentAvatar size={uc(64)} state={starting ? 'thinking' : 'idle'} />
+          <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
+            무엇을 맡길까요?
+          </Txt>
+        </View>
+      )}
       {empty && canSend && (
         <View style={styles.starters}>
           {STARTERS.map((t) => (
-            <Button key={t} title={t} kind="soft" onPress={() => onSend(t)} />
+            <Press key={t} label={t} onPress={() => onSend(t)} style={styles.chip}>
+              <Txt variant="chatLabel">{t}</Txt>
+            </Press>
           ))}
         </View>
       )}
+      {empty && <BriefCard brief={brief} />}
 
       {messages.map((m, i) => (
         <Fragment key={m.id}>
@@ -105,12 +151,8 @@ export function AssistView({ brief, messages, actions, streaming, starting, canS
         </Fragment>
       ))}
 
-      {streaming && (
-        <View>
-          <StepLog steps={[{ label: streaming.step ?? '답 준비 중', state: 'now' }]} />
-          {streaming.text ? <AgentText>{streaming.text}</AgentText> : null}
-        </View>
-      )}
+      {thinking && <TypingBubble label={streaming!.step} />}
+      {streaming?.text ? <AgentText>{streaming.text}</AgentText> : null}
       {!streaming && tail.map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} />)}
 
       {error && <ErrorLine label={ERROR_LABEL[error]} onRetry={onRetry} />}
@@ -132,53 +174,53 @@ function BriefCard({ brief }: { brief: AssistBriefView | null | 'error' }) {
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Txt variant="label" style={{ fontFamily: fonts.bold, flex: 1 }} accessibilityRole="header">
+        <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, flex: 1 }} accessibilityRole="header">
           오늘
         </Txt>
-        <Txt variant="caption" color={tokens.muted}>
+        <Txt variant="chatCaption" color={tokens.muted}>
           {md(brief.date)}
         </Txt>
       </View>
       {today.length ? (
         today.map((x, i) => (
           <View key={`t${i}`} style={[styles.row, i > 0 && styles.line]}>
-            <Txt variant="caption" color={tokens.muted} tabular style={styles.time}>
+            <Txt variant="chatCaption" color={tokens.muted} tabular style={styles.time}>
               {x.time ?? '종일'}
             </Txt>
-            <View style={{ flex: 1, gap: u(2) }}>
-              <Txt variant="small" style={{ fontFamily: fonts.semibold }} numberOfLines={2}>
+            <View style={{ flex: 1, gap: uc(2) }}>
+              <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={2}>
                 {x.title}
               </Txt>
               {!!x.sub && (
-                <Txt variant="caption" color={tokens.muted} numberOfLines={2}>
+                <Txt variant="chatCaption" color={tokens.muted} numberOfLines={2}>
                   {x.sub}
                 </Txt>
               )}
             </View>
             {x.overdue && (
-              <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold }}>
+              <Txt variant="chatCaption" color={tokens.danger} style={{ fontFamily: fonts.semibold }}>
                 기한 지남
               </Txt>
             )}
           </View>
         ))
       ) : (
-        <Txt variant="small" color={tokens.muted}>
+        <Txt variant="chatSmall" color={tokens.muted}>
           오늘 할 일 없음
         </Txt>
       )}
       {need.length > 0 && (
         <>
-          <Txt variant="caption" color={tokens.muted} style={styles.sub}>
+          <Txt variant="chatCaption" color={tokens.muted} style={styles.sub}>
             손이 필요한 안건
           </Txt>
           {need.map((x, i) => (
             <View key={x.dealId} style={[styles.row, i > 0 && styles.line]}>
-              <View style={{ flex: 1, gap: u(2) }}>
-                <Txt variant="small" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+              <View style={{ flex: 1, gap: uc(2) }}>
+                <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
                   {x.title}
                 </Txt>
-                <Txt variant="caption" color={tokens.muted} numberOfLines={1}>
+                <Txt variant="chatCaption" color={tokens.muted} numberOfLines={1}>
                   {[x.company, x.reason].filter(Boolean).join(', ')}
                 </Txt>
               </View>
@@ -202,36 +244,49 @@ function RunCard({ card, busy, onUndo }: { card: ActionCard; busy: boolean; onUn
   const o = card.undone ? { label: '되돌림', Icon: ArrowCounterClockwise, color: tokens.muted } : OUTCOME[card.outcome];
   return (
     <View style={styles.run} accessible={!card.undoable} accessibilityLabel={`${card.label}, ${o.label}`}>
-      <o.Icon size={u(18)} weight={card.outcome === 'done' && !card.undone ? 'fill' : 'regular'} color={o.color} />
-      <View style={{ flex: 1, gap: u(2) }}>
-        <Txt variant="small" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+      <o.Icon size={uc(18)} weight={card.outcome === 'done' && !card.undone ? 'fill' : 'regular'} color={o.color} />
+      <View style={{ flex: 1, gap: uc(2) }}>
+        <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
           {card.label}
         </Txt>
-        <Txt variant="caption" color={o.color === tokens.accent ? tokens.accent : o.color}>
+        <Txt variant="chatCaption" color={o.color === tokens.accent ? tokens.accent : o.color}>
           {card.message ?? o.label}
         </Txt>
       </View>
-      {card.undoable && card.runId && <Button title="되돌리기" kind="text" loading={busy} disabled={busy} onPress={() => onUndo(card.runId!)} />}
+      {card.undoable && card.runId && (
+        <Press label="되돌리기" disabled={busy} onPress={() => onUndo(card.runId!)} style={styles.undo}>
+          <Txt variant="chatLabel" color={busy ? tokens.faint : tokens.muted}>
+            {busy ? '되돌리는 중' : '되돌리기'}
+          </Txt>
+        </Press>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: space.lg, paddingVertical: space.md, gap: u(2) },
-  head: { flexDirection: 'row', alignItems: 'center', paddingBottom: u(6) },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: u(10) },
+  nav: { flexDirection: 'row', alignItems: 'center', height: u(50), paddingHorizontal: u(6) },
+  navMid: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  navSpacer: { width: u(44) },
+  hero: { alignItems: 'center', gap: uc(10), paddingTop: uc(10), paddingBottom: uc(4) },
+  heroTitle: { textAlign: 'center' },
+  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: uc(14), paddingVertical: uc(10), gap: uc(2) },
+  head: { flexDirection: 'row', alignItems: 'center', paddingBottom: uc(6) },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: uc(10), paddingVertical: uc(10) },
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  time: { width: u(40), paddingTop: u(2) },
-  sub: { marginTop: space.sm, fontFamily: fonts.semibold },
-  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  time: { width: uc(40), paddingTop: uc(2) },
+  sub: { marginTop: uc(8), fontFamily: fonts.semibold },
+  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8), justifyContent: 'center' },
+  undo: { minHeight: uc(36), paddingHorizontal: uc(10), justifyContent: 'center' },
+  chip: { height: uc(34), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
   run: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.md,
-    minHeight: u(52),
-    paddingHorizontal: space.lg,
-    paddingVertical: u(10),
-    borderRadius: radius.card,
+    gap: uc(10),
+    minHeight: uc(52),
+    paddingHorizontal: uc(14),
+    paddingVertical: uc(10),
+    borderRadius: uc(18),
     borderWidth: 1,
     borderColor: tokens.border,
     backgroundColor: tokens.surface,

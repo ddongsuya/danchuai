@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { haptic } from '@/lib/haptics';
-import { fonts, radius, space, tokens, u } from '@/constants/theme';
+import { fonts, radius, tokens, uc } from '@/constants/theme';
 
 export interface Question {
   id: string;
@@ -29,12 +29,12 @@ export function QuestionCard({ title, questions, initial = {}, onSubmit, onSkip 
   const instant = questions.length === 1;
   return (
     <View style={styles.card}>
-      <Txt variant="label" style={{ fontFamily: fonts.bold, marginBottom: space.md }}>
+      <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, marginBottom: uc(10) }}>
         {title}
       </Txt>
       {questions.map((q, i) => (
-        <View key={q.id} style={i > 0 && { marginTop: u(14) }} accessibilityRole="radiogroup" accessibilityLabel={q.label}>
-          <Txt variant="small" color={tokens.muted} style={{ marginBottom: space.sm }}>
+        <View key={q.id} style={i > 0 && { marginTop: uc(14) }} accessibilityRole="radiogroup" accessibilityLabel={q.label}>
+          <Txt variant="chatSmall" color={tokens.muted} style={{ marginBottom: uc(8) }}>
             {q.label}
           </Txt>
           <View style={styles.opts}>
@@ -54,7 +54,7 @@ export function QuestionCard({ title, questions, initial = {}, onSubmit, onSkip 
                   }}
                   style={[styles.opt, on && styles.optOn]}
                 >
-                  <Txt variant="small" color={on ? tokens.onInk : tokens.text} style={{ fontFamily: fonts.medium }}>
+                  <Txt variant="chatSmall" color={on ? tokens.onInk : tokens.text} style={{ fontFamily: fonts.medium }}>
                     {o}
                   </Txt>
                 </Press>
@@ -64,17 +64,17 @@ export function QuestionCard({ title, questions, initial = {}, onSubmit, onSkip 
         </View>
       ))}
       <View style={styles.act}>
-        {!instant && <Button title={complete ? '이대로 정하기' : '고르기 전'} onPress={() => onSubmit(answers)} disabled={!complete} />}
-        <Button title="미정으로 두기" kind="text" onPress={onSkip} />
+        {!instant && <Button chat title={complete ? '이대로 정하기' : '고르기 전'} onPress={() => onSubmit(answers)} disabled={!complete} />}
+        <Button chat title="미정으로 두기" kind="text" onPress={onSkip} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, padding: space.lg, marginTop: space.md },
-  opts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  opt: { minHeight: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
+  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, padding: uc(14), marginTop: uc(10) },
+  opts: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8) },
+  opt: { minHeight: uc(36), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
   optOn: { backgroundColor: tokens.ink },
-  act: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: space.sm, marginTop: space.md, marginLeft: -space.md },
+  act: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: uc(8), marginTop: uc(10), marginLeft: -uc(10) },
 });

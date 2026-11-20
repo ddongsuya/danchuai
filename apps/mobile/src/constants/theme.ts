@@ -31,6 +31,13 @@ export const tokens = {
 export const SCALE = 1.3;
 export const u = (px: number) => Math.round(px * SCALE * 10) / 10;
 
+/**
+ * 대화 화면 비율 (2026-11-20 사용자: "채팅 화면의 UI 사이즈를 작게").
+ * 말풍선·비서 글·입력창·단계 표시·비서 홈은 1.3배 대신 1.1배로 쓴다. 다른 화면(목록·카드·시트)은 u() 그대로.
+ */
+export const CHAT_SCALE = 1.1;
+export const uc = (px: number) => Math.round(px * CHAT_SCALE * 10) / 10;
+
 /** 원티드 산스(OFL). assets/fonts/OFL.txt */
 export const fonts = {
   regular: 'WantedSans-Regular',
@@ -54,6 +61,13 @@ export const type = {
   label: { fontFamily: fonts.semibold, fontSize: u(15), lineHeight: u(20) },
   small: { fontFamily: fonts.regular, fontSize: u(14), lineHeight: u(20) },
   caption: { fontFamily: fonts.medium, fontSize: u(13), lineHeight: u(18) },
+  /** 대화 화면(1.1배): 비서 글, 내 말풍선, 작은 글, 단계·보조 글, 라벨, 비서 홈 제목 */
+  chatAgent: { fontFamily: fonts.regular, fontSize: uc(15), lineHeight: uc(24) },
+  chatBody: { fontFamily: fonts.regular, fontSize: uc(15), lineHeight: uc(22) },
+  chatSmall: { fontFamily: fonts.regular, fontSize: uc(13.5), lineHeight: uc(19) },
+  chatCaption: { fontFamily: fonts.medium, fontSize: uc(12), lineHeight: uc(17) },
+  chatLabel: { fontFamily: fonts.semibold, fontSize: uc(14), lineHeight: uc(19) },
+  chatTitle: { fontFamily: fonts.bold, fontSize: uc(20), lineHeight: uc(27), letterSpacing: uc(-0.3) },
   /** 화면에 하나만 두는 상태 숫자(제출 2/4곳, 3일 남음) */
   stat: { fontFamily: fonts.bold, fontSize: u(32), lineHeight: u(38), letterSpacing: u(-0.6) },
 } as const;

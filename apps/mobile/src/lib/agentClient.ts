@@ -107,6 +107,9 @@ export interface AssistBriefView {
 /** 읽기 액션(브리핑 등)을 단추에서 읽는다 */
 export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}) => call<{ result: T }>('cro', '/v1/danchu/run', { action, body }).then((r) => r.result);
 
+/** 비서·앱이 바로 실행한 기록(최근 30건, 최근 순) */
+export const listRuns = () => call<{ items: AssistRunView[] }>('cro', '/v1/danchu/runs').then((r) => r.items);
+
 /** 바로 실행한 기관 기록 되돌리기 */
 export const undoRun = (id: string) => call<{ run: AssistRunView }>('cro', `/v1/danchu/runs/${encodeURIComponent(id)}/undo`, {}).then((r) => r.run);
 
