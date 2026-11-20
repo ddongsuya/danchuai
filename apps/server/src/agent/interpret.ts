@@ -110,11 +110,11 @@ const order = (n: string) => ORDER[n] ?? 9;
 /** 카드가 따로 붙이는 "미정" 줄과 겹치는 선택지 */
 export const UNSURE = /^(미정|모름|모르겠어요|잘 모르겠어요|아직 몰라요|아직 미정|미정이에요|미정으로 두기)$/;
 
-/** 조항 이름의 앞 번호("5.1 Clinical Development Trials" → "5.1") */
-const sectionNo = (section: string) => (section.trim().split(/\s+/)[0] ?? "").replace(/[.:]+$/, "");
+/** 조항 이름의 앞 번호("5.1 Clinical Development Trials" → "5.1", "제2조(적용범위)" → "제2조"). 괄호 제목은 뗀다 */
+const sectionNo = (section: string) => (section.trim().split(/[\s(（]+/)[0] ?? "").replace(/[.:]+$/, "");
 
 /** 근거 글에서 문서 이름 뒤의 낱말들("ICH M3 5.1 표 1" → ["5.1", "표", "1"]). 끝 마침표는 뗀다 */
-const tokensAfter = (b: string, doc: string) => b.slice(b.indexOf(doc) + doc.length).split(/[\s,()]+/).map((t) => t.replace(/[.:]+$/, "")).filter(Boolean);
+const tokensAfter = (b: string, doc: string) => b.slice(b.indexOf(doc) + doc.length).split(/[\s,()（）]+/).map((t) => t.replace(/[.:]+$/, "")).filter(Boolean);
 
 /**
  * 모델이 적은 근거("ICH M3 5.1")를 이번 턴 참고자료 조각과 맞춘다. 문서 이름과 조항 번호가 모두 맞는 원문만 받는다.

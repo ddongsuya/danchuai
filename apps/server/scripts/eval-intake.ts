@@ -170,8 +170,10 @@ function grade(s: Scenario, logs: TurnLog[]) {
   }
   for (const [f, re] of Object.entries(s.sheetAfterFirst ?? {})) checks.push([`첫 턴 뒤 ${f} 채움`, re!.test(first.sheet[f] ?? "")]);
   const situationQs = logs.filter((l) => l.question && (SITUATION_FIELDS as readonly string[]).includes(l.question.field));
-  // "미정"은 카드가 붙인다. 상황 질문은 고르면 달라지는 것(effect)이 하나 이상 보여야 한다.
-  checks.push(["상황 질문에 달라지는 것 표시", situationQs.every((l) => l.question!.options.some((o) => !!o.effect))]);
+  // "미정"은 카드가 붙인다. effect는 원문으로 확인될 때만 쓰게 했으므로(프롬프트 3번),
+  // 원문 근거(basis)가 붙은 상황 질문에만 고르면 달라지는 것(effect)이 하나 이상 보여야 한다.
+  const groundedQs = situationQs.filter((l) => !!l.question!.basis?.length);
+  checks.push(["근거 붙은 상황 질문에 달라지는 것 표시", groundedQs.every((l) => l.question!.options.some((o) => !!o.effect))]);
   if (s.cite) checks.push(["첫 두 턴 안에 질문 근거(basis)", logs.slice(0, 2).some((l) => !!l.question?.basis?.length)]);
   return checks;
 }

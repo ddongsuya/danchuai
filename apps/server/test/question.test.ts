@@ -72,6 +72,20 @@ describe("질문 근거", () => {
     if (chapter) expect(matchBasis(["ICH M3 5.1"], evidence).some((b) => b.section === chapter.section)).toBe(false);
   });
 
+  it("괄호 제목이 붙은 국내 고시 조항도 맞춘다(제2조(적용범위) ↔ 제2조)", () => {
+    const evidence = retrieve("이식형 의료기기 생물학적 안전성 시험");
+    const src = evidence.sources.find((s) => /^제\d+조\(/.test(s.section) && s.doc !== "단추 시험 가이드 정리본")!;
+    expect(src).toBeTruthy();
+    const no = src.section.split("(")[0]!;
+    for (const b of [`${src.doc} ${no}`, `${src.doc} ${src.section}`, `${src.doc} ${no}(${src.section.split("(")[1]}`]) {
+      const basis = matchBasis([b], evidence);
+      expect(basis).toHaveLength(1);
+      expect(basis[0]!.section).toBe(src.section);
+    }
+    // 제2조를 제20조로 잡지 않는다
+    expect(matchBasis([`${src.doc} ${no}0`], evidence).some((b) => b.section === src.section)).toBe(false);
+  });
+
   it("참고자료가 없으면 근거를 붙이지 않는다", () => {
     expect(matchBasis(["ICH M3 5.1"])).toEqual([]);
     const q = question(interpret(conv(), [ask({ field: "clinicalPlan", question: "임상 기간은요?", options: ["2주 이내", "3개월 이내"], basis: ["ICH M3 5.1"] })]));
