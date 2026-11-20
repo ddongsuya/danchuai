@@ -20,7 +20,8 @@ import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
-import { AssistView } from '@/components/lab/AssistChat';
+import { AssistView, croMenu } from '@/components/lab/AssistChat';
+import { RunsView } from '@/app/lab/runs';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -225,6 +226,13 @@ const ASSIST_ACTIONS = [
   { key: 'x1', at: 1, label: '안건 단계 옮기기', outcome: 'done' as const, message: null, runId: 'r2', undoable: false, undone: true },
 ];
 
+const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
+const ASSIST_RUNS = [
+  { id: 'r1', action: 'task_create', label: '할 일 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
+  { id: 'r2', action: 'deal_move', label: '안건 단계 옮기기', outcome: 'done' as const, undoable: false, undone: true, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
+  { id: 'r3', action: 'event_create', label: '일정 잡기', outcome: 'failed' as const, undoable: false, undone: false, createdAt: new Date(Date.now() - 86_400_000).toISOString() },
+];
+
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
@@ -247,8 +255,11 @@ const VIEWS: View_[] = [
   { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
-  { key: 'lab-assist', label: '비서, 오늘 브리핑', group: '기관' },
+  { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
+  { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
+  { key: 'lab-assist-menu', label: '비서, 메뉴 열림', group: '기관' },
+  { key: 'lab-runs', label: '실행 기록', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
   { key: 'gate-plan', label: '기관 요금제 Pro 아님', group: '관문·계정' },
@@ -403,9 +414,15 @@ function PreviewView({ view }: { view: string }) {
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
     case 'lab-assist':
-      return <AssistView brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-typing':
+      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES.slice(0, 1)} actions={[]} streaming={{ step: '브리핑 확인', text: '' }} canSend={false} error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-run':
-      return <AssistView brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-menu':
+      return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-runs':
+      return <RunsView items={ASSIST_RUNS} error={null} onRetry={noop} onUndone={noop} />;
     case 'gate-error':
     case 'gate-wait':
     case 'gate-plan':
