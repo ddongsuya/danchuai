@@ -277,6 +277,7 @@ const VIEWS: View_[] = [
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
   { key: 'lab-quote-calc', label: '견적 확인, 단추 계산으로 채움', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
+  { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
@@ -445,6 +446,13 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
+    case 'lab-won':
+      return (
+        <DanchuLabView
+          it={{ ...LAB_SENT, group: 'won', stage: '선정', next: '계약 보고', steps: [{ label: '요청 받음', at: '', state: 'done' }, { label: '견적 제출', at: '', state: 'done' }, { label: '선정', at: '', state: 'done' }, { label: '계약 보고', at: '', state: 'now' }] }}
+          contractPreview={{ awardId: 'a-demo', path: '/cro/awards/a-demo/contract', tests: 3, supply: 86_200_000, vat: 8_620_000, total: 94_820_000, articles: 12, sentAt: null, contractStatus: 'pending' }}
+        />
+      );
     case 'lab-assist':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-typing':

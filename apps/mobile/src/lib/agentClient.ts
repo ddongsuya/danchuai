@@ -227,7 +227,22 @@ export type DanchuActionName =
   | 'quote_submit'
   | 'detail_reply'
   | 'contract_report'
-  | 'crm_activity';
+  | 'crm_activity'
+  /** 단추 액션 목록에서 온 승인 액션(계약서(안) 보내기 등). 서버가 목록의 수준을 다시 본다 */
+  | 'contract_draft_send';
+
+/** 단추 계약서(안) 요약(금액은 제출한 견적 그대로, 단추 계산) */
+export interface ContractDraftView {
+  awardId: string;
+  path: string;
+  tests: number;
+  supply: number;
+  vat: number;
+  total: number;
+  articles: number;
+  sentAt: string | null;
+  contractStatus: string;
+}
 
 /**
  * conversationId: 이 동작을 만든 대화. 단추가 받으면 서버가 그 대화를 끝난 것으로 표시한다
