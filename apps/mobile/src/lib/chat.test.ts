@@ -151,6 +151,18 @@ describe('기관 비서 실행 카드', () => {
   });
 });
 
+describe('기관 비서 찾기 카드', () => {
+  it('찾을 말만 받아 이번 턴 답 자리에 붙이고, 모양이 틀린 것은 버린다', () => {
+    let s = chatReducer(initialChat, { type: 'opened', id: 'c1', role: 'cro', sheet: { ...EMPTY_SHEET }, missing: [] });
+    s = chatReducer(s, { type: 'send', text: '28일 랫드 견적 찾아줘', at: 1 });
+    s = chatReducer(s, { type: 'server', event: 'lookup', data: { action: 'quote_history', label: '과거 견적 찾기', body: { q: '28일 랫드' } } });
+    s = chatReducer(s, { type: 'server', event: 'lookup', data: { action: 'Bad Name', body: {} } });
+    s = chatReducer(s, { type: 'server', event: 'lookup', data: { action: 'quote_history', body: ['x'] } });
+    s = chatReducer(s, { type: 'ended', at: 2 });
+    expect(s.lookups).toEqual([{ key: 'l0', at: 1, action: 'quote_history', label: '과거 견적 찾기', body: { q: '28일 랫드' } }]);
+  });
+});
+
 describe('서버가 보낸 오류는 끊김으로 덮지 않는다', () => {
   it('사용 한도 오류 뒤 스트림이 끝나도 사용 한도로 보인다', () => {
     let s = chatReducer(initialChat, { type: 'opened', id: 'c1', role: 'cro', sheet: { ...EMPTY_SHEET }, missing: [] });

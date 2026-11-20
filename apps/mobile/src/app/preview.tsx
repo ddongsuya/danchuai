@@ -218,6 +218,17 @@ const ASSIST_BRIEF = {
     { dealId: 'd3', title: '랫드 PK', company: '라 제약', reason: '다음 할 일 없음', tone: 'warn' as const, suggest: '할 일 잡기' },
   ],
 };
+// 과거 견적 찾기(가상의 견적서, 금액은 계산 확인용 가상의 값)
+const FIND_MESSAGES = [
+  { id: 'u1', role: 'user' as const, text: '작년 28일 랫드 경구 견적 찾아줘' },
+  { id: 'a1', role: 'agent' as const, text: '28일 랫드 경구 견적서를 찾아볼게요.' },
+];
+const FIND_LOOKUPS = [{ key: 'l0', at: 1, action: 'quote_history', label: '과거 견적 찾기', body: { q: '28일 랫드 경구' } }];
+const FIND_HITS = [
+  { id: 'd1', docNo: 'Q-2609-007', title: '반복투여독성 28일 (랫드, 경구)', client: '단추 요청 DC-2026-0098', substance: '후보물질 B', rfqNo: 'DC-2026-0098', issuedOn: '2026-09-12', supply: 86_400_000, tests: [{ name: '반복투여독성 28일', total: 71_400_000 }, { name: '조제물분석', total: 15_000_000 }] },
+  { id: 'd2', docNo: 'Q-2603-002', title: '반복투여독성 28일 (랫드, 경구)', client: '', substance: '후보물질 A', rfqNo: null, issuedOn: '2026-03-04', supply: 68_000_000, tests: [{ name: '반복투여독성 28일', total: 68_000_000 }] },
+];
+
 const ASSIST_MESSAGES = [
   { id: 'u1', role: 'user' as const, text: '다 바이오텍 다음 주 화요일에 후속 연락 잡고, 라 제약 PK는 협의로 옮겨 줘' },
   { id: 'a1', role: 'agent' as const, text: '다 바이오텍 후속 연락을 11월 25일 할 일로 잡고, 라 제약 랫드 PK는 협의 단계로 옮길게요.' },
@@ -264,11 +275,13 @@ const VIEWS: View_[] = [
   { key: 'lab-work', label: '받은 요청, 참여 뒤(AI 견적)', group: '기관' },
   { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
+  { key: 'lab-quote-calc', label: '견적 확인, 단추 계산으로 채움', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
   { key: 'lab-assist-menu', label: '비서, 메뉴 열림', group: '기관' },
+  { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -424,6 +437,8 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuLabView it={LAB_TODO} initialSheet="decline" />;
     case 'lab-work':
       return <DanchuLabView it={LAB_WORK} />;
+    case 'lab-quote-calc':
+      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialCalc={{ 3: 31_500_000 }} onBack={() => router.back()} />;
     case 'lab-quote':
     case 'lab-quote-ready':
       return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
@@ -435,6 +450,8 @@ function PreviewView({ view }: { view: string }) {
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES.slice(0, 1)} actions={[]} streaming={{ step: '브리핑 확인', text: '' }} canSend={false} error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-run':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-find':
+      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={FIND_MESSAGES} actions={[]} lookups={FIND_LOOKUPS} lookupPreview={FIND_HITS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-menu':
       return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-runs':
