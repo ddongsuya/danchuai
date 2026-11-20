@@ -1,8 +1,9 @@
 // 요청함(Manus 작업 목록 방식). 의뢰자와 기관이 같은 틀을 쓰고 항목과 상태 이름만 다르다.
 // 진단 문서 A05 "② 새 요청 버튼 하나"(사용자 선택 2026-11-17): 새 요청은 바닥에 붙은 버튼 하나, 질문하기는 머리줄, 검색은 없음.
 // 기관(A06)은 앱에서 요청을 만들지 않으므로 바닥 버튼이 없다.
+// 두 역할 모두 첫 화면은 비서(2026-11-20). 요청함은 비서 메뉴에서 열고, 왼쪽 위 버튼으로 비서에 돌아간다.
 import { router, type Href } from 'expo-router';
-import { CaretLeft, ChatCircle, Dna, Drop, Flask, Plus, User, UserSwitch } from 'phosphor-react-native';
+import { CaretLeft, ChatCircle, Dna, Drop, Flask, Plus } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,11 +15,10 @@ import { Press } from '@/components/ui/Press';
 import { StateView } from '@/components/ui/StateView';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
-import { useAuth } from '@/lib/session';
 
 import type { InboxItem, InboxStatus } from '@/lib/inbox';
 
-const statusChip: Record<InboxStatus, { label: string; kind: ChipTone }> = {
+export const STATUS_CHIP: Record<InboxStatus, { label: string; kind: ChipTone }> = {
   new: { label: '새 요청', kind: 'wait' },
   viewed: { label: '확인', kind: 'mute' },
   waiting: { label: '승인 대기', kind: 'wait' },
@@ -43,12 +43,9 @@ interface Props {
   onRetry?: () => void;
   emptyLabel?: string;
   hrefOf: (id: string) => Href;
-  switchTo: Href;
-  switchLabel: string;
 }
 
-export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, switchTo, switchLabel }: Props) {
-  const { status } = useAuth();
+export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf }: Props) {
   const [active, setActive] = useState(0);
   // 거름 칸은 화면마다 정한 것만(의뢰자 3칸, 기관 4칸). 건수는 1 이상일 때만 숫자로 붙는다. 숫자는 고정폭.
   const tabs = useMemo(() => filters.map((f) => ({ ...f, count: f.match ? items.filter((i) => f.match!.includes(i.status)).length : items.length })), [filters, items]);
@@ -59,21 +56,10 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.root}>
         <View style={styles.nav}>
-          {role === 'cro' ? (
-            // 기관의 받은 요청은 비서 메뉴에서 연다. 계정·화면 바꾸기도 비서 메뉴에 있다
-            <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/lab/assist'))}>
-              <CaretLeft size={u(22)} color={tokens.text} />
-            </IconButton>
-          ) : status === 'disabled' ? (
-            // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다.
-            <IconButton label={switchLabel} onPress={() => router.replace(switchTo)}>
-              <UserSwitch size={u(20)} color={tokens.text} />
-            </IconButton>
-          ) : (
-            <IconButton label="계정" onPress={() => router.push('/account')}>
-              <User size={u(20)} color={tokens.text} />
-            </IconButton>
-          )}
+          {/* 받은 요청·요청함은 비서 메뉴에서 연다. 계정·화면 바꾸기도 비서 메뉴에 있다 */}
+          <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace(role === 'cro' ? '/lab/assist' : '/'))}>
+            <CaretLeft size={u(22)} color={tokens.text} />
+          </IconButton>
           <Press label="질문하기" onPress={() => router.push({ pathname: '/ask', params: { role } })} style={styles.ask}>
             <ChatCircle size={u(16)} color={tokens.text} />
             <Txt variant="small" style={{ fontFamily: fonts.semibold }}>
@@ -133,7 +119,7 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const Icon = icons[item.icon];
-              const chip = statusChip[item.status];
+              const chip = STATUS_CHIP[item.status];
               const fresh = item.status === 'new' || item.status === 'replied';
               return (
                 <Press label={`${item.title}, ${chip.label}`} onPress={() => router.push(hrefOf(item.id))} style={styles.item}>

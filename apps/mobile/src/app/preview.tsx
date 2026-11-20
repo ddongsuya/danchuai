@@ -21,6 +21,7 @@ import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { AssistView, croMenu } from '@/components/lab/AssistChat';
+import { RequesterHomeView, requesterMenu } from '@/components/agent/RequesterHome';
 import { RunsView } from '@/app/lab/runs';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
@@ -233,8 +234,17 @@ const ASSIST_RUNS = [
   { id: 'r3', action: 'event_create', label: '일정 잡기', outcome: 'failed' as const, undoable: false, undone: false, createdAt: new Date(Date.now() - 86_400_000).toISOString() },
 ];
 
+const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : 'account')) })) };
+const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], menuOpen = false) => (
+  <RequesterHomeView menu={REQ_MENU} initialMenuOpen={menuOpen} recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('inbox'))} />
+);
+
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
+  { key: 'req-home', label: '의뢰자 첫 화면, 최근 요청', group: '첫 화면' },
+  { key: 'req-home-new', label: '의뢰자 첫 화면, 요청 없음', group: '첫 화면' },
+  { key: 'req-home-loading', label: '의뢰자 첫 화면, 불러오는 중', group: '첫 화면' },
+  { key: 'req-home-menu', label: '의뢰자 첫 화면, 메뉴 열림', group: '첫 화면' },
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
   { key: 'inbox-lab', label: '요청함(기관)', group: '요청함' },
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
@@ -323,12 +333,20 @@ function PreviewView({ view }: { view: string }) {
   const [dialog, setDialog] = useState(true);
 
   switch (view) {
+    case 'req-home':
+      return reqHome({ kind: 'ready', items: REQ_ITEMS });
+    case 'req-home-new':
+      return reqHome({ kind: 'ready', items: [] });
+    case 'req-home-loading':
+      return reqHome({ kind: 'loading' });
+    case 'req-home-menu':
+      return reqHome({ kind: 'ready', items: REQ_ITEMS }, true);
     case 'inbox':
-      return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />;
     case 'inbox-lab':
-      return <InboxScreen role="cro" title="받은 요청" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} switchTo={toView('inbox')} switchLabel="의뢰자 화면으로 바꾸기" />;
+      return <InboxScreen role="cro" title="받은 요청" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} />;
     case 'inbox-empty':
-      return <InboxScreen role="requester" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />;
     case 'inbox-error':
       return (
         <InboxScreen
@@ -339,8 +357,6 @@ function PreviewView({ view }: { view: string }) {
           onRetry={noop}
           filters={REQ_FILTERS}
           hrefOf={() => toView('compare')}
-          switchTo={toView('inbox-lab')}
-          switchLabel="기관 화면으로 바꾸기"
         />
       );
     case 'chat':
