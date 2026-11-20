@@ -1,6 +1,7 @@
 // 기관 비서 (에이전트 액션 등록부 1~3단계, 2026-11-19).
 // 단추 액션 목록(GET /api/agent/actions)으로 비서 도구를 만든다. 단추에 액션이 늘면 비서도 그대로 쓴다.
-// - 비서 도구는 단추가 tool 로 표시한 바로 실행(auto) 액션만. 읽기는 턴마다 맥락으로 붙인다(한 턴은 응답 한 번).
+// - 비서 도구는 단추가 tool 로 표시한 바로 실행(auto) 액션과 찾기(read). 브리핑·보고 읽기는 턴마다 맥락으로 붙인다(한 턴은 응답 한 번).
+//   찾기 결과는 모델에 넣지 않는다. 앱이 찾기 카드에서 단추를 직접 읽는다(과거 견적 금액도 단추 계산값만 보인다).
 // - 승인이 필요한 액션(confirm)·사람만(human)은 도구로 주지 않는다. 확인 카드(보내기 장부)로만 나간다.
 // - 다른 행을 가리키는 칸(x-ref)은 모델에 id 대신 짧은 번호(D3·T2…)로 보이고, 실행할 때 id 로 바꾼다.
 //   번호는 그 턴에 읽은 브리핑에서만 나온다. 목록에 없는 번호는 실행하지 않는다.
@@ -138,8 +139,16 @@ export function toolSchema(input: Record<string, unknown>): Record<string, unkno
   return { type: "object", properties: props, required: [...(s.required ?? [])], additionalProperties: false };
 }
 
+/**
+ * 비서 찾기 도구: 단추가 tool 로 표시한 읽기(기관 범위). 서버는 이 결과를 모델에 넣지 않는다.
+ * 앱이 찾기 카드에서 단추를 직접 읽어 보여 준다(금액은 단추 계산값, 에이전트는 복사본을 두지 않는다)
+ */
+export function assistLookups(c: DanchuCatalog): DanchuCatalogAction[] {
+  return c.actions.filter((a) => a.tool && a.level === "read" && a.scope === "org" && /^[a-z][a-z_]{1,39}$/.test(a.name) && !FORBIDDEN_TOOL_PREFIXES.some((p) => a.name.startsWith(p)));
+}
+
 export function assistTools(c: DanchuCatalog): AgentToolSpec[] {
-  return assistActions(c).map((a) => ({ name: a.name, description: `${a.label}. ${a.description}`, inputSchema: toolSchema(a.input) }));
+  return [...assistActions(c), ...assistLookups(c)].map((a) => ({ name: a.name, description: `${a.label}. ${a.description}`, inputSchema: toolSchema(a.input) }));
 }
 
 export type Resolved = { ok: true; body: Record<string, unknown> } | { ok: false; reason: "unknown_ref" | "bad_input" };
@@ -203,8 +212,9 @@ export async function runAuto(
   body: Record<string, unknown>,
   conversationId: string | null,
   now = () => new Date(),
+  rfqNo: string | null = null,
 ): Promise<{ run: AssistRun; status: number; result: unknown }> {
-  const r = await deps.api.run(token, { action: a.name, rfqNo: null, body });
+  const r = await deps.api.run(token, { action: a.name, rfqNo, body });
   const log = danchuLogOf(r.body);
   const run: AssistRun = {
     id: randomUUID(),
@@ -232,6 +242,8 @@ export interface AssistDeps {
 
 /** 한 턴에 바로 실행하는 액션 수 상한 */
 export const MAX_ACTIONS_PER_TURN = 5;
+/** 한 턴에 붙이는 찾기 카드 수 상한 */
+export const MAX_LOOKUPS_PER_TURN = 2;
 
 export type AssistPrep =
   | { ok: true; tools: AgentToolSpec[]; context: string; book: RefBook; actions: Map<string, DanchuCatalogAction> }
@@ -250,10 +262,12 @@ export async function prepareAssist(deps: AssistDeps, token: string, orgId: stri
   if (!cat || !brief) return { ok: false, error: "danchu_unavailable" };
   const report = rep.status === 200 && rep.body && typeof rep.body === "object" ? ((rep.body as { report?: AssistReport }).report ?? null) : null;
   const book = refBook(brief);
-  return { ok: true, tools: assistTools(cat), context: assistContext(brief, book, report), book, actions: new Map(assistActions(cat).map((a) => [a.name, a])) };
+  return { ok: true, tools: assistTools(cat), context: assistContext(brief, book, report), book, actions: new Map([...assistActions(cat), ...assistLookups(cat)].map((a) => [a.name, a])) };
 }
 
 export type AssistActionEvent = { run: ReturnType<typeof runView> | null; label: string; outcome: "done" | "failed" | "unknown" | "skipped"; message: string | null };
+/** 찾기 카드: 앱이 이 입력으로 단추를 읽는다 */
+export type AssistLookupEvent = { action: string; label: string; body: Record<string, unknown> };
 
 /** 모델이 부른 도구를 단추에서 바로 실행한다. 목록에 없는 도구·번호·틀린 입력은 실행하지 않는다 */
 export async function applyAssistCalls(
@@ -263,13 +277,23 @@ export async function applyAssistCalls(
   conversationId: string,
   calls: readonly { name: string; input: unknown }[],
   prep: Extract<AssistPrep, { ok: true }>,
-): Promise<{ events: AssistActionEvent[]; notes: string[] }> {
+): Promise<{ events: AssistActionEvent[]; lookups: AssistLookupEvent[]; notes: string[] }> {
   const events: AssistActionEvent[] = [];
+  const lookups: AssistLookupEvent[] = [];
   const notes: string[] = [];
-  for (const [i, call] of calls.entries()) {
+  let runs = 0;
+  for (const call of calls) {
     const a = prep.actions.get(call.name);
     const label = a?.label ?? "알 수 없는 동작";
-    if (!a || i >= MAX_ACTIONS_PER_TURN) {
+    if (a?.level === "read") {
+      const r = resolveCall(a, call.input, prep.book);
+      if (r.ok && lookups.length < MAX_LOOKUPS_PER_TURN) {
+        lookups.push({ action: a.name, label, body: r.body });
+        notes.push(`(찾기: ${label})`);
+      }
+      continue;
+    }
+    if (!a || runs++ >= MAX_ACTIONS_PER_TURN) {
       events.push({ run: null, label, outcome: "skipped", message: null });
       notes.push(`(실행 안 함: ${label})`);
       continue;
@@ -287,5 +311,5 @@ export async function applyAssistCalls(
     events.push({ run: runView(done.run), label, outcome: done.run.outcome, message });
     notes.push(`(실행: ${label} ${done.run.outcome === "done" ? "완료" : done.run.outcome === "failed" ? "거절됨" : "결과 모름"})`);
   }
-  return { events, notes };
+  return { events, lookups, notes };
 }

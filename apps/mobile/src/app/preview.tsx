@@ -21,6 +21,7 @@ import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { AssistView, croMenu } from '@/components/lab/AssistChat';
+import { RequesterHomeView, requesterMenu } from '@/components/agent/RequesterHome';
 import { RunsView } from '@/app/lab/runs';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
@@ -85,7 +86,7 @@ const WAITING: DanchuCompare = { open: false, joined: 4, submitted: 2, replyBy: 
 const OPEN: DanchuCompare = {
   open: true,
   columns: [
-    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4), quoteId: 'q-demo-1', revision: 1, selectable: true },
+    { lab: '가 기관', total: 48_500_000, weeks: 14, submittedAt: day(4), quoteId: 'q-demo-1', revision: 1, selectable: true, docPath: '/app/r/DC-2026-0142/q/q-demo-1/doc' },
     { lab: '나 기관', total: 51_200_000, weeks: 12, submittedAt: day(5), quoteId: 'q-demo-2', revision: 2, selectable: true },
     { lab: '다 기관', total: 49_800_000, weeks: 16, submittedAt: day(7), quoteId: 'q-demo-3', revision: 1, selectable: false },
   ],
@@ -217,6 +218,17 @@ const ASSIST_BRIEF = {
     { dealId: 'd3', title: '랫드 PK', company: '라 제약', reason: '다음 할 일 없음', tone: 'warn' as const, suggest: '할 일 잡기' },
   ],
 };
+// 과거 견적 찾기(가상의 견적서, 금액은 계산 확인용 가상의 값)
+const FIND_MESSAGES = [
+  { id: 'u1', role: 'user' as const, text: '작년 28일 랫드 경구 견적 찾아줘' },
+  { id: 'a1', role: 'agent' as const, text: '28일 랫드 경구 견적서를 찾아볼게요.' },
+];
+const FIND_LOOKUPS = [{ key: 'l0', at: 1, action: 'quote_history', label: '과거 견적 찾기', body: { q: '28일 랫드 경구' } }];
+const FIND_HITS = [
+  { id: 'd1', docNo: 'Q-2609-007', title: '반복투여독성 28일 (랫드, 경구)', client: '단추 요청 DC-2026-0098', substance: '후보물질 B', rfqNo: 'DC-2026-0098', issuedOn: '2026-09-12', supply: 86_400_000, tests: [{ name: '반복투여독성 28일', total: 71_400_000 }, { name: '조제물분석', total: 15_000_000 }] },
+  { id: 'd2', docNo: 'Q-2603-002', title: '반복투여독성 28일 (랫드, 경구)', client: '', substance: '후보물질 A', rfqNo: null, issuedOn: '2026-03-04', supply: 68_000_000, tests: [{ name: '반복투여독성 28일', total: 68_000_000 }] },
+];
+
 const ASSIST_MESSAGES = [
   { id: 'u1', role: 'user' as const, text: '다 바이오텍 다음 주 화요일에 후속 연락 잡고, 라 제약 PK는 협의로 옮겨 줘' },
   { id: 'a1', role: 'agent' as const, text: '다 바이오텍 후속 연락을 11월 25일 할 일로 잡고, 라 제약 랫드 PK는 협의 단계로 옮길게요.' },
@@ -233,8 +245,17 @@ const ASSIST_RUNS = [
   { id: 'r3', action: 'event_create', label: '일정 잡기', outcome: 'failed' as const, undoable: false, undone: false, createdAt: new Date(Date.now() - 86_400_000).toISOString() },
 ];
 
+const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : 'account')) })) };
+const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], menuOpen = false) => (
+  <RequesterHomeView menu={REQ_MENU} initialMenuOpen={menuOpen} recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('inbox'))} />
+);
+
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
+  { key: 'req-home', label: '의뢰자 첫 화면, 최근 요청', group: '첫 화면' },
+  { key: 'req-home-new', label: '의뢰자 첫 화면, 요청 없음', group: '첫 화면' },
+  { key: 'req-home-loading', label: '의뢰자 첫 화면, 불러오는 중', group: '첫 화면' },
+  { key: 'req-home-menu', label: '의뢰자 첫 화면, 메뉴 열림', group: '첫 화면' },
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
   { key: 'inbox-lab', label: '요청함(기관)', group: '요청함' },
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
@@ -254,11 +275,15 @@ const VIEWS: View_[] = [
   { key: 'lab-work', label: '받은 요청, 참여 뒤(AI 견적)', group: '기관' },
   { key: 'lab-quote', label: '견적 확인, 직접 입력 남음', group: '기관' },
   { key: 'lab-quote-ready', label: '견적 확인, 제출 가능', group: '기관' },
+  { key: 'lab-quote-calc', label: '견적 확인, 단추 계산으로 채움', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
+  { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
   { key: 'lab-assist-menu', label: '비서, 메뉴 열림', group: '기관' },
+  { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
+  { key: 'lab-assist-record', label: '비서, 회의 녹음', group: '기관' },
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -323,12 +348,20 @@ function PreviewView({ view }: { view: string }) {
   const [dialog, setDialog] = useState(true);
 
   switch (view) {
+    case 'req-home':
+      return reqHome({ kind: 'ready', items: REQ_ITEMS });
+    case 'req-home-new':
+      return reqHome({ kind: 'ready', items: [] });
+    case 'req-home-loading':
+      return reqHome({ kind: 'loading' });
+    case 'req-home-menu':
+      return reqHome({ kind: 'ready', items: REQ_ITEMS }, true);
     case 'inbox':
-      return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />;
     case 'inbox-lab':
-      return <InboxScreen role="cro" title="받은 요청" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} switchTo={toView('inbox')} switchLabel="의뢰자 화면으로 바꾸기" />;
+      return <InboxScreen role="cro" title="받은 요청" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} />;
     case 'inbox-empty':
-      return <InboxScreen role="requester" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} switchTo={toView('inbox-lab')} switchLabel="기관 화면으로 바꾸기" />;
+      return <InboxScreen role="requester" items={[]} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />;
     case 'inbox-error':
       return (
         <InboxScreen
@@ -339,8 +372,6 @@ function PreviewView({ view }: { view: string }) {
           onRetry={noop}
           filters={REQ_FILTERS}
           hrefOf={() => toView('compare')}
-          switchTo={toView('inbox-lab')}
-          switchLabel="기관 화면으로 바꾸기"
         />
       );
     case 'chat':
@@ -408,17 +439,30 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuLabView it={LAB_TODO} initialSheet="decline" />;
     case 'lab-work':
       return <DanchuLabView it={LAB_WORK} />;
+    case 'lab-quote-calc':
+      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialCalc={{ 3: 31_500_000 }} onBack={() => router.back()} />;
     case 'lab-quote':
     case 'lab-quote-ready':
       return <DanchuQuoteReview no="DC-2026-0142" line="반복투여독성, 후보물질 A" quote={QUOTE} initialManual={view === 'lab-quote-ready' ? { 3: '32000000' } : {}} onBack={() => router.back()} />;
     case 'lab-sent':
       return <DanchuLabView it={LAB_SENT} />;
+    case 'lab-won':
+      return (
+        <DanchuLabView
+          it={{ ...LAB_SENT, group: 'won', stage: '선정', next: '계약 보고', steps: [{ label: '요청 받음', at: '', state: 'done' }, { label: '견적 제출', at: '', state: 'done' }, { label: '선정', at: '', state: 'done' }, { label: '계약 보고', at: '', state: 'now' }] }}
+          contractPreview={{ awardId: 'a-demo', path: '/cro/awards/a-demo/contract', tests: 3, supply: 86_200_000, vat: 8_620_000, total: 94_820_000, articles: 12, sentAt: null, contractStatus: 'pending' }}
+        />
+      );
     case 'lab-assist':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-typing':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES.slice(0, 1)} actions={[]} streaming={{ step: '브리핑 확인', text: '' }} canSend={false} error={null} onSend={noop} onUndo={noop} />;
     case 'lab-assist-run':
       return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-find':
+      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={FIND_MESSAGES} actions={[]} lookups={FIND_LOOKUPS} lookupPreview={FIND_HITS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'lab-assist-record':
+      return <AssistView menu={ASSIST_MENU} initialRecordOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onTranscript={noop} onUndo={noop} />;
     case 'lab-assist-menu':
       return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-runs':

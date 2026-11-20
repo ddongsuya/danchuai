@@ -6,6 +6,7 @@ import { fetch } from 'expo/fetch';
 import type { ChatErrorCode } from './chat';
 import { createSseParser, type SseEvent } from './sse';
 import { accessToken, authEnabled } from './supabase';
+import type { SttTicket } from './transcribe';
 
 const BASE = process.env.EXPO_PUBLIC_AGENT_URL?.replace(/\/$/, '');
 // 로그인(Supabase)이 켜져 있으면 그 세션 토큰을 쓰고, 아니면 개발용 토큰(로컬 실행)을 쓴다.
@@ -26,6 +27,7 @@ const codeOf = (status: number, body: unknown): ChatErrorCode => {
   const e = (body as { error?: string } | null)?.error;
   if (status === 401) return 'unauthorized';
   if (status === 503 || e === 'agent_unavailable') return 'agent_unavailable';
+  if (e === 'usage_limit') return 'usage_limit';
   if (status === 429 || e === 'turn_limit') return 'turn_limit';
   if (e === 'turn_in_progress') return 'turn_in_progress';
   // 단추 견적 대화를 열 수 없음(quote_not_joined·quote_closed 등), 단추가 찾지 못함·막음
@@ -104,8 +106,38 @@ export interface AssistBriefView {
   need: { dealId: string; title: string; company: string | null; reason: string; tone: 'warn' | 'due'; suggest: string }[];
 }
 
-/** 읽기 액션(브리핑 등)을 단추에서 읽는다 */
-export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}) => call<{ result: T }>('cro', '/v1/danchu/run', { action, body }).then((r) => r.result);
+/** 읽기 액션(브리핑 등)을 단추에서 읽는다. 요청 단위 읽기는 요청 번호를 함께 */
+export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
+  call<{ result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) }).then((r) => r.result);
+
+/** 바로 실행 액션을 앱 버튼으로(견적서 만들기 등). 서버가 실행 기록을 남긴다 */
+export const runDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
+  call<{ run: AssistRunView; result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) });
+
+/** 회의 녹음 전사 임시 토큰. 녹음 길이(분)와 참석자 동의 확인(attest)을 보낸다 */
+export const getSttTicket = (minutes: number) => call<SttTicket>('cro', '/v1/agent/transcribe/token', { minutes: Math.max(1, Math.ceil(minutes)), attest: true });
+
+/** 단추 견적서 툴 계산 금액(요청 행별, 부가세 별도). 금액이 없는 행은 amount null */
+export interface QuotePriceView {
+  rows: { seq: number; name: string; kind: string | null; amount: number | null; changes: number; priced: boolean; why: 'no_match' | 'no_price' | 'missing_item' | 'check' | null; checks?: string[] }[];
+  sum: number;
+  complete: boolean;
+  source: 'doc' | 'catalog';
+  doc: { id: string; docNo: string } | null;
+}
+
+/** 단추 과거 견적 찾기 결과 한 줄(금액은 단추 견적서 툴 계산) */
+export interface QuoteHitView {
+  id: string;
+  docNo: string;
+  title: string;
+  client: string;
+  substance: string;
+  rfqNo: string | null;
+  issuedOn: string;
+  supply: number;
+  tests: { name: string; total: number }[];
+}
 
 /** 비서·앱이 바로 실행한 기록(최근 30건, 최근 순) */
 export const listRuns = () => call<{ items: AssistRunView[] }>('cro', '/v1/danchu/runs').then((r) => r.items);
@@ -118,13 +150,14 @@ export const getConversation = (role: AgentRole, id: string) => call<Conversatio
 /**
  * 한 턴. 서버 이벤트를 오는 대로 넘긴다. done이 오면 정상 종료, 오기 전에 끊기면 network 오류.
  */
-export async function sendTurn(role: AgentRole, id: string, text: string, onEvent: (e: SseEvent) => void, signal?: AbortSignal) {
+export async function sendTurn(role: AgentRole, id: string, text: string, onEvent: (e: SseEvent) => void, signal?: AbortSignal, transcript?: string) {
   let res;
   try {
     res = await fetch(`${BASE}/v1/agent/conversations/${encodeURIComponent(id)}/turn`, {
       method: 'POST',
       headers: { ...(await headers(role)), accept: 'text/event-stream' },
-      body: JSON.stringify({ text }),
+      // 회의 전사본(기관 비서)은 이 턴에만 붙인다. 서버는 대화 기록에 남기지 않는다
+      body: JSON.stringify(transcript ? { text, transcript } : { text }),
       signal,
     });
   } catch {
@@ -194,7 +227,22 @@ export type DanchuActionName =
   | 'quote_submit'
   | 'detail_reply'
   | 'contract_report'
-  | 'crm_activity';
+  | 'crm_activity'
+  /** 단추 액션 목록에서 온 승인 액션(계약서(안) 보내기 등). 서버가 목록의 수준을 다시 본다 */
+  | 'contract_draft_send';
+
+/** 단추 계약서(안) 요약(금액은 제출한 견적 그대로, 단추 계산) */
+export interface ContractDraftView {
+  awardId: string;
+  path: string;
+  tests: number;
+  supply: number;
+  vat: number;
+  total: number;
+  articles: number;
+  sentAt: string | null;
+  contractStatus: string;
+}
 
 /**
  * conversationId: 이 동작을 만든 대화. 단추가 받으면 서버가 그 대화를 끝난 것으로 표시한다

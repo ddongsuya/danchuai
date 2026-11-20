@@ -18,6 +18,7 @@ import { danchuApi, danchuBaseFromEnv } from "./danchu";
 import { danchuIdentity, MemoryWorkspaceRepo, PgWorkspaceRepo } from "./danchuAuth";
 import { PgPurgeRepo, type PurgeRepo } from "./purge";
 import { MemoryUsageRepo, PgUsageRepo, usageConfigFromEnv, usageMeter } from "./usage";
+import { deepgramStt, sttConfigFromEnv } from "./transcribe";
 
 type Env = Record<string, string | undefined>;
 
@@ -47,6 +48,10 @@ export function buildServer(env: Env): Hono {
       : null;
   // AI 이용량 상한(AGENT_PRICE_*, AGENT_CAP_*). 잘못된 값이면 여기서 시작을 멈춘다
   const usage = usageMeter(pool ? new PgUsageRepo(pool) : new MemoryUsageRepo(), usageConfigFromEnv(env));
+
+  // 회의 녹음 전사(DEEPGRAM_API_KEY). 없으면 전사 버튼이 "설정 전"으로 보인다
+  const sttCfg = sttConfigFromEnv(env);
+  const stt = sttCfg ? { provider: deepgramStt(sttCfg), pricePerMin: sttCfg.pricePerMin, maxMinutes: sttCfg.maxMinutes } : undefined;
 
   // 메모리 모드에서는 기관 화면 확인용 견본 요청 하나를 둔다.
   const memoryRequests = new MemoryRequestDirectory({
@@ -86,6 +91,7 @@ export function buildServer(env: Env): Hono {
     danchu: danchu ?? undefined,
     purge: purgeRepo ? { repo: purgeRepo, secret: env.AGENT_PURGE_SECRET } : undefined,
     usage,
+    stt,
   });
 
   const origins = (env.CORS_ORIGINS ?? "http://localhost:8081").split(",");

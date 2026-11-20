@@ -7,6 +7,7 @@
 //   의뢰자 작업 공간(user:<id>)의 초안 전부, 그 사람이 승인한 대화 없는 단추 동작 초안.
 //   같은 기관 동료의 초안에 남긴 승인은 기관 기록이라 두고 결정자만 비운다.
 // 탈퇴면 더해서: 에이전트 쪽 동의 사본, 계정별 이용량, 의뢰자 작업 공간 이름(이름·이메일일 수 있다).
+// 기관 비서 실행 기록(assist_runs, 0012)은 철회·탈퇴 모두 그 사람의 줄을 지운다(되돌리기 값은 단추에 있고 단추도 지운다).
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";

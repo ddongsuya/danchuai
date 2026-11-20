@@ -36,15 +36,18 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
     return () => abort.current?.abort();
   }, [open]);
 
+  // 다시 보내기에 쓸 전사본(화면 상태에는 두지 않는다)
+  const lastTranscript = useRef<string | undefined>(undefined);
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, transcript?: string) => {
       const id = idRef.current;
       if (!id || abort.current) return;
       const ctrl = new AbortController();
       abort.current = ctrl;
+      lastTranscript.current = transcript;
       dispatch({ type: 'send', text, at: Date.now() });
       try {
-        await sendTurn(role, id, text, (e) => dispatch({ type: 'server', event: e.event, data: e.data }), ctrl.signal);
+        await sendTurn(role, id, text, (e) => dispatch({ type: 'server', event: e.event, data: e.data }), ctrl.signal, transcript);
         dispatch({ type: 'ended', at: Date.now() });
       } catch (e) {
         if (!ctrl.signal.aborted) dispatch({ type: 'failed', code: e instanceof AgentHttpError ? e.code : 'network', at: Date.now() });
@@ -57,7 +60,7 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
 
   const retry = useCallback(() => {
     if (!idRef.current) return void open();
-    if (state.lastText) void send(state.lastText);
+    if (state.lastText) void send(state.lastText, lastTranscript.current);
   }, [open, send, state.lastText]);
 
   /** 기관 비서: 되돌린 실행 카드를 표시한다 */

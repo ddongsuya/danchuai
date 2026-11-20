@@ -1,0 +1,192 @@
+// 의뢰자 첫 화면(시안 2026-11-20, 기관 비서 홈과 같은 틀). 열자마자 "어떤 시험이 필요해요?"로 대화를 시작한다.
+// 왼쪽 위 메뉴에 요청함·질문하기·계정. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
+// 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
+import { router, type Href } from 'expo-router';
+import { CaretRight, ChatCircleText, List, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { AgentAvatar } from '@/components/agent/AgentAvatar';
+import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
+import { ErrorLine } from '@/components/agent/LiveChat';
+import { ChatShell } from '@/components/chat/ChatShell';
+import { Composer } from '@/components/chat/Composer';
+import { STATUS_CHIP } from '@/components/inbox/InboxScreen';
+import type { ChipTone } from '@/components/ui/Chip';
+import { IconButton } from '@/components/ui/IconButton';
+import { Press } from '@/components/ui/Press';
+import { Txt } from '@/components/ui/Txt';
+import { fonts, radius, tokens, u, uc } from '@/constants/theme';
+import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
+import { agentConfigured } from '@/lib/agentClient';
+import { requesterItem, type InboxItem } from '@/lib/inbox';
+import { fetchRequests } from '@/lib/marketClient';
+import { useAuth } from '@/lib/session';
+
+/** 빈 화면에서 바로 고르는 말. seed 가 있으면 그 글로 새 요청 대화를 연다, 없으면 질문하기 */
+const STARTERS = [
+  { label: '독성시험 견적', seed: '독성시험 견적이 필요해요' },
+  { label: '효력시험 견적', seed: '효력시험 견적이 필요해요' },
+  { label: '가이드라인 질문', seed: null },
+] as const;
+
+const RECENT = 3;
+/** 요청함 상태 칩과 같은 색(회신 도착·승인 대기는 호박, 선정은 청록) */
+const TONE: Record<ChipTone, string> = { wait: tokens.wait, accent: tokens.accent, mute: tokens.muted };
+
+/** 보낸 요청은 진행 화면, 아직 안 보낸 대화는 이어서 쓰기(요청함과 같은 규칙) */
+export const requesterHref = (id: string): Href =>
+  id.startsWith('c:') ? { pathname: '/requester/[id]', params: { id: 'new', conv: id.slice(2) } } : { pathname: '/requester/[id]', params: { id } };
+
+const startRequest = (seed: string) => router.push({ pathname: '/requester/[id]', params: { id: 'new', seed: seed.slice(0, 1000) } });
+const openAsk = () => router.push({ pathname: '/ask', params: { role: 'requester' } });
+
+export function RequesterHome() {
+  const { status, org } = useAuth();
+  const live = agentConfigured();
+  const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
+  const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
+  const replied = items.filter((i) => i.status === 'replied').length;
+  const recent: RecentState = !live ? { kind: 'error', label: '서버 연결 전이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
+  return (
+    <RequesterHomeView
+      menu={{
+        title: '비서',
+        sub: org?.name ?? null,
+        items: requesterMenu(replied),
+        // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다
+        footer: status === 'disabled' ? [{ key: 'switch', label: '기관 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/lab/assist') }] : [],
+      }}
+      recent={recent}
+      onRetry={() => void reload()}
+      onStart={startRequest}
+      onAsk={openAsk}
+      onOpen={(it) => router.push(requesterHref(it.id))}
+      onAll={() => router.push('/requester' as Href)}
+    />
+  );
+}
+
+/** 의뢰자 메뉴: 요청함(회신 도착 수), 가이드라인 질문, 계정 */
+export function requesterMenu(repliedCount = 0): MenuItem[] {
+  const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
+  return [
+    { key: 'inbox', label: '요청함', icon: ic(Tray), count: repliedCount, onPress: () => router.push('/requester' as Href) },
+    { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: openAsk },
+    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
+  ];
+}
+
+export type RecentState = { kind: 'loading' } | { kind: 'error'; label: string } | { kind: 'ready'; items: InboxItem[] };
+
+export interface RequesterHomeViewProps {
+  menu: { title: string; sub?: string | null; items: MenuItem[]; footer?: MenuItem[] };
+  /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
+  initialMenuOpen?: boolean;
+  recent: RecentState;
+  onRetry?: () => void;
+  /** 첫 글(직접 쓴 글 또는 고른 말)로 새 요청 대화를 연다 */
+  onStart: (text: string) => void;
+  onAsk: () => void;
+  onOpen: (item: InboxItem) => void;
+  onAll: () => void;
+}
+
+/** 화면 모양만(미리보기에서도 쓴다) */
+export function RequesterHomeView({ menu, initialMenuOpen = false, recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
+  const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
+  const nav = (
+    <View style={styles.nav}>
+      <IconButton label="메뉴" onPress={() => setMenuOpen(true)}>
+        <List size={u(22)} color={tokens.text} />
+      </IconButton>
+    </View>
+  );
+  return (
+    <ChatShell title="비서" nav={nav} bottom={<Composer placeholder="필요한 시험" onSend={(t) => t && onStart(t)} />}>
+      <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
+      <View style={styles.hero}>
+        <AgentAvatar size={uc(64)} />
+        <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
+          어떤 시험이 필요해요?
+        </Txt>
+      </View>
+      <View style={styles.starters}>
+        {STARTERS.map((s) => (
+          <Press key={s.label} label={s.label} onPress={() => (s.seed ? onStart(s.seed) : onAsk())} style={styles.chip}>
+            <Txt variant="chatLabel">{s.label}</Txt>
+          </Press>
+        ))}
+      </View>
+      <RecentCard recent={recent} onRetry={onRetry} onOpen={onOpen} onAll={onAll} />
+    </ChatShell>
+  );
+}
+
+/** 최근 요청 세 건. 읽는 중에는 마지막 모양의 뼈대, 요청이 없으면 숨긴다 */
+function RecentCard({ recent, onRetry, onOpen, onAll }: { recent: RecentState; onRetry?: () => void; onOpen: (item: InboxItem) => void; onAll: () => void }) {
+  if (recent.kind === 'error') return <ErrorLine label={recent.label} onRetry={onRetry} />;
+  if (recent.kind === 'ready' && !recent.items.length) return null;
+  const shown = recent.kind === 'ready' ? recent.items.slice(0, RECENT) : null;
+  return (
+    <View style={styles.card}>
+      <View style={styles.head}>
+        <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, flex: 1 }} accessibilityRole="header">
+          최근 요청
+        </Txt>
+        {recent.kind === 'ready' && (
+          <Press label="요청함 전체" onPress={onAll} style={styles.all}>
+            <Txt variant="chatCaption" color={tokens.muted}>
+              전체
+            </Txt>
+            <CaretRight size={uc(12)} color={tokens.muted} />
+          </Press>
+        )}
+      </View>
+      {shown
+        ? shown.map((it, i) => {
+            const chip = STATUS_CHIP[it.status];
+            return (
+              <Press key={it.id} label={`${it.title}, ${chip.label}`} onPress={() => onOpen(it)} style={[styles.row, i > 0 && styles.line]}>
+                <View style={{ flex: 1, gap: uc(4) }}>
+                  <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
+                    {it.title}
+                  </Txt>
+                  <View style={styles.meta}>
+                    <Txt variant="chatCaption" color={TONE[chip.kind]} style={{ fontFamily: fonts.semibold }}>
+                      {chip.label}
+                    </Txt>
+                    <Txt variant="chatCaption" color={tokens.muted} tabular numberOfLines={1} style={{ flexShrink: 1 }}>
+                      {it.when}
+                    </Txt>
+                  </View>
+                </View>
+              </Press>
+            );
+          })
+        : [0, 1].map((i) => (
+            <View key={i} style={[styles.row, i > 0 && styles.line]} accessibilityLabel={i === 0 ? '불러오는 중' : undefined} accessibilityRole={i === 0 ? 'progressbar' : undefined}>
+              <View style={{ flex: 1, gap: uc(8) }}>
+                <View style={[styles.bone, { width: '58%' }]} />
+                <View style={[styles.bone, { width: uc(84) }]} />
+              </View>
+            </View>
+          ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  nav: { flexDirection: 'row', alignItems: 'center', height: u(50), paddingHorizontal: u(6) },
+  hero: { alignItems: 'center', gap: uc(10), paddingTop: uc(10), paddingBottom: uc(4) },
+  heroTitle: { textAlign: 'center' },
+  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8), justifyContent: 'center' },
+  chip: { height: uc(34), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: uc(14), paddingVertical: uc(10), gap: uc(2) },
+  head: { flexDirection: 'row', alignItems: 'center', paddingBottom: uc(6) },
+  all: { flexDirection: 'row', alignItems: 'center', gap: uc(2), minHeight: uc(32), paddingLeft: uc(10) },
+  row: { paddingVertical: uc(10) },
+  line: { borderTopWidth: 1, borderTopColor: tokens.border },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: uc(8) },
+  bone: { height: uc(13), borderRadius: uc(7), backgroundColor: tokens.sunken },
+});

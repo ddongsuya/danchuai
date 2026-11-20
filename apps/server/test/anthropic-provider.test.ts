@@ -111,3 +111,16 @@ describe("공급사 오류 로그 값", () => {
     expect(providerErrorInfo(rate)).toEqual(["RateLimitError", 429, "rate_limit_error", ""]);
   });
 });
+
+describe("공급사 오류 → 앱 오류 코드", () => {
+  it("공급사 사용 한도·크레딧 부족은 ai_quota, 나머지는 provider_error", async () => {
+    const { providerErrorCode } = await import("../src/agent/routes");
+    const limit = Object.assign(new Error("x"), { status: 400, error: { error: { type: "invalid_request_error", message: "You have reached your specified API usage limits. You will regain access on 2026-12-01 at 00:00 UTC." } } });
+    expect(providerErrorCode(limit)).toBe("ai_quota");
+    const credit = Object.assign(new Error("x"), { status: 400, error: { error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } } });
+    expect(providerErrorCode(credit)).toBe("ai_quota");
+    const shape = Object.assign(new Error("x"), { status: 400, error: { error: { type: "invalid_request_error", message: "messages: text content blocks must be non-empty" } } });
+    expect(providerErrorCode(shape)).toBe("provider_error");
+    expect(providerErrorCode(new Error("boom"))).toBe("provider_error");
+  });
+});

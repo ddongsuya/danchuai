@@ -13,7 +13,11 @@ export type ChatErrorCode =
   /** 단추 견적 대화를 열 수 없다(참여 전·불참·회신 닫힘·찾을 수 없음 등) */
   | 'quote_unavailable'
   /** 기관 비서: 되돌릴 수 없다(이미 되돌림·기간 지남·그 뒤 바뀜) */
-  | 'undo_unavailable';
+  | 'undo_unavailable'
+  /** 계정·기관 AI 이용량 상한(서버 usage_limit) */
+  | 'usage_limit'
+  /** 서비스의 AI 사용 한도·크레딧이 다 됨(공급사 쪽) */
+  | 'ai_quota';
 
 /** 기관 비서가 단추에서 바로 실행한 것 한 장(서버 action 이벤트). at: 이 카드가 붙는 메시지 자리 */
 export interface ActionCard {
@@ -25,6 +29,15 @@ export interface ActionCard {
   runId: string | null;
   undoable: boolean;
   undone: boolean;
+}
+
+/** 기관 비서 찾기 카드(서버 lookup 이벤트). 카드가 이 입력으로 단추를 직접 읽는다(결과는 모델·대화 기록에 없다) */
+export interface LookupCard {
+  key: string;
+  at: number;
+  action: string;
+  label: string;
+  body: Record<string, unknown>;
 }
 
 export interface AgentQuestion {
@@ -73,6 +86,8 @@ export interface ChatState {
   quote: DanchuQuoteDraft | null;
   /** 기관 비서 실행 카드(이번에 연 동안 받은 것) */
   actions: ActionCard[];
+  /** 기관 비서 찾기 카드(이번에 연 동안 받은 것) */
+  lookups: LookupCard[];
 }
 
 export const initialChat: ChatState = {
@@ -93,6 +108,7 @@ export const initialChat: ChatState = {
   pendingSources: [],
   quote: null,
   actions: [],
+  lookups: [],
 };
 
 export type ChatAction =
@@ -116,7 +132,7 @@ export type ChatAction =
   | { type: 'ended'; at: number }
   | { type: 'failed'; code: ChatErrorCode; at: number };
 
-const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable', 'undo_unavailable'];
+const KNOWN: readonly string[] = ['agent_unavailable', 'turn_limit', 'turn_in_progress', 'refused', 'truncated', 'provider_error', 'unauthorized', 'quote_unavailable', 'undo_unavailable', 'usage_limit', 'ai_quota'];
 const asCode = (c: unknown): ChatErrorCode => (typeof c === 'string' && KNOWN.includes(c) ? (c as ChatErrorCode) : 'provider_error');
 
 /** 출처는 모양이 맞는 것만, 원문 주소는 https만 받는다. */
@@ -218,6 +234,11 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           };
           return { ...s, actions: [...s.actions, card] };
         }
+        case 'lookup': {
+          if (typeof d.action !== 'string' || !/^[a-z][a-z_]{1,39}$/.test(d.action) || !d.body || typeof d.body !== 'object' || Array.isArray(d.body)) return s;
+          const card: LookupCard = { key: `l${s.lookups.length}`, at: s.messages.length, action: d.action, label: typeof d.label === 'string' ? d.label.slice(0, 60) : '찾기', body: d.body as Record<string, unknown> };
+          return { ...s, lookups: [...s.lookups, card] };
+        }
         case 'error':
           return { ...s, error: asCode(d.code) };
         default:
@@ -229,6 +250,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
     case 'ended':
       return settle(s, a.at);
     case 'failed':
-      return { ...settle(s, a.at), error: a.code };
+      // 서버가 먼저 보낸 오류(사용 한도 등)가 있으면 그것을 둔다. 스트림이 끊긴 것(network)으로 덮지 않는다
+      return { ...settle(s, a.at), error: s.error ?? a.code };
   }
 }

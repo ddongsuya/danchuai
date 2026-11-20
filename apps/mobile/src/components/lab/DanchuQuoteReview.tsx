@@ -1,18 +1,21 @@
 // 기관: 견적 확인(말로 맡기는 견적 2단계). 에이전트가 대화로 다듬은 단추 견적 초안을 사람이 보고 제출한다.
 // 금액은 단추가 시험 목록 단가로 계산한 줄(단추 계산), 단추에 저장된 줄, 담당자가 여기서 넣는 줄(직접 입력)뿐이다. 합계는 코드가 낸다(부가세 별도).
+// 직접 입력 줄은 단추 견적서 툴 계산(quote_price: 요청 조건 차이, 약동학 검체 수, 효력 단가표 사용량)으로 먼저 채운다(2026-11-20 B안).
+// 담당자가 고치면 직접 입력이 된다. 견적서 툴에서 열면 단추 견적서(의뢰자에게 안 보임)를 만들어 연다.
 // 버튼을 누른 것이 승인이다. 실행은 서버 보내기 장부가 한 번만 한다(draft → approve → dispatch).
 // 레퍼런스: Mobbin Snapchat 홍보 검토(구역별 확인 + 아래 합계·주 버튼), Instacart 항목 목록(줄마다 금액 강조).
 import { CheckCircle, WarningCircle } from 'phosphor-react-native';
-import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Linking, StyleSheet, TextInput, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
-import { approveDanchuAction, draftDanchuAction } from '@/lib/agentClient';
-import { blockedLabel, buildQuoteBody, formatWonInput, quoteSubmittedNow, reviewLines, type DanchuQuoteDraft } from '@/lib/danchuQuote';
+import { approveDanchuAction, draftDanchuAction, readDanchu, runDanchu, type QuotePriceView } from '@/lib/agentClient';
+import { DANCHU_URL } from '@/lib/danchuLinks';
+import { blockedLabel, buildQuoteBody, formatWonInput, parseWonInput, quoteSubmittedNow, reviewLines, type DanchuQuoteDraft } from '@/lib/danchuQuote';
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
 const SOURCE_LABEL = { danchu: '단추 계산', saved: '저장된 금액', manual: '직접 입력' } as const;
@@ -29,18 +32,58 @@ export interface QuoteReviewProps {
   onSubmitted?: () => void;
   /** 미리보기에서 직접 입력 칸을 채운 채로 보여 줄 때만 */
   initialManual?: Record<number, string>;
+  /** 미리보기에서 단추 견적서 툴 계산을 채워 보여 줄 때만(seq → 금액) */
+  initialCalc?: Record<number, number>;
 }
 
 type Run = { kind: 'idle' } | { kind: 'sending'; what: 'submit' | 'save' } | { kind: 'done'; what: 'submit' | 'save' } | { kind: 'error'; message: string };
 
-export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onSubmitted, initialManual = {} }: QuoteReviewProps) {
-  const [manual, setManual] = useState<Record<number, string>>(initialManual);
+export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onSubmitted, initialManual = {}, initialCalc }: QuoteReviewProps) {
+  const [calc, setCalc] = useState<Record<number, number>>(initialCalc ?? {});
+  const [manual, setManual] = useState<Record<number, string>>(() => ({ ...Object.fromEntries(Object.entries(initialCalc ?? {}).map(([k, v]) => [k, String(v)])), ...initialManual }));
   const [run, setRun] = useState<Run>({ kind: 'idle' });
+  const [tool, setTool] = useState<'idle' | 'opening' | 'error' | 'off'>(initialCalc ? 'idle' : 'off');
   const lines = reviewLines(quote);
+
+  // 직접 입력 줄을 단추 견적서 툴 계산으로 채운다. 이미 넣은 칸은 두고, 금액이 없는 줄(표준가 없음 등)은 비운다
+  useEffect(() => {
+    if (initialCalc) return;
+    let live = true;
+    readDanchu<{ price: QuotePriceView }>('quote_price', {}, no)
+      .then((r) => {
+        if (!live || !r?.price) return;
+        // 직접 입력할 줄(가능·조건부 가능인데 단추 금액이 없는 줄)만. 단추 계산·저장된 줄은 그대로 둔다
+        const open = new Set(reviewLines(quote).filter((l) => l.source === 'manual' && (l.avail === '가능' || l.avail === '조건부 가능')).map((l) => l.seq));
+        const got = Object.fromEntries(r.price.rows.filter((x) => x.priced && x.amount != null && open.has(x.seq)).map((x) => [x.seq, x.amount as number]));
+        setCalc(got);
+        setTool('idle');
+        setManual((m) => ({ ...Object.fromEntries(Object.entries(got).map(([k, v]) => [k, String(v)])), ...m }));
+      })
+      // 요금제·연결 문제로 못 읽으면 지금처럼 직접 입력
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [no, initialCalc, quote]);
+
+  const openTool = async () => {
+    setTool('opening');
+    try {
+      const r = await runDanchu<{ path?: string }>('quote_doc', {}, no);
+      const path = typeof r.result?.path === 'string' && r.result.path.startsWith('/cro/docs/') ? r.result.path : null;
+      if (!path) throw new Error('no_path');
+      setTool('idle');
+      await Linking.openURL(`${DANCHU_URL}${path}`);
+    } catch {
+      setTool('error');
+    }
+  };
   const built = buildQuoteBody(quote, manual, true);
   const blocked = blockedLabel(quote, manual);
   const sending = run.kind === 'sending';
-  const submittedNow = quoteSubmittedNow(quote) && !Object.keys(manual).length;
+  // 단추 계산으로 채운 값을 그대로 둔 줄은 고친 것으로 보지 않는다
+  const edited = Object.entries(manual).some(([k, v]) => calc[Number(k)] == null || parseWonInput(v) !== calc[Number(k)]);
+  const submittedNow = quoteSubmittedNow(quote) && !edited;
 
   const go = async (what: 'submit' | 'save') => {
     const b = buildQuoteBody(quote, manual, what === 'submit');
@@ -127,7 +170,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
                 <Txt variant="caption" color={tokens.muted} tabular style={{ flex: 1 }}>
                   {[off || undecided ? null : l.avail, l.weeks ? `${l.weeks}주` : null, l.reason || null].filter(Boolean).join(', ') || ' '}
                 </Txt>
-                {!off && !undecided && <Chip label={SOURCE_LABEL[l.source]} kind={empty ? 'wait' : 'mute'} />}
+                {!off && !undecided && <Chip label={needs && calc[l.seq] != null && parseWonInput(typed) === calc[l.seq] ? '단추 계산' : SOURCE_LABEL[l.source]} kind={empty ? 'wait' : 'mute'} />}
               </View>
               {/* 직접 입력 줄은 금액 칸을 한 줄 전체로(이름·금액이 좁아지지 않게) */}
               {needs && (
@@ -150,6 +193,17 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
           );
         })}
       </View>
+
+      {tool !== 'off' && (
+        <View style={styles.toolRow}>
+          {tool === 'error' && (
+            <Txt variant="caption" color={tokens.danger} style={{ flex: 1 }}>
+              견적서를 열지 못했어요
+            </Txt>
+          )}
+          <Button title="견적서 툴에서 열기" kind="text" disabled={sending || tool === 'opening'} loading={tool === 'opening'} onPress={() => void openTool()} />
+        </View>
+      )}
 
       <View style={[styles.card, styles.facts]}>
         <Fact k="착수 가능일" v={quote.common.startDate || '미정'} />
@@ -209,4 +263,5 @@ const styles = StyleSheet.create({
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
   totalRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: space.sm, marginBottom: space.xs },
   subRow: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
+  toolRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginTop: -space.sm },
 });

@@ -43,6 +43,8 @@ const LOOKUP_STATUS: Record<DanchuLookupError, 401 | 403 | 404 | 429 | 503> = {
 
 export const LIMITS = {
   textChars: 2000,
+  // 회의 녹음 전사본(약 두 시간 분량). 기관 비서 턴에만 받는다
+  transcriptChars: 60_000,
   turns: 40,
   historyMessages: 20,
   // 답 길이 상한(출력 토큰). 한국어는 토큰을 많이 쓰고, 요청 대화는 요청서 채우기 도구 호출도 이 안에서 쓴다.
@@ -70,7 +72,13 @@ type Env = { Variables: { session: Session } };
 const CreateBody = z
   .object({ requestId: z.string().min(1).max(64).optional(), mode: z.enum(["request", "ask", "assist"]).optional() })
   .strict();
-const TurnBody = z.object({ text: z.string().trim().min(1).max(LIMITS.textChars) }).strict();
+const TurnBody = z
+  .object({
+    text: z.string().trim().min(1).max(LIMITS.textChars),
+    /** 회의 녹음 전사본(기관 비서만). 이 턴에만 모델에 넘기고 대화 기록에는 남기지 않는다 */
+    transcript: z.string().trim().min(1).max(LIMITS.transcriptChars).optional(),
+  })
+  .strict();
 const OutboundBody = z
   .object({
     version: z.number().int().positive(),
@@ -119,11 +127,19 @@ export function providerErrorInfo(err: unknown): (string | number)[] {
   return [err instanceof Error ? err.name : "unknown", status, type, msg];
 }
 
+/** 공급사 계정의 사용 한도·크레딧이 다 됐는지(서비스 운영 쪽 한도). 앱에는 ai_quota 로 알린다 */
+export function providerErrorCode(err: unknown): "ai_quota" | "provider_error" {
+  const e = err as { status?: unknown; error?: { error?: { type?: unknown; message?: unknown } } };
+  const msg = typeof e.error?.error?.message === "string" ? e.error.error.message : "";
+  const quota = (e.status === 400 && /usage limit|credit balance/i.test(msg)) || e.status === 402 || e.error?.error?.type === "billing_error";
+  return quota ? "ai_quota" : "provider_error";
+}
+
 /** 기록용 표시("(요청서 갱신)" 등)는 모델 맥락에만 두고 화면에는 보이지 않는다. */
 const stripNotes = (t: string) =>
   t
     .split("\n")
-    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*|실행: .*|실행 안 함: .*)\)$/.test(l.trim()))
+    .filter((l) => !/^\((요청서 갱신|요청 요약|본문 초안|견적 초안 갱신|응답 없음|질문: .*|실행: .*|실행 안 함: .*|찾기: .*)\)$/.test(l.trim()))
     .join("\n")
     .trim();
 
@@ -223,6 +239,8 @@ export function agentRoutes(deps: AgentDeps) {
     if (!found) return c.json({ error: "not_found" }, 404);
     const parsed = TurnBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request" }, 400);
+    // 녹음 전사본은 기관 비서 대화에서만 받는다
+    if (parsed.data.transcript && found.mode !== "assist") return c.json({ error: "bad_request" }, 400);
     const provider = deps.provider;
     if (!provider) return c.json({ error: "agent_unavailable" }, 503);
     if (found.turns >= LIMITS.turns) return c.json({ error: "turn_limit" }, 429);
@@ -240,7 +258,7 @@ export function agentRoutes(deps: AgentDeps) {
     const userText = redactContacts(parsed.data.text);
     const history = windowed(conv.messages);
 
-    if (conv.mode === "assist") return assistTurn(c, provider, conv, s, userText, history);
+    if (conv.mode === "assist") return assistTurn(c, provider, conv, s, userText, history, parsed.data.transcript ? redactContacts(parsed.data.transcript) : null);
     // 질문과 관련된 가이드라인 원문 조각. 기록에는 남기지 않고 이번 턴에만 붙인다.
     // 의뢰자 대화는 상황 칸을 검색어에 더해 짧은 답("3개월이요")에도 맞는 원문 조각을 찾는다.
     const ask = conv.mode === "ask";
@@ -311,7 +329,7 @@ export function agentRoutes(deps: AgentDeps) {
         // 본문·프롬프트는 남기지 않는다. 오류 종류만.
         console.error("agent_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
-        await send("error", { code: "provider_error" });
+        await send("error", { code: providerErrorCode(err) });
       } finally {
         await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
       }
@@ -322,7 +340,7 @@ export function agentRoutes(deps: AgentDeps) {
    * 기관 비서 한 턴: 단추에서 액션 목록·브리핑·이번 주 보고를 읽어 맥락과 도구를 만들고, 모델이 부른 바로 실행 액션을 단추에서 실행한다.
    * 밖으로 나가는 액션은 도구에 없다. 실행 결과는 action 이벤트(실행 카드, 되돌리기)로 보낸다.
    */
-  async function assistTurn(c: Context<Env>, provider: LlmProvider, conv: Conversation, s: Session, userText: string, history: AgentMessage[]) {
+  async function assistTurn(c: Context<Env>, provider: LlmProvider, conv: Conversation, s: Session, userText: string, history: AgentMessage[], transcript: string | null = null) {
     const a = deps.assist;
     const token = BEARER.exec(c.req.header("authorization") ?? "")?.[1] ?? "";
     const prep = a && token ? await prepareAssist(a, token, s.orgId) : ({ ok: false, error: "danchu_unavailable" } as const);
@@ -330,7 +348,9 @@ export function agentRoutes(deps: AgentDeps) {
       await deps.conversations.unlockTurn(conv.id);
       return c.json({ error: prep.ok ? "danchu_unavailable" : prep.error }, prep.ok || prep.error === "danchu_unavailable" ? 503 : 403);
     }
-    const messages: AgentMessage[] = [...history, { role: "user", content: `${userText}\n\n${prep.context}` }];
+    // 녹음 전사본은 이번 턴에만 붙인다. 대화 기록에는 사용자 글만 남는다
+    const heard = transcript ? `\n\n<회의 전사본>\n${transcript.replace(/<\/?회의 전사본>/g, "")}\n</회의 전사본>` : "";
+    const messages: AgentMessage[] = [...history, { role: "user", content: `${userText}${heard}\n\n${prep.context}` }];
     return streamSSE(c, async (stream) => {
       const send = (event: string, data: unknown) => stream.writeSSE({ event, data: JSON.stringify(data) });
       let writes: Promise<void> = Promise.resolve();
@@ -353,6 +373,7 @@ export function agentRoutes(deps: AgentDeps) {
         if (calls.length) await send("step", { label: "단추에 반영" });
         const applied = await applyAssistCalls(a, s, token, conv.id, calls, prep);
         for (const e of applied.events) await send("action", e);
+        for (const l of applied.lookups) await send("lookup", l);
         const reply = [text, ...applied.notes].filter(Boolean).join("\n") || "(응답 없음)";
         const saved: Conversation = {
           ...conv,
@@ -372,7 +393,7 @@ export function agentRoutes(deps: AgentDeps) {
       } catch (err) {
         console.error("assist_turn_failed", ...providerErrorInfo(err));
         await writes.catch(() => undefined);
-        await send("error", { code: "provider_error" });
+        await send("error", { code: providerErrorCode(err) });
       } finally {
         await deps.conversations.unlockTurn(conv.id).catch(() => undefined);
       }

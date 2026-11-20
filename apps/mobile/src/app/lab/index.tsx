@@ -34,8 +34,6 @@ export default function LabInbox() {
       emptyLabel="받은 요청 없음"
       filters={FILTERS}
       hrefOf={(id) => ({ pathname: '/lab/[id]', params: { id } })}
-      switchTo="/"
-      switchLabel="의뢰자 화면으로 바꾸기"
     />
   );
 }
