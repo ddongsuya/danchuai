@@ -1,6 +1,6 @@
-"""HWP 5.0 문서에서 본문 글자만 뽑는다(표준 라이브러리만 사용). 국가법령정보센터 별표 파일용.
+"""HWP 5.0·HWPX 문서에서 본문 글자만 뽑는다(표준 라이브러리만 사용). 국가법령정보센터 별표 파일용.
 사용: python3 -I hwp5text.py 파일.hwp > 결과.txt"""
-import struct, sys, zlib
+import html, re, struct, sys, zipfile, zlib
 
 def cfb_streams(data):
     ss = 1 << struct.unpack_from('<H', data, 30)[0]
@@ -93,5 +93,27 @@ def hwp_text(path):
             p += size
     return ''.join(texts)
 
+def hwpx_text(path):
+    """HWPX(zip + XML): Contents/section*.xml 의 문단(hp:p)마다 글자(hp:t)를 이어 한 줄로 낸다. 표 칸도 문단이라 한 칸이 한 줄이 된다."""
+    z = zipfile.ZipFile(path)
+    names = [n for n in z.namelist() if re.fullmatch(r'Contents/section\d+\.xml', n)]
+    names.sort(key=lambda n: int(re.search(r'(\d+)\.xml$', n).group(1)))
+    lines = []
+    for n in names:
+        x = z.read(n).decode('utf-8', 'ignore')
+        # 표 칸·글상자 안 문단도 hp:p 다. 바깥 문단이 안쪽 문단을 품으면 글자가 두 번 나오지 않게 가장 안쪽 문단만 본다.
+        for p in re.findall(r'<hp:p\b(?:(?!<hp:p\b).)*?</hp:p>', x, flags=re.S):
+            t = ''.join(re.findall(r'<hp:t\b[^>]*>(.*?)</hp:t>', p, flags=re.S))
+            t = html.unescape(re.sub(r'<[^>]+>', '', t)).strip()
+            if t: lines.append(t)
+    return '\n'.join(lines)
+
+def doc_text(path):
+    """파일 머리로 형식을 가려 글자를 뽑는다. HWP(OLE)·HWPX(zip)가 아니면 None."""
+    head = open(path, 'rb').read(8)
+    if head == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1': return hwp_text(path)
+    if head[:4] == b'PK\x03\x04': return hwpx_text(path)
+    return None
+
 if __name__ == '__main__':
-    sys.stdout.write(hwp_text(sys.argv[1]))
+    sys.stdout.write(doc_text(sys.argv[1]) or '')

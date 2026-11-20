@@ -82,8 +82,18 @@ describe("질문 근거", () => {
       expect(basis).toHaveLength(1);
       expect(basis[0]!.section).toBe(src.section);
     }
+    // 띄어 쓴 조항("제 2 조")도 맞춘다
+    expect(matchBasis([`${src.doc} ${no.replace(/제(\d+)조/, "제 $1 조")}`], evidence)).toHaveLength(1);
     // 제2조를 제20조로 잡지 않는다
     expect(matchBasis([`${src.doc} ${no}0`], evidence).some((b) => b.section === src.section)).toBe(false);
+  });
+
+  it("HWPX 별표 원문도 근거로 맞춘다(건강기능식품 인정 규정 별표 3)", () => {
+    const evidence = retrieve("건강기능식품 개별인정형 원료 섭취 경험 없는 새 원료 독성시험");
+    const basis = matchBasis(["식약처 건강기능식품 인정 규정 별표 3"], evidence);
+    expect(basis).toHaveLength(1);
+    expect(basis[0]!.section).toMatch(/^별표3 /);
+    expect(basis[0]!.excerpt.length).toBeGreaterThan(0);
   });
 
   it("참고자료가 없으면 근거를 붙이지 않는다", () => {

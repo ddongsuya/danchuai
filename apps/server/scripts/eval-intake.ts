@@ -14,6 +14,7 @@ import {
 } from "@danchuai/core";
 import { contextBlock, retrieve } from "@danchuai/knowledge";
 import { runToolTurn } from "../src/agent/repair";
+import { LIMITS } from "../src/agent/routes";
 import { SYSTEM } from "../src/agent/prompts";
 import type { Conversation } from "../src/agent/store";
 import { TOOLS } from "../src/agent/tools";
@@ -127,7 +128,8 @@ async function run(s: Scenario, provider: NonNullable<ReturnType<typeof provider
         system: SYSTEM.requester,
         messages: [...history, { role: "user", content: `${user}\n\n${sheetContext(conv.sheet)}\n\n${contextBlock(evidence)}` }],
         tools: TOOLS.requester,
-        maxTokens: 1200,
+        // 운영 서버와 같은 답 길이 상한. 1200으로 두면 긴 원문을 받은 턴에서 도구 호출이 잘려 운영과 다른 결과가 난다.
+        maxTokens: LIMITS.maxTokens,
       },
       evidence,
     });
@@ -157,6 +159,8 @@ function grade(s: Scenario, logs: TurnLog[]) {
   checks.push(["추천·금액 표현 없음", !BANNED.some((r) => r.test(all))]);
   checks.push(["선택지 6개 이하", logs.every((l) => !l.question || l.question.options.length <= 6)]);
   // 도구 호출을 답 글에 태그로 써 버리면 요청서·질문이 반영되지 않고 사용자에게 태그가 보인다.
+  // 받은 자료 이름(정리본·원문 조각·참고자료)은 사용자에게 보이면 안 된다.
+  checks.push(["답 글에 자료 이름 없음", logs.every((l) => !/정리본|원문 조각|참고자료|<조각/.test(l.text))]);
   checks.push(["답 글에 도구 태그 없음", logs.every((l) => !/<\/?(invoke|parameter|update_sheet|ask_question|draft_body|summarize_request)\b/.test(l.text))]);
   // 빈 칸이 남았는데 질문이 없으면 사용자는 다음에 할 일을 모른다(마지막 턴 제외).
   checks.push(["빈 칸 남은 턴마다 질문", logs.slice(0, -1).every((l) => !!l.question || missingFields(l.sheet as never).length === 0)]);

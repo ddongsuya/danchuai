@@ -13,7 +13,7 @@ import hashlib, html, json, os, re, subprocess, sys, time, urllib.parse, urllib.
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from hwp5text import hwp_text  # noqa: E402
+from hwp5text import doc_text  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 DATA = os.path.join(ROOT, "packages", "knowledge", "data")
@@ -138,7 +138,12 @@ def split_long(txt, size=MAX_CHUNK):
 
 # ---------- 국가법령정보센터 ----------
 
-def law_doc(url, cache):
+# HWPX 별표를 아직 넣지 않는 문서. 농약 등록기준은 별표가 조각 480여 개라 넣으면 의약품 질문 검색 정확도가
+# 90% 아래로 떨어진다(2026-11-21, 86.7%). 제품 유형별 검색 조정 뒤에 넣는다.
+HWPX_SKIP = {"농약 등록기준"}
+
+
+def law_doc(url, cache, hwpx=True):
     page = get(url, cache, "page-" + key(url) + ".html").decode("utf-8", "ignore")
     is_rule = "/행정규칙/" in urllib.parse.unquote(url)
     if is_rule:
@@ -165,12 +170,14 @@ def law_doc(url, cache):
             b = get(f"{LAW}/LSW/{href}", cache, f"fl-{fl}.bin")
         except RuntimeError:
             continue
-        if b[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":  # HWP(OLE)
-            p = os.path.join(cache, f"fl-{fl}.bin")
-            try:
-                files.append(hwp_text(p))
-            except Exception:
-                continue
+        # HWP(OLE)·HWPX(zip). 같은 별표의 PDF 판은 글자 순서가 흐트러져 쓰지 않는다
+        p = os.path.join(cache, f"fl-{fl}.bin")
+        try:
+            t = doc_text(p)
+        except Exception:
+            continue
+        if t and (hwpx or b[:4] != b"PK\x03\x04"):
+            files.append(t)
     return version, text, files
 
 
@@ -199,17 +206,26 @@ def law_chunks(text, files, relevant):
     titles = set()
     for f in files:
         f = re.sub(r"\n{2,}", "\n", f).strip()
-        first = f.split("\n", 1)[0].strip()
+        flines = f.split("\n")
+        first = flines[0].strip()
         m = re.match(r"^\[?(별표\s*[\d의]+|별지[^\]]*)\]?\s*(.*)", first)
         if not m:
             continue
         name = re.sub(r"\s+", " ", m.group(1)).replace("별표 ", "별표")
-        title = f"{name} {m.group(2).strip()}".strip()
+        rest = m.group(2).strip()
+        body_from = 1
+        # HWPX 별표는 "[별표 3]" 다음 줄에 제목이 온다. "<개정 …>" 같은 개정 표시 줄은 건너뛴다
+        while not rest and body_from < min(len(flines), 4):
+            cand = flines[body_from].strip()
+            body_from += 1
+            if not re.match(r"^<[^>]*(개정|신설)", cand):
+                rest = cand
+        title = f"{name} {rest}".strip()
         if title in titles or name.startswith("별지") or not relevant(title):
             continue
         titles.add(title)
         part, plabel = [], title
-        for l in f.split("\n")[1:]:
+        for l in flines[body_from:]:
             mm = re.match(r"^\s*([①-⑳]|\d{1,2}\.)\s", l)
             if mm and part and len("\n".join(part)) > 300:
                 out += [(plabel, p) for p in split_long("\n".join(part))]
@@ -247,7 +263,7 @@ def main():
                 meta["license"] = "© ICH. 원문을 조항 단위로 나눈 것이며 내용은 바꾸지 않았다."
                 meta["lang"] = "en"
             elif url.startswith(LAW):
-                version, text, files = law_doc(url, cache)
+                version, text, files = law_doc(url, cache, hwpx=short not in HWPX_SKIP)
                 relevant = (lambda t: "유해성" in t or "시험" in t) if "/법령/" in urllib.parse.unquote(url) else (lambda t: not SKIP_BYL.search(t))
                 got = law_chunks(text, files, relevant)
                 meta["license"] = "법령·고시(저작권법 제7조, 보호받지 않는 저작물)"
