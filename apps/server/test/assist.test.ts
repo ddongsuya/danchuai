@@ -80,6 +80,7 @@ function setup(provider?: LlmProvider) {
   const acted: Array<{ action: string; rfqNo: string | null }> = [];
   const undone: string[] = [];
   let logSeq = 0;
+  const agreed = new Map<string, string[]>();
   const api: DanchuApi = {
     me: async (t) => (ME[t] ? { ok: true, data: ME[t]! } : { ok: false, error: "unauthorized" }),
     requesterList: async () => ({ ok: true, data: [] }),
@@ -87,7 +88,15 @@ function setup(provider?: LlmProvider) {
     croList: async () => ({ ok: true, data: [] }),
     croDetail: async () => ({ ok: false, error: "not_found" }),
     croQuote: async () => ({ ok: false, error: "not_found" }),
-    recordConsent: async (_t, version) => ({ ok: true, data: { version } }),
+    recordConsent: async (t, version) => {
+      agreed.set(t, [...(agreed.get(t) ?? []), version]);
+      return { ok: true, data: { version } };
+    },
+    consents: async (t) => ({ ok: true, data: (agreed.get(t) ?? []).map((version) => ({ version, agreedAt: "2026-11-19T00:00:00Z" })) }),
+    revokeConsent: async (t, version) => {
+      agreed.set(t, (agreed.get(t) ?? []).filter((v) => v !== version));
+      return { ok: true, data: { version } };
+    },
     act: async (_t, a) => {
       acted.push({ action: a.action, rfqNo: a.rfqNo });
       return { status: 200, body: { ok: true } };

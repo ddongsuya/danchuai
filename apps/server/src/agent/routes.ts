@@ -26,6 +26,7 @@ import { applyAssistCalls, prepareAssist, type AssistDeps } from "../danchuAssis
 import { BEARER } from "../danchuAuth";
 import { ASK_SYSTEM, CRO_ASSIST_SYSTEM, CRO_DANCHU_SYSTEM, SYSTEM } from "./prompts";
 import { toolsFor } from "./tools";
+import type { UsageMeter } from "../usage";
 import type { Conversation, ConversationRepo, DanchuLookupError, RequestDirectory, StoredMessage } from "./store";
 
 /** 단추 요청 번호 */
@@ -60,6 +61,8 @@ export interface AgentDeps {
   market?: MarketRepo;
   /** 단추 연동 모드의 기관 비서(액션 목록·바로 실행). 없으면 비서 대화는 열지 않는다 */
   assist?: AssistDeps;
+  /** AI 이용량 상한(계정 하루·조직 한 달·전체 한 달). 넘으면 429 usage_limit */
+  usage?: UsageMeter;
 }
 
 type Env = { Variables: { session: Session } };
@@ -223,6 +226,8 @@ export function agentRoutes(deps: AgentDeps) {
     const provider = deps.provider;
     if (!provider) return c.json({ error: "agent_unavailable" }, 503);
     if (found.turns >= LIMITS.turns) return c.json({ error: "turn_limit" }, 429);
+    const over = deps.usage ? await deps.usage.over(s) : null;
+    if (over) return c.json({ error: "usage_limit", scope: over }, 429);
     if (!(await deps.conversations.lockTurn(found.id, s.orgId))) return c.json({ error: "turn_in_progress" }, 409);
     // 잠근 뒤 다시 읽는다. 바로 앞 턴이 막 저장했을 수 있다.
     const conv = await load(found.id, s);
@@ -297,6 +302,8 @@ export function agentRoutes(deps: AgentDeps) {
           },
         };
         await deps.conversations.save(saved);
+        // 이용량은 대화 저장과 따로 더한다. 실패해도 답은 그대로 돌려준다(숫자만 남는 기록)
+        if (deps.usage) await deps.usage.record(s, result.usage).catch((e) => console.error("usage_record_failed", e instanceof Error ? e.name : "unknown"));
 
         if (result.stop !== "done") await send("error", { code: result.stop });
         await send("done", { usage: result.usage, turns: saved.turns });
@@ -359,6 +366,7 @@ export function agentRoutes(deps: AgentDeps) {
           },
         };
         await deps.conversations.save(saved);
+        if (deps.usage) await deps.usage.record(s, result.usage).catch((e) => console.error("usage_record_failed", e instanceof Error ? e.name : "unknown"));
         if (result.stop !== "done") await send("error", { code: result.stop });
         await send("done", { usage: result.usage, turns: saved.turns });
       } catch (err) {
