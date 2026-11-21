@@ -30,4 +30,5 @@ npm test -w @danchuai/knowledge
 
 - 가이드라인이 개정되면 2번을 다시 돌린다. 국가법령정보센터는 그날 기준 최신 고시를 준다(시행 전 개정본일 수 있어 `docs[].version` 의 시행일을 확인한다).
 - 시험 묶음에서 원문과 어긋나 고친 곳은 `build-reference.mts` 의 `fix(...)` 와 `reference.json` 의 `corrections` 에 근거 조항과 함께 남긴다.
+- 국가법령정보센터 별표는 HWP(OLE)와 HWPX(zip) 판을 읽는다. 같은 별표의 PDF 판은 쓰지 않는다. `build_guidelines.py` 의 `HWPX_SKIP` 문서(지금은 농약 등록기준)는 HWPX 별표를 넣지 않는다. 넣으면 정확도 질문 세트가 90% 아래로 떨어져서, 검색 조정 뒤에 뺀다.
 - 정확도 질문 세트는 `packages/knowledge/test/eval-set.ts`. 놓친 질문이 생기면 여기에 더한다.
