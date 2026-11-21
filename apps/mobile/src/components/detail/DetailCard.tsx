@@ -3,7 +3,7 @@
 // 2차 견적 금액은 기관 견적서에서 단추가 채운다(앱·AI가 금액을 만들지 않는다).
 import { ArrowsClockwise, ArrowSquareOut, CheckCircle } from 'phosphor-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Err } from '@/components/contract/ContractCard';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { readDanchu } from '@/lib/agentClient';
 import { CRO_STATUS_LABEL, daysFrom, detailReplyBody, detailRequestBody, type CroDetailView, type DetailField, type DetailLine, type RequesterDetailView } from '@/lib/danchuDetail';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { sendApproved } from '@/lib/danchuSend';
 import { shortDate } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
@@ -339,7 +339,7 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
       {m && (
         <SheetBody title={REPLY_TITLE[m]} onClose={onClose} primary={<Button title={REPLY_BUTTON[m]} tall loading={busy} onPress={() => void go()} />}>
           <View style={{ gap: space.lg }}>
-            {m === 'revise' && <Button title="견적서 툴에서 고치기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={() => void Linking.openURL(`${DANCHU_URL}/cro`)} />}
+            {m === 'revise' && <Button title="견적서 툴에서 고치기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={() => void openWeb(`${DANCHU_URL}/cro`)} />}
             <Field label="메모" value={note} onChangeText={setNote} maxLength={2000} multiline style={styles.multi} />
             <Err text={err} />
           </View>

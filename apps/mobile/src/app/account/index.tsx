@@ -4,15 +4,17 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { CaretRight, X } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LogoutDialog } from '@/components/auth/LogoutDialog';
+import { RevokeDialog } from '@/components/auth/RevokeDialog';
 import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { space, tokens, u } from '@/constants/theme';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { revokeConsent } from '@/lib/accountClient';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { useAuth } from '@/lib/session';
 
 /** ISO 시각을 "11.17"로(기기 날짜) */
@@ -24,10 +26,25 @@ const monthDay = (iso: string | null) => {
 };
 
 export default function Account() {
-  const { status, org, consentAt, signOut } = useAuth();
+  const { status, org, consentAt, consentVersion, signOut, refresh } = useAuth();
   const [leaving, setLeaving] = useState(false);
   const [asking, setAsking] = useState(false);
-  const manage = `${DANCHU_URL}/${org?.kind === 'cro' ? 'cro' : 'app'}/profile`;
+  const [revoke, setRevoke] = useState<{ open: boolean; busy: boolean; error: string | null }>({ open: false, busy: false, error: null });
+  const base = `${DANCHU_URL}/${org?.kind === 'cro' ? 'cro' : 'app'}/profile`;
+
+  // 앱 안에서 철회한다. 끝나면 동의 화면으로 돌아간다(다시 동의하면 새로 시작)
+  const doRevoke = async () => {
+    if (!consentVersion) return;
+    setRevoke({ open: true, busy: true, error: null });
+    try {
+      await revokeConsent(consentVersion);
+      await refresh();
+      setRevoke({ open: false, busy: false, error: null });
+      router.replace('/');
+    } catch {
+      setRevoke({ open: true, busy: false, error: '철회하지 못했어요. 다시 시도해 주세요.' });
+    }
+  };
 
   const logout = async () => {
     setLeaving(true);
@@ -41,16 +58,19 @@ export default function Account() {
         name={org?.displayName ?? '이름 없음'}
         role={org?.kind === 'cro' ? '기관' : '의뢰자'}
         consent={monthDay(consentAt)}
-        onManage={() => void Linking.openURL(manage)}
+        onManage={() => void openWeb(base)}
+        onDelete={() => void openWeb(`${base}/delete`)}
+        onRevoke={status === 'ready' && consentVersion ? () => setRevoke({ open: true, busy: false, error: null }) : undefined}
         onLogout={status === 'ready' ? () => setAsking(true) : undefined}
       />
       <LogoutDialog visible={asking} busy={leaving} onClose={() => setAsking(false)} onConfirm={() => void logout()} />
+      <RevokeDialog visible={revoke.open} busy={revoke.busy} error={revoke.error} onClose={() => setRevoke({ open: false, busy: false, error: null })} onConfirm={() => void doRevoke()} />
     </>
   );
 }
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
-export function AccountView({ name, role, consent, onManage, onLogout }: { name: string; role: string; consent: string | null; onManage: () => void; onLogout?: () => void }) {
+export function AccountView({ name, role, consent, onManage, onDelete, onRevoke, onLogout }: { name: string; role: string; consent: string | null; onManage: () => void; onDelete?: () => void; onRevoke?: () => void; onLogout?: () => void }) {
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.nav}>
@@ -70,6 +90,21 @@ export function AccountView({ name, role, consent, onManage, onLogout }: { name:
           </Txt>
           <CaretRight size={u(16)} color={tokens.muted} />
         </Press>
+        {onRevoke && (
+          <Press label="에이전트 동의 철회" accessibilityRole="button" onPress={onRevoke} style={styles.row}>
+            <Txt variant="body" style={{ flex: 1 }} numberOfLines={1}>
+              에이전트 동의 철회
+            </Txt>
+          </Press>
+        )}
+        {onDelete && (
+          <Press label="계정 삭제, 단추에서 열기" accessibilityRole="link" onPress={onDelete} style={styles.row}>
+            <Txt variant="body" style={{ flex: 1 }} numberOfLines={1}>
+              계정 삭제
+            </Txt>
+            <CaretRight size={u(16)} color={tokens.muted} />
+          </Press>
+        )}
         {onLogout && (
           <Press label="로그아웃" accessibilityRole="button" onPress={onLogout} style={styles.row}>
             <Txt variant="body" color={tokens.muted}>

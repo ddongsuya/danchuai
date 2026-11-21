@@ -3,7 +3,7 @@
 import { ArrowClockwise, ArrowSquareOut, CheckCircle, CircleDashed, HourglassMedium, WarningCircle } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
 import { DanchuDeclineSheet, DanchuJoinSheet } from '@/components/lab/DanchuJoinSheets';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { daysLeft, shortDate } from '@/lib/format';
 import { fetchDanchuLabRequest, type DanchuLabItem } from '@/lib/marketClient';
 import { ContractDraftCard } from '@/components/lab/ContractDraftCard';
@@ -78,7 +78,7 @@ function task(it: DanchuLabItem) {
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
 export function DanchuLabView({ it, onChanged, initialSheet = null, contractPreview, contractStatusPreview, qnaPreview, detailPreview }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null; contractPreview?: ContractDraftView; contractStatusPreview?: ContractView; qnaPreview?: QnaView; detailPreview?: CroDetailView }) {
-  const open = () => Linking.openURL(`${DANCHU_URL}/cro`);
+  const open = () => openWeb(`${DANCHU_URL}/cro`);
   const [sheet, setSheet] = useState<'join' | 'decline' | null>(initialSheet);
   const done = () => {
     setSheet(null);

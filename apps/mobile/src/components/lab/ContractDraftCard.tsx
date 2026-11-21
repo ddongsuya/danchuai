@@ -3,14 +3,14 @@
 // 보내기는 확인 대화에서 누른 것이 승인이다. 실행은 서버 보내기 장부가 한 번만 한다(draft → approve → dispatch).
 import { ArrowSquareOut, CheckCircle, FileText, WarningCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { approveDanchuAction, draftDanchuAction, readDanchu, type ContractDraftView } from '@/lib/agentClient';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { shortDate } from '@/lib/format';
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
@@ -80,7 +80,7 @@ export function ContractDraftCard({ no, initial }: { no: string; initial?: Contr
       )}
       <View style={styles.actions}>
         <Button title={sentAt ? '다시 보내기' : '의뢰자에게 보내기'} kind="soft" disabled={send.kind === 'sending'} loading={send.kind === 'sending'} onPress={() => setSend({ kind: 'confirm' })} />
-        <Button title="계약서(안) 보기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={() => void Linking.openURL(`${DANCHU_URL}${draft.path}`)} />
+        <Button title="계약서(안) 보기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={() => void openWeb(`${DANCHU_URL}${draft.path}`)} />
       </View>
 
       <Dialog visible={send.kind === 'confirm'} onClose={() => setSend({ kind: 'idle' })}>

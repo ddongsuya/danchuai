@@ -3,7 +3,7 @@
 // 과거 견적(quote_history): 최근 발행 순, 줄을 누르면 단추 견적서를 연다.
 import { MagnifyingGlass } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ErrorLine } from '@/components/agent/LiveChat';
 import { StepLog } from '@/components/chat/Messages';
@@ -12,7 +12,7 @@ import { Txt } from '@/components/ui/Txt';
 import { fonts, tokens, uc } from '@/constants/theme';
 import { readDanchu, type QuoteHitView } from '@/lib/agentClient';
 import type { LookupCard as Card } from '@/lib/chat';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
 const ymd = (s: string) => s.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$1.$2.$3');
@@ -69,7 +69,7 @@ function QuoteHits({ card, initial }: { card: Card; initial?: QuoteHitView[] }) 
           <Press
             key={h.id}
             label={`${h.title}, ${ymd(h.issuedOn)}, 공급가 ${won(h.supply)}`}
-            onPress={() => void Linking.openURL(`${DANCHU_URL}/cro/docs/${encodeURIComponent(h.id)}`)}
+            onPress={() => void openWeb(`${DANCHU_URL}/cro/docs/${encodeURIComponent(h.id)}`)}
             style={[styles.row, i > 0 && styles.line]}
           >
             <View style={styles.top}>

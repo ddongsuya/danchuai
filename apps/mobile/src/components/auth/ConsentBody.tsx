@@ -3,14 +3,14 @@
 // 접어 둬도 고지 의무(개인정보 보호법 제28조의8)를 채우는지는 법 확인이 필요하다(추측, 출시 전 확인 목록).
 import { CaretDown } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, space, tokens, u } from '@/constants/theme';
 import { TRANSFERS, type TransferRow } from '@/lib/consent';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { lineEnter } from '@/lib/motion';
 
 export function ConsentBody() {
@@ -65,7 +65,7 @@ function Item({ t, first }: { t: TransferRow; first: boolean }) {
           <Row k="항목" v={t.items} />
           <Row k="보관" v={t.keep} />
           <Row k="이전 방법" v="이용할 때마다 암호화 통신으로 전송" />
-          <Txt variant="caption" color={tokens.muted} style={styles.link} accessibilityRole="link" onPress={() => Linking.openURL(`${DANCHU_URL}/privacy`)}>
+          <Txt variant="caption" color={tokens.muted} style={styles.link} accessibilityRole="link" onPress={() => openWeb(`${DANCHU_URL}/privacy`)}>
             개인정보 처리방침
           </Txt>
         </Animated.View>

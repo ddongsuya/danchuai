@@ -35,7 +35,7 @@ export const SummarizeRequest = z.object({ points: z.array(z.string().min(1).max
 
 export const DraftBody = z.object({ body: z.string().min(1).max(8000) }).strict();
 
-// 단추 기관 견적 초안 고치기(말로 맡기는 견적 2단계). 금액 칸은 없다: 금액은 단추 계산 또는 담당자가 확인 카드에서 넣는다.
+// 단추 기관 견적 초안 고치기(말로 맡기는 견적 2단계). 금액 칸은 없다: 금액은 단추 견적서 툴 계산값, 견적서에 없는 금액은 담당자가 확인 카드에서 견적서에 넣는다.
 const ymdOrEmpty = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
 export const UpdateQuote = z
   .object({

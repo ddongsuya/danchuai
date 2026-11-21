@@ -7,7 +7,7 @@
 import type { RequestSheet } from '@danchuai/core';
 import { X } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ import { Press } from '@/components/ui/Press';
 import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
 import {
@@ -144,7 +144,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
       <Txt variant="caption" color={tokens.muted} style={styles.agree}>
         {AGREEMENTS.map((a, i) => (
           <Txt key={a.id} variant="caption" color={tokens.muted}>
-            <Txt variant="caption" color={tokens.muted} accessibilityRole="link" onPress={() => void Linking.openURL(`${DANCHU_URL}${a.href}`)}>
+            <Txt variant="caption" color={tokens.muted} accessibilityRole="link" onPress={() => void openWeb(`${DANCHU_URL}${a.href}`)}>
               {a.label}
             </Txt>
             {i < AGREEMENTS.length - 1 ? ', ' : ''}

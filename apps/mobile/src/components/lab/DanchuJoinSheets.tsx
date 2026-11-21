@@ -3,7 +3,7 @@
 // 사람이 시트의 버튼을 누른 것이 승인이다. 승인 기록과 한 번만 실행은 서버 보내기 장부가 맡는다.
 import { WarningCircle } from 'phosphor-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -11,7 +11,7 @@ import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { approveDanchuAction, draftDanchuAction } from '@/lib/agentClient';
-import { DANCHU_URL } from '@/lib/danchuLinks';
+import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { DECLINE_NOTE_MAX, declineBody, joinBody } from '@/lib/labActions';
 
 type Run = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string };
@@ -71,7 +71,7 @@ export function DanchuJoinSheet({ no, visible, join, onClose, onDone }: JoinProp
             {join.consent}
           </Txt>
         </View>
-        <Button title="기관 이용약관" kind="text" onPress={() => Linking.openURL(`${DANCHU_URL}${join.termsUrl}`)} />
+        <Button title="기관 이용약관" kind="text" onPress={() => openWeb(`${DANCHU_URL}${join.termsUrl}`)} />
         {run.kind === 'error' && <ErrorLine message={run.message} />}
       </SheetBody>
     </Sheet>

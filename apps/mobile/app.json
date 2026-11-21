@@ -39,7 +39,9 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "회의를 녹음해 글로 옮기려면 마이크 권한이 필요해요."
+          "microphonePermission": "회의를 녹음해 글로 옮기려면 마이크 권한이 필요해요.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
         }
       ]
     ],

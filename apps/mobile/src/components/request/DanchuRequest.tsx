@@ -7,7 +7,7 @@ import {
   WarningCircle,
 } from "phosphor-react-native";
 import { useCallback, useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { ChatShell } from "@/components/chat/ChatShell";
 import { ContractCard } from "@/components/contract/ContractCard";
@@ -22,7 +22,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Txt } from "@/components/ui/Txt";
 import { fonts, radius, space, tokens, u } from "@/constants/theme";
 import { REMOTE_ERROR, useRemote } from "@/hooks/useRemote";
-import { DANCHU_URL } from "@/lib/danchuLinks";
+import { DANCHU_URL, openWeb } from "@/lib/danchuLinks";
 import { monthDay, shortDate } from "@/lib/format";
 import {
   fetchDanchuRequest,
@@ -113,7 +113,7 @@ export function DanchuRequestView({
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
   const open = () =>
-    Linking.openURL(`${DANCHU_URL}/app/r/${encodeURIComponent(r.no)}`);
+    openWeb(`${DANCHU_URL}/app/r/${encodeURIComponent(r.no)}`);
   // 상태에 맞는 주 동작 하나. 기다리기만 하면 되는 때에는 주 버튼을 두지 않는다.
   const choose = compare.open && !r.selected && compare.columns.length > 0;
   // 앱에서 바로 선정할 수 있는 칸(정식 견적서, 선정 승인에 넘길 id·판)이 하나라도 있으면 시트로, 없으면 단추에서
@@ -280,7 +280,7 @@ function CompareList({
                 kind="text"
                 icon={<ArrowSquareOut size={u(16)} color={tokens.text} />}
                 onPress={() =>
-                  void Linking.openURL(`${DANCHU_URL}${c.docPath}`)
+                  void openWeb(`${DANCHU_URL}${c.docPath}`)
                 }
               />
             </View>

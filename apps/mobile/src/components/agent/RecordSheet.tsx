@@ -4,6 +4,7 @@
 // 녹음 중 표시만 빨강(위험색 점), 글로 옮기는 동안은 청록(에이전트가 일하는 중).
 import { getDocumentAsync } from 'expo-document-picker';
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { FileAudio, Microphone, Stop } from 'phosphor-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -94,6 +95,14 @@ function RecordBody({ onClose, onTranscript }: { onClose: () => void; onTranscri
   };
 
   // 상한에 닿으면 멈춘다
+  // 녹음하는 동안 화면이 꺼지지 않게 한다(잠기면 휴대폰이 녹음을 멈춘다)
+  const recording = phase.kind === 'recording';
+  useEffect(() => {
+    if (!recording) return;
+    void activateKeepAwakeAsync('record').catch(() => undefined);
+    return () => void deactivateKeepAwake('record').catch(() => undefined);
+  }, [recording]);
+
   const over = phase.kind === 'recording' && rec.durationMillis >= MAX_MINUTES * 60_000;
   useEffect(() => {
     if (!over) return;
