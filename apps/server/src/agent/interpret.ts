@@ -125,7 +125,8 @@ export function matchBasis(basis: readonly string[], evidence?: Retrieved): Ques
   const out: QuestionBasis[] = [];
   const seen = new Set<number>();
   for (const raw of basis) {
-    const b = raw.replace(/\s+/g, " ").trim();
+    // "별표 3"·"제 2 조"처럼 띄어 쓴 조항도 조각 이름("별표3", "제2조")과 맞춘다
+    const b = raw.replace(/\s+/g, " ").trim().replace(/(별표|별지)\s+(\d)/g, "$1$2").replace(/제\s*(\d+)\s*조/g, "제$1조");
     const i = evidence.sources.findIndex((s, k) => !seen.has(k) && s.doc !== NOTES_DOC && b.includes(s.doc) && sectionNo(s.section) !== "" && tokensAfter(b, s.doc).includes(sectionNo(s.section)));
     if (i < 0) continue;
     seen.add(i);
