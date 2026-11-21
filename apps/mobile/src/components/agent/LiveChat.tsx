@@ -20,8 +20,8 @@ import { ResultBlock } from '@/components/ui/ResultBlock';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
-import { buildPayload, fillFromChat, type SendChoices } from '@/lib/danchuRequest';
+import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, readDanchu, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
+import { buildPayload, checkBody, fillFromChat, type RequestCheckView, type RequestSchemaView, type SendChoices } from '@/lib/danchuRequest';
 import { shortDate } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
@@ -105,6 +105,10 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const { danchu } = useAuth();
   const viaDanchu = danchu && role === 'requester';
   const [choices, setChoices] = useState<SendChoices | null>(null);
+  // 단추 요청서 양식(request_schema). undefined 는 아직 안 읽음, null 은 못 읽음(분야만 보낸다)
+  const [schema, setSchema] = useState<RequestSchemaView | null | undefined>(undefined);
+  const [issue, setIssue] = useState<string | null>(null);
+  const loadSchema = () => readDanchu<RequestSchemaView>('request_schema', {}, undefined, 'requester').catch(() => null);
   const danchuMade = useRef<{ key: string; d: DanchuActionDraft } | null>(null);
   const draft = state.draft;
   const outBody = draft && role === 'cro' && quoteLines.length ? `${draft.body}\n\n${amountBlock(quoteLines)}` : draft?.body ?? '';
@@ -112,9 +116,27 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const approveDanchu = async (c: SendChoices) => {
     if (!draft || !state.sheet) return;
     setChoices(c);
-    const payload = buildPayload(state.sheet, draft.body, c);
+    setIssue(null);
+    const payload = buildPayload(state.sheet, draft.body, c, schema);
     setOut({ kind: 'sending' });
     try {
+      // 보내기 전에 단추가 접수와 같은 규칙으로 검사한다. 걸리면 카드에 남아 그 칸을 고친다
+      if (schema) {
+        const chk = await readDanchu<RequestCheckView>('request_check', checkBody(payload), undefined, 'requester').catch(() => null);
+        if (chk?.outdated) {
+          setSchema(await loadSchema());
+          setIssue('요청서 양식이 바뀌었어요. 다시 확인해 주세요');
+          setOut({ kind: 'idle' });
+          return;
+        }
+        if (chk && !chk.ok) {
+          const first = chk.issues[0];
+          haptic.error();
+          setIssue(first?.message ?? (first ? `${first.label} 확인 필요` : '요청서 확인 필요'));
+          setOut({ kind: 'idle' });
+          return;
+        }
+      }
       // 같은 본문이면 만든 초안을 다시 쓴다(승인 한 건에 실행 한 번은 서버가 지킨다)
       const key = JSON.stringify(payload);
       // 대화 id 를 함께 넘겨 접수 뒤 서버가 이 대화를 끝난 것으로 표시한다(요청함에 "작성 중"으로 남지 않게)
@@ -172,8 +194,15 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const openReview = () => {
     if (viaDanchu) {
       // 에이전트가 대화에서 채운 값으로 시작한다. 사람은 빈 값만 정한다.
-      if (!choices && state.sheet) setChoices(fillFromChat(state.sheet, state.messages.filter((m) => m.role === 'user').map((m) => m.text)));
-      return setReviewing(true);
+      // 단추 양식을 한 번 읽어 분야 칸(시험 종류·동물종·군 구성)까지 채운다
+      const sheet = state.sheet;
+      void (async () => {
+        const sc = schema === undefined ? await loadSchema() : schema;
+        if (schema === undefined) setSchema(sc);
+        if (!choices && sheet) setChoices(fillFromChat(sheet, state.messages.filter((m) => m.role === 'user').map((m) => m.text), sc));
+        setReviewing(true);
+      })();
+      return;
     }
     if (role === 'requester' && !recipients.length) return setPicking(true);
     if (needsQuote) return onEditQuote?.();
@@ -200,7 +229,12 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         sheet={state.sheet}
         body={draft.body}
         choices={choices}
-        onChange={setChoices}
+        onChange={(next) => {
+          setIssue(null);
+          setChoices(next);
+        }}
+        schema={schema}
+        issue={issue}
         sending={out.kind === 'sending'}
         onClose={() => setReviewing(false)}
         onApprove={(c) => void approveDanchu(c)}

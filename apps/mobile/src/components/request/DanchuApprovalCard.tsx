@@ -3,10 +3,11 @@
 // 참고: 토스 송금(질문형 제목, 아래 시트 선택, 큰 버튼 하나), ChatGPT 승인 카드(입력창 자리), Cash App 확인 목록.
 // 받을 기관 수는 묻지 않는다. 분야가 맞는 참여 기관 전체에게 간다(2026-11-17 사용자 결정).
 // 승인 기록(epoch + 해시)과 한 번만 실행은 서버가 맡는다. 화면은 보낼 값(payload)으로만 그린다.
+// 단추 양식을 받았으면 분야마다 시험 종류와 조건부 필수 칸(PK 동물 시험의 군 수·군당 마릿수)을 줄로 보여 주고, 비면 묻는다.
 import type { RequestSheet } from '@danchuai/core';
 import { X } from 'phosphor-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/Button';
@@ -18,7 +19,27 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
-import { AGREEMENTS, FIELD_LABEL, FIELD_OPTIONS, nextMissing, type ChoiceField, type SendChoices } from '@/lib/danchuRequest';
+import {
+  AGREEMENTS,
+  FIELD_LABEL,
+  FIELD_OPTIONS,
+  nextMissing,
+  requiredDetails,
+  showDetail,
+  type ChoiceField,
+  type RequestSchemaView,
+  type SchemaField,
+  type SendChoices,
+} from '@/lib/danchuRequest';
+
+type Ask = ChoiceField | { detail: SchemaField } | null;
+const MULTI = new Set(['chips']);
+/** 분야 칸 질문. 시험 종류는 분야 이름을 함께 */
+const detailQuestion = (f: SchemaField) => {
+  const cat = f.key.slice(0, f.key.lastIndexOf('.'));
+  if (f.key.endsWith('.items') || f.key.endsWith('.segment')) return `${cat} 중 어떤 시험이에요?`;
+  return `${f.label}${f.requiredIf ? '는 몇이에요?' : '을 정해 주세요'}`;
+};
 
 const QUESTION: Record<ChoiceField, string> = {
   categories: '어떤 시험이에요?',
@@ -32,23 +53,36 @@ interface Props {
   body: string;
   choices: SendChoices;
   onChange: (c: SendChoices) => void;
+  /** 단추 요청서 양식. 없으면 분야만 보낸다 */
+  schema?: RequestSchemaView | null;
+  /** 단추 검사에서 걸린 문구(보내기 전 검사) */
+  issue?: string | null;
   sending: boolean;
   onClose: () => void;
   /** 동의까지 받은 값으로 접수 */
   onApprove: (c: SendChoices) => void;
 }
 
-export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending, onClose, onApprove }: Props) {
-  const [asking, setAsking] = useState<ChoiceField | null>(null);
+export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, issue, sending, onClose, onApprove }: Props) {
+  const [asking, setAsking] = useState<Ask>(null);
   const reduced = useReducedMotion();
-  const gap = nextMissing(sheet, c);
+  const gap = nextMissing(sheet, c, schema);
+  const many = c.categories.length > 1;
   const value = (f: ChoiceField) => (f === 'categories' ? c.categories.join(', ') : c[f]) || null;
 
   // 시안 A08(사용자 선택 2026-11-17, 고르기 보드 "시안대로"): 받는 곳, 시험물질, 의뢰 목적, 회신 기한 4줄만.
   // 나머지 칸(시험 항목·요청 성격·기밀 등급)은 비어 있을 때만 주 버튼이 "○○ 정하기"로 묻는다.
-  const rows: { key: string; label: string; value: string | null; field?: ChoiceField }[] = [
+  // 단추 양식이 있으면 분야마다 시험 종류와 지금 필수인 칸(PK 군 수·군당 마릿수)을 시험물질 아래에 둔다
+  const detailRows = requiredDetails(c, schema).map((f) => {
+    const cat = f.key.slice(0, f.key.lastIndexOf('.'));
+    const items = f.key.endsWith('.items') || f.key.endsWith('.segment');
+    const v = showDetail(c.details?.[f.key]);
+    return { key: f.key, label: items ? '시험 종류' : f.label, value: v && items && many ? `${cat}: ${v}` : v, field: { detail: f } as Ask };
+  });
+  const rows: { key: string; label: string; value: string | null; field?: Ask }[] = [
     { key: 'to', label: '받는 곳', value: '분야가 맞는 참여 기관 전체' },
     { key: 'substance', label: '시험물질', value: sheet.substance?.trim() || null },
+    ...detailRows,
     { key: 'purpose', label: FIELD_LABEL.purpose, value: value('purpose'), field: 'purpose' },
     { key: 'reply', label: '회신 기한', value: c.replyBy || '7영업일 후' },
   ];
@@ -56,9 +90,11 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
   const primary =
     gap === 'substance'
       ? { title: '시험물질 알려 주기', onPress: onClose }
-      : gap && gap !== 'agreed'
-        ? { title: `${FIELD_LABEL[gap]} 정하기`, onPress: () => setAsking(gap) }
-        : { title: '동의하고 요청하기', onPress: () => onApprove({ ...c, agreed: true }) };
+      : gap && typeof gap === 'object'
+        ? { title: `${gap.detail.key.endsWith('.items') || gap.detail.key.endsWith('.segment') ? '시험 종류' : gap.detail.label} 정하기`, onPress: () => setAsking(gap) }
+        : gap && gap !== 'agreed'
+          ? { title: `${FIELD_LABEL[gap]} 정하기`, onPress: () => setAsking(gap) }
+          : { title: '동의하고 요청하기', onPress: () => onApprove({ ...c, agreed: true }) };
 
   return (
     <Animated.View entering={lineEnter(0, reduced)} style={styles.card} accessibilityViewIsModal>
@@ -99,6 +135,12 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
         })}
       </ScrollView>
 
+      {issue ? (
+        <Txt variant="small" color={tokens.danger} style={{ marginTop: space.sm }} accessibilityLiveRegion="polite">
+          {issue}
+        </Txt>
+      ) : null}
+
       <Txt variant="caption" color={tokens.muted} style={styles.agree}>
         {AGREEMENTS.map((a, i) => (
           <Txt key={a.id} variant="caption" color={tokens.muted}>
@@ -128,46 +170,80 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, sending,
   );
 }
 
-/** 아래에서 올라오는 질문 시트. 하나 고르면 바로 닫힌다(시험 항목만 여러 개). */
-function Picker({ field, choices, onClose, onPick }: { field: ChoiceField | null; choices: SendChoices; onClose: () => void; onPick: (c: SendChoices) => void }) {
+/** 아래에서 올라오는 질문 시트. 하나 고르면 바로 닫힌다(여러 개 고르는 칸과 숫자 칸은 정하기 버튼). */
+function Picker({ field, choices, onClose, onPick }: { field: Ask; choices: SendChoices; onClose: () => void; onPick: (c: SendChoices) => void }) {
   const [many, setMany] = useState<string[]>([]);
+  const [text, setText] = useState('');
   // 닫히는 동안에도 마지막 질문을 그대로 보여 준다(내려가는 중에 내용이 비지 않게).
-  const [last, setLast] = useState<ChoiceField | null>(field);
+  const [last, setLast] = useState<Ask>(field);
   if (field !== null && field !== last) setLast(field);
   const f = field ?? last;
-  const multi = f === 'categories';
+  const detail = f && typeof f === 'object' ? f.detail : null;
+  const options = detail ? detail.options ?? null : f ? FIELD_OPTIONS[f as ChoiceField] : null;
+  const multi = detail ? MULTI.has(detail.type) : f === 'categories';
+  const current = (): string[] => {
+    if (detail) {
+      const v = choices.details?.[detail.key];
+      return Array.isArray(v) ? v : v ? [v] : [];
+    }
+    return f === 'categories' ? choices.categories : [];
+  };
+  const setDetail = (v: string | string[]) => ({ ...choices, details: { ...choices.details, [detail!.key]: v } });
+  const pickMany = () => onPick(detail ? setDetail(many) : { ...choices, categories: many });
+  const title = detail ? detailQuestion(detail) : f ? QUESTION[f as ChoiceField] : '';
+  const primary = !options ? (
+    <Button title={text.trim() ? '정하기' : '적기 전'} tall disabled={!text.trim()} onPress={() => onPick(setDetail(text.trim()))} />
+  ) : multi ? (
+    <Button title={many.length ? `${many.length}개 정하기` : '고르기 전'} tall disabled={!many.length} onPress={pickMany} />
+  ) : undefined;
   return (
-    <Sheet visible={field !== null} onClose={onClose} onShow={() => setMany(choices.categories)}>
+    <Sheet
+      visible={field !== null}
+      onClose={onClose}
+      onShow={() => {
+        setMany(current());
+        setText(current()[0] ?? '');
+      }}
+    >
       {f && (
-        <SheetBody
-          title={QUESTION[f]}
-          onClose={onClose}
-          primary={multi ? <Button title={many.length ? `${many.length}개 정하기` : '고르기 전'} tall disabled={!many.length} onPress={() => onPick({ ...choices, categories: many })} /> : undefined}
-        >
-          <ScrollView style={{ maxHeight: u(420) }}>
-            {FIELD_OPTIONS[f].map((o) => {
-              const on = multi ? many.includes(o) : choices[f] === o;
-              return (
-                <Press
-                  key={o}
-                  label={o}
-                  accessibilityRole={multi ? 'checkbox' : 'radio'}
-                  accessibilityState={multi ? { checked: on } : { selected: on }}
-                  style={styles.option}
-                  onPress={() => {
-                    haptic.tap();
-                    if (multi) setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o]));
-                    else onPick({ ...choices, [f]: o });
-                  }}
-                >
-                  <Txt variant="body" style={{ flex: 1, fontFamily: on ? fonts.semibold : fonts.regular }}>
-                    {o}
-                  </Txt>
-                  <CheckMark on={on} />
-                </Press>
-              );
-            })}
-          </ScrollView>
+        <SheetBody title={title} onClose={onClose} primary={primary}>
+          {options ? (
+            <ScrollView style={{ maxHeight: u(420) }}>
+              {options.map((o) => {
+                const on = multi ? many.includes(o) : detail ? current()[0] === o : choices[f as Exclude<ChoiceField, 'categories'>] === o;
+                return (
+                  <Press
+                    key={o}
+                    label={o}
+                    accessibilityRole={multi ? 'checkbox' : 'radio'}
+                    accessibilityState={multi ? { checked: on } : { selected: on }}
+                    style={styles.option}
+                    onPress={() => {
+                      haptic.tap();
+                      if (multi) setMany((m) => (m.includes(o) ? m.filter((x) => x !== o) : [...m, o]));
+                      else onPick(detail ? setDetail(o) : { ...choices, [f as ChoiceField]: o });
+                    }}
+                  >
+                    <Txt variant="body" style={{ flex: 1, fontFamily: on ? fonts.semibold : fonts.regular }}>
+                      {o}
+                    </Txt>
+                    <CheckMark on={on} />
+                  </Press>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              accessibilityLabel={detail?.label}
+              selectionColor={tokens.accent}
+              cursorColor={tokens.accent}
+              keyboardType={detail?.requiredIf ? 'number-pad' : 'default'}
+              autoFocus
+              style={styles.input}
+            />
+          )}
         </SheetBody>
       )}
     </Sheet>
@@ -198,4 +274,5 @@ const styles = StyleSheet.create({
   value: { flex: 1 },
   agree: { marginTop: space.sm, marginBottom: u(10) },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: u(56), borderTopWidth: 1, borderTopColor: tokens.border },
+  input: { height: u(52), borderRadius: radius.inner, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, paddingHorizontal: space.lg, fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
 });

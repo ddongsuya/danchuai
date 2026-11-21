@@ -107,8 +107,8 @@ export interface AssistBriefView {
 }
 
 /** 읽기 액션(브리핑 등)을 단추에서 읽는다. 요청 단위 읽기는 요청 번호를 함께 */
-export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>
-  call<{ result: T }>('cro', '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) }).then((r) => r.result);
+export const readDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string, role: AgentRole = 'cro') =>
+  call<{ result: T }>(role, '/v1/danchu/run', { action, body, ...(rfqNo ? { rfqNo } : {}) }).then((r) => r.result);
 
 /** 바로 실행 액션을 앱 버튼으로(견적서 만들기 등). 서버가 실행 기록을 남긴다 */
 export const runDanchu = <T,>(action: string, body: Record<string, unknown> = {}, rfqNo?: string) =>

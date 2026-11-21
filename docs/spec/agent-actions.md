@@ -26,17 +26,21 @@
 | 이름 | 범위 | 수준 | 하는 일 |
 |---|---|---|---|
 | create | org | confirm | 요청 접수(회사명·연락처는 단추 프로필) |
-| ask · answer | rfq | confirm | 기관에 질의, 기관 질의에 답변 |
+| ask · answer | rfq | confirm | 기관에 질의(inviteId·topic·testSeq·body), 기관 질의에 답변(questionId·answer·scope) |
+| qna_view | rfq | read | 질의응답 목록(비교표 전 기관 A·B, 선정 전 연락처 가림), 질의할 기관, 답할 질의 수. 앱 요청 화면 질의응답 카드 (2026-11-21) |
 | select | rfq | confirm | 기관 선정(선정 사유) |
-| detail | rfq | confirm | 2차 상세 요청 |
+| detail_view | rfq | read | 2차 상세 요청을 보낼 수 있는지, 1차 견적을 낸 기관(최대 3곳), 바꿀 수 있는 조건 칸과 지금 값, 보낸 뒤 기관별 회신. 앱 요청 화면 2차 카드 (2026-11-21) |
+| detail | rfq | confirm | 2차 상세 요청. quoteIds 1~3, detail(바꾼 칸만), replyBy(내일~60일), note |
 | contract_confirm · contract_result | rfq | confirm | 계약 보고 확인, 계약 결과 알림 |
+| contract_status | rfq | read | 계약 진행(기관 보고·확인 기한·확정, 내가 알린 결과, 지금 할 수 있는 동작). 앱 요청 화면 계약 카드 (2026-11-21) |
 
 ### 기관
 
 | 이름 | 범위 | 수준 | 비서 도구 | 하는 일 |
 |---|---|---|---|---|
 | join · decline | rfq | confirm | | 참여·불참 |
-| ask · answer | rfq | confirm | | 의뢰자에게 질의·답변 |
+| ask · answer | rfq | confirm | | 의뢰자에게 질의(topic·testSeq·body)·답변(questionId·answer) |
+| qna_view | rfq | read | | 참여한 요청의 우리 질의응답과 공개 답변. 앱 받은 요청 화면 질의응답 카드 (2026-11-21) |
 | quote_draft | rfq | auto | | 견적 임시 저장(의뢰자에게 안 보임) |
 | quote_upload | rfq | auto | | 견적서 PDF 올릴 주소 |
 | quote_price | rfq | read | | 요청 행마다 견적서 툴 계산 금액(독성·약동학·개별 분석·효력) |
@@ -44,8 +48,10 @@
 | quote_submit_preview | rfq | read | | 제출 미리보기(단추 #142): quote_submit 이 줄마다 채울 금액(할인 반영)·기간·설계 설명, 금액을 넣을 견적서 시험, 견적서 판. 견적 확인 카드가 그대로 보인다 |
 | quote_doc_set_amount | rfq | confirm | | 시험 목록·단가표에 금액이 없는 견적서 시험에 담당자가 카드에서 넣은 금액을 적는다(누른 것이 승인) |
 | quote_submit | rfq | confirm | | 견적 제출. 줄 금액은 단추가 견적서로 채운다(#141). 카드는 미리보기의 판(docUpdatedAt)을 함께 보내고, 판이 바뀌었거나 금액이 다르면 단추가 changed 로 막는다 |
-| detail_reply | rfq | confirm | | 2차 회신. revise 금액은 quote_submit 과 같은 규칙 |
-| contract_report | rfq | confirm | | 계약 체결 보고 |
+| detail_view | rfq | read | | 받은 2차 요청(바뀐·추가 조건, 1차 견적 합계·시험 줄, 회신 기한, 회신할 수 있는지). 앱 받은 요청 화면 2차 카드 (2026-11-21) |
+| detail_reply | rfq | confirm | | 2차 회신. mode revise(견적서를 2차 조건으로 고친 뒤 시험 줄 번호만, 금액은 단추가 견적서에서)·keep·decline, note. docUpdatedAt 은 quote_submit 과 같은 규칙(#142) |
+| contract_report | rfq | confirm | | 계약 체결 보고(선정 견적과 10% 이상 다르면 차이 사유) |
+| contract_status | rfq | read | | 계약 진행(보고 상태, 선정 견적 금액, 차이 사유 규칙, 의뢰자 확인 여부, 보고·정정 가능). 앱 받은 요청 화면 계약 카드 (2026-11-21) |
 | contract_draft | rfq | read | | 계약서(안) 요약(금액·조항 수·보낸 날)과 단추 화면 주소. 선정 전이면 404 |
 | contract_draft_send | rfq | confirm | | 계약서(안)을 의뢰자에게 보내기(요청 기록 + 의뢰자 알림). 서명은 단추 밖에서 |
 | brief | org | read | 맥락 | 오늘 할 일·손이 필요한 안건·진행 중 안건·할 일·일정·고객사·담당자 |
