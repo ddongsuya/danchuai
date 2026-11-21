@@ -12,8 +12,10 @@ import { Linking, StyleSheet, View } from "react-native";
 import { ChatShell } from "@/components/chat/ChatShell";
 import { ContractCard } from "@/components/contract/ContractCard";
 import { QnaCard } from "@/components/qna/QnaCard";
+import { RequesterDetailCard } from "@/components/detail/DetailCard";
 import type { ContractView } from "@/lib/danchuContract";
 import type { QnaView } from "@/lib/danchuQna";
+import type { RequesterDetailView } from "@/lib/danchuDetail";
 import { DanchuSelectSheet } from "@/components/request/DanchuSelectSheet";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -94,6 +96,7 @@ export function DanchuRequestView({
   initialSelecting = false,
   contractPreview,
   qnaPreview,
+  detailPreview,
 }: {
   data: { request: DanchuRequestData; compare: DanchuCompare };
   /** 선정이 끝났다(화면이 다시 읽는다) */
@@ -104,6 +107,8 @@ export function DanchuRequestView({
   contractPreview?: ContractView;
   /** 미리보기 질의응답 값 */
   qnaPreview?: QnaView;
+  /** 미리보기 2차 상세 요청 값 */
+  detailPreview?: RequesterDetailView;
 }) {
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
@@ -186,6 +191,9 @@ export function DanchuRequestView({
 
       {/* 질의응답: 비교표가 열린 뒤 견적을 낸 기관에 질의, 기관 질의에 답변 */}
       <QnaCard role="requester" no={r.no} initial={qnaPreview} />
+
+      {/* 2차 상세 요청: 비교표가 열린 뒤 선정 전, 1~3곳에 바꾼 조건 */}
+      {compare.open && <RequesterDetailCard no={r.no} initial={detailPreview} />}
 
       {!compare.open && (
         <View style={[styles.card, styles.facts]}>

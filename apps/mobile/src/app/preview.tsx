@@ -40,6 +40,7 @@ import type { QnaView } from '@/lib/danchuQna';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
 import type { DanchuCompare, DanchuLabItem, DanchuRequest } from '@/lib/marketClient';
+import type { CroDetailView, RequesterDetailView } from '@/lib/danchuDetail';
 
 /** 오늘에서 n일 뒤 날짜(YYYY-MM-DD, 기기 날짜). 기한 숫자가 늘 그럴듯하게 보이도록 */
 const day = (n: number) => {
@@ -289,6 +290,43 @@ const QNA_LAB: QnaView = {
     canAsk: true, canAnswer: true, pending: 1, replyBy: day(3), tests: [{ seq: 1, name: '반복투여 4주' }],
   },
 };
+// 2차 상세 요청 예시(가상의 값)
+const DETAIL_REQ: RequesterDetailView = {
+  canSend: true,
+  maxTargets: 3,
+  targets: [{ quoteId: 'qa', lab: '가 기관' }, { quoteId: 'qb', lab: '나 기관' }, { quoteId: 'qc', lab: '다 기관' }],
+  fields: [
+    { key: 'tox.recovery', group: '독성', label: '회복군', type: 'select', options: ['있음', '없음'], current: '있음', private: false },
+    { key: 'tox.species', group: '독성', label: '동물종', type: 'chips', options: ['랫드', '마우스', '비글견'], current: '랫드', private: false },
+    { key: 'common.report', group: '공통', label: '보고서 언어', type: 'select', options: ['국문', '영문', '국문+영문'], current: '국문', private: false },
+  ],
+  sent: null,
+};
+const DETAIL_REQ_SENT: RequesterDetailView = {
+  ...DETAIL_REQ,
+  canSend: false,
+  sent: {
+    replyBy: day(5),
+    note: '회복군 없이 다시 받아 보고 싶어요.',
+    changed: [{ key: 'tox.recovery', label: '회복군', group: '독성', was: '있음', now: '없음' }],
+    added: [],
+    targets: [
+      { quoteId: 'qa', lab: '가 기관', status: 'submitted', statusLabel: '2차 견적 보냄', total: 80_300_000, weeks: 14, respondedAt: day(-1) },
+      { quoteId: 'qb', lab: '나 기관', status: 'sent', statusLabel: '회신할 차례', total: null, weeks: null, respondedAt: null },
+    ],
+  },
+};
+const DETAIL_LAB: CroDetailView = {
+  status: 'sent',
+  replyBy: day(5),
+  expired: false,
+  closed: false,
+  changed: [{ key: 'tox.recovery', label: '회복군', group: '독성', was: '있음', now: '없음' }],
+  added: [],
+  first: { total: 86_200_000, weeks: 16, items: [{ seq: 1, name: '반복투여 4주', amount: 86_200_000, weeks: 16, avail: 'ok' }] },
+  reply: null,
+  canReply: true,
+};
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 // 기관 비서 예시(가상의 고객사·담당자)
@@ -363,6 +401,8 @@ const VIEWS: View_[] = [
   { key: 'selected', label: '진행, 선정 뒤', group: '진행·비교' },
   { key: 'contract-req', label: '선정 뒤, 기관 계약 보고 확인', group: '진행·비교' },
   { key: 'qna-req', label: '비교표 열림, 질의응답', group: '진행·비교' },
+  { key: 'detail-req', label: '비교표 열림, 2차 상세 요청', group: '진행·비교' },
+  { key: 'detail-req-sent', label: '2차 상세 요청 보낸 뒤', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
@@ -374,6 +414,7 @@ const VIEWS: View_[] = [
   { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
   { key: 'lab-contract', label: '받은 요청, 계약 체결 보고 전', group: '기관' },
   { key: 'lab-qna', label: '받은 요청, 의뢰자 질의에 답할 차례', group: '기관' },
+  { key: 'lab-detail', label: '받은 요청, 2차 회신할 차례', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
@@ -570,6 +611,12 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} qnaPreview={QNA_REQ} />;
     case 'lab-qna':
       return <DanchuLabView it={LAB_SENT} qnaPreview={QNA_LAB} />;
+    case 'detail-req':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} detailPreview={DETAIL_REQ} />;
+    case 'detail-req-sent':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} detailPreview={DETAIL_REQ_SENT} />;
+    case 'lab-detail':
+      return <DanchuLabView it={LAB_SENT} detailPreview={DETAIL_LAB} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
     case 'lab-join':
