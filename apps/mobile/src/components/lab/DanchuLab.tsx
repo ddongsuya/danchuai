@@ -15,7 +15,9 @@ import { DANCHU_URL } from '@/lib/danchuLinks';
 import { daysLeft, shortDate } from '@/lib/format';
 import { fetchDanchuLabRequest, type DanchuLabItem } from '@/lib/marketClient';
 import { ContractDraftCard } from '@/components/lab/ContractDraftCard';
+import { ContractCard } from '@/components/contract/ContractCard';
 import type { ContractDraftView } from '@/lib/agentClient';
+import type { ContractView } from '@/lib/danchuContract';
 
 export function DanchuLab({ no }: { no: string }) {
   const load = useCallback(() => fetchDanchuLabRequest(no), [no]);
@@ -71,7 +73,7 @@ function task(it: DanchuLabItem) {
 }
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
-export function DanchuLabView({ it, onChanged, initialSheet = null, contractPreview }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null; contractPreview?: ContractDraftView }) {
+export function DanchuLabView({ it, onChanged, initialSheet = null, contractPreview, contractStatusPreview }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null; contractPreview?: ContractDraftView; contractStatusPreview?: ContractView }) {
   const open = () => Linking.openURL(`${DANCHU_URL}/cro`);
   const [sheet, setSheet] = useState<'join' | 'decline' | null>(initialSheet);
   const done = () => {
@@ -152,6 +154,9 @@ export function DanchuLabView({ it, onChanged, initialSheet = null, contractPrev
 
       {/* 선정된 요청: 계약서(안) (단추가 선정된 견적으로 만든다) */}
       {it.group === 'won' && <ContractDraftCard no={it.no} initial={contractPreview} />}
+
+      {/* 선정된 요청: 계약 체결 보고(성사 수수료는 보고 → 의뢰자 확인으로 정해진다) */}
+      {(it.group === 'won' || it.group === 'done') && <ContractCard role="cro" no={it.no} initial={contractStatusPreview} />}
 
       {it.join && <Button title="단추에서 요약 보기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />}
 

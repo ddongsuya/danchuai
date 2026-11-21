@@ -10,6 +10,8 @@ import { useCallback, useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 
 import { ChatShell } from "@/components/chat/ChatShell";
+import { ContractCard } from "@/components/contract/ContractCard";
+import type { ContractView } from "@/lib/danchuContract";
 import { DanchuSelectSheet } from "@/components/request/DanchuSelectSheet";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -88,12 +90,15 @@ export function DanchuRequestView({
   data,
   onSelected,
   initialSelecting = false,
+  contractPreview,
 }: {
   data: { request: DanchuRequestData; compare: DanchuCompare };
   /** 선정이 끝났다(화면이 다시 읽는다) */
   onSelected?: () => void;
   /** 미리보기에서 시트를 연 채로 보여 줄 때만 */
   initialSelecting?: boolean;
+  /** 미리보기 계약 카드 값 */
+  contractPreview?: ContractView;
 }) {
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
@@ -163,6 +168,9 @@ export function DanchuRequestView({
           </Txt>
         </View>
       )}
+
+      {/* 선정 뒤: 기관 계약 보고 확인, 보고 전이면 계약 결과 알리기 */}
+      {r.selected && <ContractCard role="requester" no={r.no} initial={contractPreview} />}
 
       {compare.open && (
         <CompareList

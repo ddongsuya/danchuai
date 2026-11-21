@@ -35,6 +35,7 @@ import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
 import type { AgentQuestion } from '@/lib/chat';
+import type { ContractView } from '@/lib/danchuContract';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
 import type { DanchuCompare, DanchuLabItem, DanchuRequest } from '@/lib/marketClient';
@@ -255,6 +256,17 @@ const Q_RECHECK: AgentQuestion = {
 const qCard = (q: AgentQuestion, left: string, initial?: Parameters<typeof QuestionCard>[0]['initial']) => (
   <QuestionCard question={q} field={SHEET_LABELS[q.field as SheetField]} left={left} initial={initial} onAnswer={() => router.push(toView('q-next'))} />
 );
+// 계약 진행 예시(가상의 값)
+const CONTRACT_BASE: ContractView = {
+  lab: '가 기관', awardedAt: day(-6), quoteAmount: 50_000_000, state: 'awaiting_report', report: null, gap: null,
+  confirmDueAt: null, confirmedAt: null, confirmedVia: null, sponsor: null, sponsorSaysSigned: false,
+  can: { report: true, correct: false, confirm: false, tellResult: false },
+  gapRule: { ratio: 0.1, reasons: [{ id: 'scope', label: '시험 범위 변경' }, { id: 'price', label: '단가·할인 조정' }, { id: 'schedule', label: '일정 변경' }, { id: 'other', label: '기타' }] },
+};
+const CONTRACT_TO_CONFIRM: ContractView = {
+  ...CONTRACT_BASE, state: 'to_confirm', report: { date: day(-1), amount: 44_000_000, gapReason: 'scope', gapReasonLabel: '시험 범위 변경', note: '회복군 제외', reportedAt: day(-1) },
+  gap: { diff: -6_000_000, ratio: -0.12 }, confirmDueAt: day(6), can: { report: false, correct: false, confirm: true, tellResult: false },
+};
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 // 기관 비서 예시(가상의 고객사·담당자)
@@ -327,6 +339,7 @@ const VIEWS: View_[] = [
   { key: 'compare', label: '진행, 비교표 열림', group: '진행·비교' },
   { key: 'select', label: '기관 선정 시트', group: '진행·비교' },
   { key: 'selected', label: '진행, 선정 뒤', group: '진행·비교' },
+  { key: 'contract-req', label: '선정 뒤, 기관 계약 보고 확인', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
@@ -336,6 +349,7 @@ const VIEWS: View_[] = [
   { key: 'lab-quote-calc', label: '견적 확인, 단추 계산으로 채움', group: '기관' },
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
+  { key: 'lab-contract', label: '받은 요청, 계약 체결 보고 전', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
@@ -526,6 +540,8 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} initialSelecting />;
     case 'selected':
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} />;
+    case 'contract-req':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} contractPreview={CONTRACT_TO_CONFIRM} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
     case 'lab-join':
@@ -546,6 +562,14 @@ function PreviewView({ view }: { view: string }) {
         <DanchuLabView
           it={{ ...LAB_SENT, group: 'won', stage: '선정', next: '계약 보고', steps: [{ label: '요청 받음', at: '', state: 'done' }, { label: '견적 제출', at: '', state: 'done' }, { label: '선정', at: '', state: 'done' }, { label: '계약 보고', at: '', state: 'now' }] }}
           contractPreview={{ awardId: 'a-demo', path: '/cro/awards/a-demo/contract', tests: 3, supply: 86_200_000, vat: 8_620_000, total: 94_820_000, articles: 12, sentAt: null, contractStatus: 'pending' }}
+          contractStatusPreview={CONTRACT_BASE}
+        />
+      );
+    case 'lab-contract':
+      return (
+        <DanchuLabView
+          it={{ ...LAB_SENT, group: 'won', stage: '선정', next: '계약 보고', steps: [{ label: '요청 받음', at: '', state: 'done' }, { label: '견적 제출', at: '', state: 'done' }, { label: '선정', at: '', state: 'done' }, { label: '계약 보고', at: '', state: 'now' }] }}
+          contractStatusPreview={{ ...CONTRACT_BASE, sponsorSaysSigned: true }}
         />
       );
     case 'lab-assist':

@@ -30,6 +30,7 @@
 | select | rfq | confirm | 기관 선정(선정 사유) |
 | detail | rfq | confirm | 2차 상세 요청 |
 | contract_confirm · contract_result | rfq | confirm | 계약 보고 확인, 계약 결과 알림 |
+| contract_status | rfq | read | 계약 진행(기관 보고·확인 기한·확정, 내가 알린 결과, 지금 할 수 있는 동작). 앱 요청 화면 계약 카드 (2026-11-21) |
 
 ### 기관
 
@@ -43,7 +44,8 @@
 | quote_doc | rfq | auto | | 견적서 툴 견적서 만들기(이미 있으면 그것). 앱 "견적서 툴에서 열기" |
 | quote_submit | rfq | confirm | | 견적 제출 |
 | detail_reply | rfq | confirm | | 2차 회신 |
-| contract_report | rfq | confirm | | 계약 체결 보고 |
+| contract_report | rfq | confirm | | 계약 체결 보고(선정 견적과 10% 이상 다르면 차이 사유) |
+| contract_status | rfq | read | | 계약 진행(보고 상태, 선정 견적 금액, 차이 사유 규칙, 의뢰자 확인 여부, 보고·정정 가능). 앱 받은 요청 화면 계약 카드 (2026-11-21) |
 | contract_draft | rfq | read | | 계약서(안) 요약(금액·조항 수·보낸 날)과 단추 화면 주소. 선정 전이면 404 |
 | contract_draft_send | rfq | confirm | | 계약서(안)을 의뢰자에게 보내기(요청 기록 + 의뢰자 알림). 서명은 단추 밖에서 |
 | brief | org | read | 맥락 | 오늘 할 일·손이 필요한 안건·진행 중 안건·할 일·일정·고객사·담당자 |
