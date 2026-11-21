@@ -16,8 +16,10 @@ import { daysLeft, shortDate } from '@/lib/format';
 import { fetchDanchuLabRequest, type DanchuLabItem } from '@/lib/marketClient';
 import { ContractDraftCard } from '@/components/lab/ContractDraftCard';
 import { ContractCard } from '@/components/contract/ContractCard';
+import { QnaCard } from '@/components/qna/QnaCard';
 import type { ContractDraftView } from '@/lib/agentClient';
 import type { ContractView } from '@/lib/danchuContract';
+import type { QnaView } from '@/lib/danchuQna';
 
 export function DanchuLab({ no }: { no: string }) {
   const load = useCallback(() => fetchDanchuLabRequest(no), [no]);
@@ -73,7 +75,7 @@ function task(it: DanchuLabItem) {
 }
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
-export function DanchuLabView({ it, onChanged, initialSheet = null, contractPreview, contractStatusPreview }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null; contractPreview?: ContractDraftView; contractStatusPreview?: ContractView }) {
+export function DanchuLabView({ it, onChanged, initialSheet = null, contractPreview, contractStatusPreview, qnaPreview }: { it: DanchuLabItem; onChanged?: () => void; initialSheet?: 'join' | 'decline' | null; contractPreview?: ContractDraftView; contractStatusPreview?: ContractView; qnaPreview?: QnaView }) {
   const open = () => Linking.openURL(`${DANCHU_URL}/cro`);
   const [sheet, setSheet] = useState<'join' | 'decline' | null>(initialSheet);
   const done = () => {
@@ -157,6 +159,9 @@ export function DanchuLabView({ it, onChanged, initialSheet = null, contractPrev
 
       {/* 선정된 요청: 계약 체결 보고(성사 수수료는 보고 → 의뢰자 확인으로 정해진다) */}
       {(it.group === 'won' || it.group === 'done') && <ContractCard role="cro" no={it.no} initial={contractStatusPreview} />}
+
+      {/* 참여한 요청: 의뢰자와 질의응답(비교표가 열리기 전까지 질의) */}
+      {!it.join && it.group !== 'decide' && <QnaCard role="cro" no={it.no} initial={qnaPreview} />}
 
       {it.join && <Button title="단추에서 요약 보기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />}
 

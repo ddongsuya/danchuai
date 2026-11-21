@@ -12,7 +12,8 @@ import { Press } from '@/components/ui/Press';
 import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
-import { approveDanchuAction, draftDanchuAction, readDanchu, type AgentRole, type DanchuActionName } from '@/lib/agentClient';
+import { readDanchu, type AgentRole } from '@/lib/agentClient';
+import { sendApproved as send } from '@/lib/danchuSend';
 import {
   RESULT_OPTIONS,
   confirmBody,
@@ -143,20 +144,7 @@ function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
   );
 }
 
-/** 승인한 본문을 단추로 한 번 보낸다. 실패 문구는 단추가 준 한국어만 그대로 */
-async function send(role: AgentRole, action: DanchuActionName, body: Record<string, unknown>, no: string): Promise<string | null> {
-  try {
-    const d = await draftDanchuAction(role, action, body, no);
-    const r = await approveDanchuAction(role, d);
-    if (r.status === 'sent') return null;
-    const reason = typeof r.result?.error === 'string' && /[가-힣]/.test(r.result.error) ? r.result.error : null;
-    return r.status === 'failed' ? (reason ?? '단추가 받지 않았어요') : '결과 확인 필요';
-  } catch {
-    return '연결이 끊겼어요';
-  }
-}
-
-function Err({ text }: { text: string | null }) {
+export function Err({ text }: { text: string | null }) {
   if (!text) return null;
   return (
     <View style={styles.note} accessibilityRole="alert">

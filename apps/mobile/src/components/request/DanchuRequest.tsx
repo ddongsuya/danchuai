@@ -11,7 +11,9 @@ import { Linking, StyleSheet, View } from "react-native";
 
 import { ChatShell } from "@/components/chat/ChatShell";
 import { ContractCard } from "@/components/contract/ContractCard";
+import { QnaCard } from "@/components/qna/QnaCard";
 import type { ContractView } from "@/lib/danchuContract";
+import type { QnaView } from "@/lib/danchuQna";
 import { DanchuSelectSheet } from "@/components/request/DanchuSelectSheet";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -91,6 +93,7 @@ export function DanchuRequestView({
   onSelected,
   initialSelecting = false,
   contractPreview,
+  qnaPreview,
 }: {
   data: { request: DanchuRequestData; compare: DanchuCompare };
   /** 선정이 끝났다(화면이 다시 읽는다) */
@@ -99,6 +102,8 @@ export function DanchuRequestView({
   initialSelecting?: boolean;
   /** 미리보기 계약 카드 값 */
   contractPreview?: ContractView;
+  /** 미리보기 질의응답 값 */
+  qnaPreview?: QnaView;
 }) {
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
@@ -178,6 +183,9 @@ export function DanchuRequestView({
           missing={Math.max(0, r.joined - compare.columns.length)}
         />
       )}
+
+      {/* 질의응답: 비교표가 열린 뒤 견적을 낸 기관에 질의, 기관 질의에 답변 */}
+      <QnaCard role="requester" no={r.no} initial={qnaPreview} />
 
       {!compare.open && (
         <View style={[styles.card, styles.facts]}>

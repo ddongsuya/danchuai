@@ -36,6 +36,7 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
 import type { AgentQuestion } from '@/lib/chat';
 import type { ContractView } from '@/lib/danchuContract';
+import type { QnaView } from '@/lib/danchuQna';
 import type { SendChoices } from '@/lib/danchuRequest';
 import type { InboxItem } from '@/lib/inbox';
 import type { DanchuCompare, DanchuLabItem, DanchuRequest } from '@/lib/marketClient';
@@ -267,6 +268,27 @@ const CONTRACT_TO_CONFIRM: ContractView = {
   ...CONTRACT_BASE, state: 'to_confirm', report: { date: day(-1), amount: 44_000_000, gapReason: 'scope', gapReasonLabel: '시험 범위 변경', note: '회복군 제외', reportedAt: day(-1) },
   gap: { diff: -6_000_000, ratio: -0.12 }, confirmDueAt: day(6), can: { report: false, correct: false, confirm: true, tellResult: false },
 };
+// 질의응답 예시(가상의 값)
+const QNA_TOPICS = [{ id: 'terms', label: '요청 조건' }, { id: 'substance', label: '시험물질' }, { id: 'schedule', label: '일정' }, { id: 'quote', label: '견적' }, { id: 'other', label: '기타' }];
+const QNA_REQ: QnaView = {
+  topics: QNA_TOPICS,
+  qna: {
+    items: [
+      { id: 'q2', direction: 'cro', topic: '시험물질', test: null, body: '시험물질 보유량이 얼마나 되나요?', bodyMasked: false, at: day(-1), answer: null, answerMasked: false, answeredAt: null, scope: null, party: '나 기관', inviteId: 'i2', toAnswer: true },
+      { id: 'q1', direction: 'sponsor', topic: '견적', test: '반복투여 4주', body: '회복군을 빼면 금액이 얼마나 줄어요?', bodyMasked: false, at: day(-2), answer: '약 600만 원 줄어요.', answerMasked: false, answeredAt: day(-1), scope: null, party: '가 기관', inviteId: 'i1', toAnswer: false },
+    ],
+    targets: [{ inviteId: 'i1', label: '가 기관' }, { inviteId: 'i2', label: '나 기관' }],
+    canAsk: true, canAnswer: true, pending: 1, replyBy: day(3), tests: [{ seq: 1, name: '반복투여 4주' }],
+  },
+};
+const QNA_LAB: QnaView = {
+  topics: QNA_TOPICS,
+  qna: {
+    mine: [{ id: 'q3', direction: 'sponsor', topic: '일정', test: null, body: '착수를 12월 둘째 주로 맞출 수 있나요?', bodyMasked: false, at: day(-1), answer: null, answerMasked: false, answeredAt: null, scope: null, party: '', inviteId: 'i1', toAnswer: true }],
+    shared: [],
+    canAsk: true, canAnswer: true, pending: 1, replyBy: day(3), tests: [{ seq: 1, name: '반복투여 4주' }],
+  },
+};
 const CHOICES: SendChoices = { purpose: null, intent: '비교 견적', confid: '일반', categories: ['일반독성'], replyBy: '', agreed: false };
 
 // 기관 비서 예시(가상의 고객사·담당자)
@@ -340,6 +362,7 @@ const VIEWS: View_[] = [
   { key: 'select', label: '기관 선정 시트', group: '진행·비교' },
   { key: 'selected', label: '진행, 선정 뒤', group: '진행·비교' },
   { key: 'contract-req', label: '선정 뒤, 기관 계약 보고 확인', group: '진행·비교' },
+  { key: 'qna-req', label: '비교표 열림, 질의응답', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
@@ -350,6 +373,7 @@ const VIEWS: View_[] = [
   { key: 'lab-sent', label: '받은 요청, 제출 뒤', group: '기관' },
   { key: 'lab-won', label: '받은 요청, 선정·계약서(안)', group: '기관' },
   { key: 'lab-contract', label: '받은 요청, 계약 체결 보고 전', group: '기관' },
+  { key: 'lab-qna', label: '받은 요청, 의뢰자 질의에 답할 차례', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
@@ -542,6 +566,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} />;
     case 'contract-req':
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} contractPreview={CONTRACT_TO_CONFIRM} />;
+    case 'qna-req':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} qnaPreview={QNA_REQ} />;
+    case 'lab-qna':
+      return <DanchuLabView it={LAB_SENT} qnaPreview={QNA_LAB} />;
     case 'lab':
       return <DanchuLabView it={LAB_TODO} />;
     case 'lab-join':

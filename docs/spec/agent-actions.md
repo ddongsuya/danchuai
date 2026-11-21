@@ -26,7 +26,8 @@
 | 이름 | 범위 | 수준 | 하는 일 |
 |---|---|---|---|
 | create | org | confirm | 요청 접수(회사명·연락처는 단추 프로필) |
-| ask · answer | rfq | confirm | 기관에 질의, 기관 질의에 답변 |
+| ask · answer | rfq | confirm | 기관에 질의(inviteId·topic·testSeq·body), 기관 질의에 답변(questionId·answer·scope) |
+| qna_view | rfq | read | 질의응답 목록(비교표 전 기관 A·B, 선정 전 연락처 가림), 질의할 기관, 답할 질의 수. 앱 요청 화면 질의응답 카드 (2026-11-21) |
 | select | rfq | confirm | 기관 선정(선정 사유) |
 | detail | rfq | confirm | 2차 상세 요청 |
 | contract_confirm · contract_result | rfq | confirm | 계약 보고 확인, 계약 결과 알림 |
@@ -37,7 +38,8 @@
 | 이름 | 범위 | 수준 | 비서 도구 | 하는 일 |
 |---|---|---|---|---|
 | join · decline | rfq | confirm | | 참여·불참 |
-| ask · answer | rfq | confirm | | 의뢰자에게 질의·답변 |
+| ask · answer | rfq | confirm | | 의뢰자에게 질의(topic·testSeq·body)·답변(questionId·answer) |
+| qna_view | rfq | read | | 참여한 요청의 우리 질의응답과 공개 답변. 앱 받은 요청 화면 질의응답 카드 (2026-11-21) |
 | quote_draft | rfq | auto | | 견적 임시 저장(의뢰자에게 안 보임) |
 | quote_upload | rfq | auto | | 견적서 PDF 올릴 주소 |
 | quote_price | rfq | read | | 요청 행마다 견적서 툴 계산 금액(독성·약동학·개별 분석·효력). 견적 확인 카드의 직접 입력 줄을 먼저 채운다 |
