@@ -10,6 +10,12 @@ import { useCallback, useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 
 import { ChatShell } from "@/components/chat/ChatShell";
+import { ContractCard } from "@/components/contract/ContractCard";
+import { QnaCard } from "@/components/qna/QnaCard";
+import { RequesterDetailCard } from "@/components/detail/DetailCard";
+import type { ContractView } from "@/lib/danchuContract";
+import type { QnaView } from "@/lib/danchuQna";
+import type { RequesterDetailView } from "@/lib/danchuDetail";
 import { DanchuSelectSheet } from "@/components/request/DanchuSelectSheet";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -88,12 +94,21 @@ export function DanchuRequestView({
   data,
   onSelected,
   initialSelecting = false,
+  contractPreview,
+  qnaPreview,
+  detailPreview,
 }: {
   data: { request: DanchuRequestData; compare: DanchuCompare };
   /** 선정이 끝났다(화면이 다시 읽는다) */
   onSelected?: () => void;
   /** 미리보기에서 시트를 연 채로 보여 줄 때만 */
   initialSelecting?: boolean;
+  /** 미리보기 계약 카드 값 */
+  contractPreview?: ContractView;
+  /** 미리보기 질의응답 값 */
+  qnaPreview?: QnaView;
+  /** 미리보기 2차 상세 요청 값 */
+  detailPreview?: RequesterDetailView;
 }) {
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
@@ -164,12 +179,21 @@ export function DanchuRequestView({
         </View>
       )}
 
+      {/* 선정 뒤: 기관 계약 보고 확인, 보고 전이면 계약 결과 알리기 */}
+      {r.selected && <ContractCard role="requester" no={r.no} initial={contractPreview} />}
+
       {compare.open && (
         <CompareList
           columns={compare.columns}
           missing={Math.max(0, r.joined - compare.columns.length)}
         />
       )}
+
+      {/* 질의응답: 비교표가 열린 뒤 견적을 낸 기관에 질의, 기관 질의에 답변 */}
+      <QnaCard role="requester" no={r.no} initial={qnaPreview} />
+
+      {/* 2차 상세 요청: 비교표가 열린 뒤 선정 전, 1~3곳에 바꾼 조건 */}
+      {compare.open && <RequesterDetailCard no={r.no} initial={detailPreview} />}
 
       {!compare.open && (
         <View style={[styles.card, styles.facts]}>
