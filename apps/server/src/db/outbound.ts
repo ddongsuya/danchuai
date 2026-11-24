@@ -1,5 +1,5 @@
 import type { ApprovalDecision, OutboundDraft } from "@danchuai/core";
-import type { DraftSource, OutboundRepo } from "../repo";
+import type { DraftSource, OutboundRepo, SentRow } from "../repo";
 import { tx, UUID, type Pool } from "./pool";
 
 type Row = {
@@ -103,5 +103,26 @@ export class PgOutboundRepo implements OutboundRepo {
     if (!UUID.test(draftId)) return null;
     const { rows } = await this.pool.query<{ result: unknown }>(`select result from outbound_drafts where id = $1`, [draftId]);
     return rows[0]?.result ?? null;
+  }
+
+  async listDanchuSent(orgId: string, limit: number): Promise<SentRow[]> {
+    const { rows } = await this.pool.query<{ id: string; status: SentRow["status"]; body: string; updated_at: Date; decided_by: string | null; decided_at: Date | null; result: unknown }>(
+      `select d.id, d.status, d.body, d.updated_at, a.decided_by, a.decided_at, d.result
+         from outbound_drafts d
+         left join lateral (select decided_by, decided_at from approvals where draft_id = d.id order by id desc limit 1) a on true
+        where d.org_id = $1 and d.kind = 'danchu' and d.status <> 'drafted'
+        order by d.updated_at desc
+        limit $2`,
+      [orgId, limit],
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      text: r.body,
+      updatedAt: r.updated_at.toISOString(),
+      decidedBy: r.decided_by,
+      decidedAt: r.decided_at ? r.decided_at.toISOString() : null,
+      result: r.result ?? null,
+    }));
   }
 }

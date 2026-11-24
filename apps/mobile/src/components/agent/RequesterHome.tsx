@@ -2,11 +2,12 @@
 // 왼쪽 위 메뉴에 요청함·질문하기·계정. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
 // 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
 import { router, type Href } from 'expo-router';
-import { CaretRight, ChatCircleText, List, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
+import { Bell, CaretRight, ChatCircleText, List, PaperPlaneTilt, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
+import { AgentStatus, useSentCheck, useUnreadAlerts } from '@/components/agent/AgentStatus';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { ErrorLine } from '@/components/agent/LiveChat';
 import { ChatShell } from '@/components/chat/ChatShell';
@@ -47,17 +48,20 @@ export function RequesterHome() {
   const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
   const replied = items.filter((i) => i.status === 'replied').length;
+  const sent = useSentCheck('requester', live && (status === 'ready' || status === 'disabled'));
+  const alerts = useUnreadAlerts('requester', live && (status === 'ready' || status === 'disabled'));
   const recent: RecentState = !live ? { kind: 'error', label: '서버 연결 전이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
   return (
     <RequesterHomeView
       menu={{
         title: '비서',
         sub: org?.name ?? null,
-        items: requesterMenu(replied),
+        items: requesterMenu(replied, alerts),
         // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다
         footer: status === 'disabled' ? [{ key: 'switch', label: '기관 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/lab/assist') }] : [],
       }}
       recent={recent}
+      sent={sent}
       onRetry={() => void reload()}
       onStart={startRequest}
       onAsk={openAsk}
@@ -67,11 +71,13 @@ export function RequesterHome() {
   );
 }
 
-/** 의뢰자 메뉴: 요청함(회신 도착 수), 가이드라인 질문, 계정 */
-export function requesterMenu(repliedCount = 0): MenuItem[] {
+/** 의뢰자 메뉴: 요청함(회신 도착 수), 알림(읽지 않은 수), 보낸 것, 가이드라인 질문, 계정 */
+export function requesterMenu(repliedCount = 0, alertCount = 0): MenuItem[] {
   const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
   return [
     { key: 'inbox', label: '요청함', icon: ic(Tray), count: repliedCount, onPress: () => router.push('/requester' as Href) },
+    { key: 'alerts', label: '알림', icon: ic(Bell), count: alertCount, onPress: () => router.push({ pathname: '/alerts', params: { role: 'requester' } }) },
+    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'requester' } }) },
     { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: openAsk },
     { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
   ];
@@ -84,6 +90,8 @@ export interface RequesterHomeViewProps {
   /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
   initialMenuOpen?: boolean;
   recent: RecentState;
+  /** 캐릭터 밑 상태 줄: 보낸 것 가운데 결과 확인 필요 건수 */
+  sent?: { check: number; onCheck: () => void };
   onRetry?: () => void;
   /** 첫 글(직접 쓴 글 또는 고른 말)로 새 요청 대화를 연다 */
   onStart: (text: string) => void;
@@ -93,7 +101,7 @@ export interface RequesterHomeViewProps {
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function RequesterHomeView({ menu, initialMenuOpen = false, recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
+export function RequesterHomeView({ menu, initialMenuOpen = false, recent, sent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
   const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
   const nav = (
     <View style={styles.nav}>
@@ -107,6 +115,7 @@ export function RequesterHomeView({ menu, initialMenuOpen = false, recent, onRet
       <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
       <View style={styles.hero}>
         <AgentAvatar size={uc(64)} />
+        {sent && <AgentStatus check={sent.check} onCheck={sent.onCheck} />}
         <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
           어떤 시험이 필요해요?
         </Txt>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { daysFrom, detailReplyBody, detailRequestBody, type CroDetailView, type RequesterDetailView } from './danchuDetail';
+import { daysFrom, detailReplyBody, detailRequestBody, reviseCheck, type CroDetailView, type RequesterDetailView } from './danchuDetail';
 
 const now = new Date(2026, 10, 21);
 const v: RequesterDetailView = {
@@ -29,8 +29,21 @@ describe('2차 상세 요청 본문 (단추 app/api/rfq/[no]/detail 규칙)', ()
 
 describe('2차 회신 본문', () => {
   const d: CroDetailView = { status: 'sent', replyBy: '2026-11-28', expired: false, closed: false, changed: [], added: [], first: { total: 50_000_000, weeks: 12, items: [{ seq: 1, name: '반복투여 4주', amount: 50_000_000, weeks: 12, avail: '가능' }] }, reply: null, canReply: true };
-  it('고친 견적은 줄 번호만(금액은 단추가 견적서에서)', () => {
-    expect(detailReplyBody(d, 'revise', '')).toEqual({ ok: true, body: { mode: 'revise', items: [{ seq: 1 }] } });
+  const d2: CroDetailView = { ...d, first: { ...d.first, items: [...d.first.items, { seq: 2, name: '유전독성', amount: null, weeks: null, avail: '불가' }] } };
+  const pv = { updatedAt: '2026-11-24T01:00:00Z', rows: [{ seq: 1, amount: 46_000_000, weeks: 11 }], mismatched: [] as number[] };
+  it('고친 견적은 사람이 본 견적서 판과 줄 금액을 함께 보낸다', () => {
+    expect(detailReplyBody(d2, 'revise', '', pv)).toEqual({
+      ok: true,
+      body: { mode: 'revise', items: [{ seq: 1, avail: '가능', amount: '46000000', weeks: '11' }, { seq: 2, avail: '불가', amount: '', weeks: '' }], docUpdatedAt: '2026-11-24T01:00:00Z' },
+    });
+    expect(reviseCheck(d2, pv).total).toBe(46_000_000);
+  });
+  it('견적서를 아직 못 읽었거나 금액이 빈 줄·이름이 다른 줄이 있으면 보내지 않는다', () => {
+    expect(detailReplyBody(d, 'revise', '').ok).toBe(false);
+    expect(detailReplyBody(d, 'revise', '', { ...pv, rows: [{ seq: 1, amount: null, weeks: null }] })).toEqual({ ok: false, error: '금액 없는 줄이 1개 있어요' });
+    expect(detailReplyBody(d, 'revise', '', { ...pv, mismatched: [1] })).toEqual({ ok: false, error: '요청서와 시험 이름이 다른 줄이 1개 있어요' });
+  });
+  it('1차 그대로·안 함은 견적서 없이 보낸다', () => {
     expect(detailReplyBody(d, 'keep', ' 1차와 같아요 ')).toEqual({ ok: true, body: { mode: 'keep', note: '1차와 같아요' } });
   });
   it('회신할 수 없으면 막는다', () => {

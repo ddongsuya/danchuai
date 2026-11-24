@@ -142,6 +142,16 @@ export interface QuoteHitView {
 /** 비서·앱이 바로 실행한 기록(최근 30건, 최근 순) */
 export const listRuns = () => call<{ items: AssistRunView[] }>('cro', '/v1/danchu/runs').then((r) => r.items);
 
+/** 보낸 것 기록(우리 조직이 승인해 단추로 보낸 동작, 최근 50건) */
+export const listSent = (role: AgentRole) => call<{ items: import('@/lib/sent').SentItem[] }>(role, '/v1/danchu/sent').then((r) => r.items);
+
+/** 단추 알림 최근 30개(단추가 만든 문장 그대로) */
+export const listAlerts = (role: AgentRole) =>
+  readDanchu<{ notifications: import('@/lib/alerts').AlertItem[] }>('notifications', {}, undefined, role).then((r) => r?.notifications ?? []);
+
+/** 알림 모두 읽음(실행 기록에 남지 않는다) */
+export const readAllAlerts = (role: AgentRole) => readDanchu<unknown>('notifications_read', {}, undefined, role);
+
 /** 바로 실행한 기관 기록 되돌리기 */
 export const undoRun = (id: string) => call<{ run: AssistRunView }>('cro', `/v1/danchu/runs/${encodeURIComponent(id)}/undo`, {}).then((r) => r.run);
 

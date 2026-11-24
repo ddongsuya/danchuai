@@ -86,8 +86,61 @@ export function detailRequestBody(v: RequesterDetailView, i: { quoteIds: string[
 }
 
 /** 2차 회신 본문. revise 는 시험 줄 번호만 보내고 금액은 단추가 견적서에서 채운다 */
-export function detailReplyBody(v: CroDetailView, mode: 'revise' | 'keep' | 'decline', note: string): Built {
+/** 2차 회신 확인 시트가 보이는 줄(견적서 판 기준). 금액은 단추 제출 미리보기 값 그대로, 합계는 코드가 낸다 */
+export interface ReviseLine {
+  seq: number;
+  name: string;
+  avail: string;
+  /** 보낼 금액(원). 불가 줄은 null */
+  amount: number | null;
+  firstAmount: number | null;
+}
+export type RevisePreview = { updatedAt: string; rows: { seq: number; amount: number | null; weeks: number | null }[]; mismatched: number[] };
+export interface ReviseCheck {
+  lines: ReviseLine[];
+  total: number;
+  /** 금액이 없는 줄(불가 제외) */
+  missing: number[];
+  /** 요청서와 시험 이름이 달라진 줄(불가 제외) */
+  mismatched: number[];
+}
+
+const live = (avail: string) => avail !== '불가';
+
+/** 1차 견적 줄 + 견적서 제출 미리보기 → 2차 회신에 나갈 줄 */
+export function reviseCheck(v: CroDetailView, p: RevisePreview): ReviseCheck {
+  const rows = new Map(p.rows.map((r) => [r.seq, r]));
+  const bad = new Set(p.mismatched);
+  const lines = v.first.items.map((it): ReviseLine => {
+    const a = rows.get(it.seq)?.amount;
+    return { seq: it.seq, name: it.name, avail: it.avail, amount: live(it.avail) && !bad.has(it.seq) && a != null && a > 0 ? a : null, firstAmount: it.amount };
+  });
+  const on = lines.filter((l) => live(l.avail));
+  return {
+    lines,
+    total: on.reduce((t, l) => t + (l.amount ?? 0), 0),
+    missing: on.filter((l) => l.amount == null && !bad.has(l.seq)).map((l) => l.seq),
+    mismatched: on.filter((l) => bad.has(l.seq)).map((l) => l.seq),
+  };
+}
+
+/**
+ * 2차 회신 본문. 고쳐 보내기(revise)는 사람이 본 견적서 판(docUpdatedAt)과 줄 금액을 함께 보낸다.
+ * 그사이 견적서가 바뀌었거나 금액이 다르면 단추가 막고(changed), 시트가 새 금액을 다시 보여 준 뒤 다시 승인받는다.
+ */
+export function detailReplyBody(v: CroDetailView, mode: 'revise' | 'keep' | 'decline', note: string, preview?: RevisePreview): Built {
   if (!v.canReply) return { ok: false, error: '지금은 회신할 수 없어요' };
   const n = note.trim().slice(0, 2000);
-  return { ok: true, body: { mode, ...(mode === 'revise' ? { items: v.first.items.map((it) => ({ seq: it.seq })) } : {}), ...(n ? { note: n } : {}) } };
+  const tail = n ? { note: n } : {};
+  if (mode !== 'revise') return { ok: true, body: { mode, ...tail } };
+  if (!preview) return { ok: false, error: '견적서를 불러온 뒤 보내 주세요' };
+  const c = reviseCheck(v, preview);
+  if (c.mismatched.length) return { ok: false, error: `요청서와 시험 이름이 다른 줄이 ${c.mismatched.length}개 있어요` };
+  if (c.missing.length) return { ok: false, error: `금액 없는 줄이 ${c.missing.length}개 있어요` };
+  const weeks = new Map(preview.rows.map((r) => [r.seq, r.weeks]));
+  const items = c.lines.map((l) => {
+    const w = weeks.get(l.seq);
+    return { seq: l.seq, avail: l.avail, amount: l.amount == null ? '' : String(l.amount), weeks: w == null ? '' : String(w) };
+  });
+  return { ok: true, body: { mode, items, ...tail, docUpdatedAt: preview.updatedAt } };
 }
