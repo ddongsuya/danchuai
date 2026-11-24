@@ -337,7 +337,6 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
   useEffect(() => {
     if (mode !== 'revise') return;
     let live = true;
-    setDoc({ kind: 'loading' });
     readDanchu<QuoteSubmitPreview>('quote_submit_preview', {}, no)
       .then((p) => live && setDoc({ kind: 'ready', p }))
       .catch((e) => live && setDoc({ kind: e instanceof AgentHttpError && e.status === 404 ? 'missing' : 'error' }));
@@ -361,12 +360,16 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
     if (r.ok) return onDone(m === 'revise' ? '2차 견적을 보냈어요' : '답했어요');
     if (r.code === 'changed') {
       setErr('견적서가 바뀌어 새 금액을 불러왔어요. 다시 확인해 주세요');
-      setTick((t) => t + 1);
+      reload();
       return;
     }
     setErr(r.code && REVISE_REFUSED[r.code] ? REVISE_REFUSED[r.code] : r.text);
   };
 
+  const reload = () => {
+    setDoc({ kind: 'loading' });
+    setTick((t) => t + 1);
+  };
   const openTool = () => void openWeb(`${DANCHU_URL}${p ? p.path : '/cro'}`);
 
   return (
@@ -416,7 +419,7 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
                   </>
                 )}
                 <Button title="견적서 툴에서 고치기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={openTool} />
-                {doc.kind !== 'loading' && <Button title="견적서 다시 불러오기" kind="text" icon={<ArrowsClockwise size={u(16)} color={tokens.text} />} onPress={() => setTick((t) => t + 1)} />}
+                {doc.kind !== 'loading' && <Button title="견적서 다시 불러오기" kind="text" icon={<ArrowsClockwise size={u(16)} color={tokens.text} />} onPress={reload} />}
               </View>
             )}
             <Field label="메모" value={note} onChangeText={setNote} maxLength={2000} multiline style={styles.multi} />
