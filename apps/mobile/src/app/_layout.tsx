@@ -63,6 +63,7 @@ function Gate() {
         <Stack.Screen name="requester" />
         <Stack.Screen name="ask" />
         <Stack.Screen name="sent" />
+        <Stack.Screen name="alerts" />
         <Stack.Screen name="account" />
       </Stack.Protected>
     </Stack>

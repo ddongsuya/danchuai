@@ -6,7 +6,8 @@ import { StyleSheet } from 'react-native';
 
 import { Chip } from '@/components/ui/Chip';
 import { Press } from '@/components/ui/Press';
-import { agentConfigured, listSent, type AgentRole } from '@/lib/agentClient';
+import { agentConfigured, listAlerts, listSent, type AgentRole } from '@/lib/agentClient';
+import { unreadCount } from '@/lib/alerts';
 import { needsLook } from '@/lib/sent';
 
 export function AgentStatus({ working, check, onCheck }: { working?: boolean; check: number; onCheck?: () => void }) {
@@ -34,6 +35,22 @@ export function useSentCheck(role: AgentRole, enabled = true): { check: number; 
     };
   }, [role, enabled]);
   return { check, onCheck: () => router.push({ pathname: '/sent', params: { role } }) };
+}
+
+/** 읽지 않은 단추 알림 수(메뉴 숫자). 읽지 못하면 0 */
+export function useUnreadAlerts(role: AgentRole, enabled = true): number {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!enabled || !agentConfigured()) return;
+    let live = true;
+    listAlerts(role)
+      .then((items) => live && setN(unreadCount(items)))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [role, enabled]);
+  return n;
 }
 
 const styles = StyleSheet.create({

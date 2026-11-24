@@ -257,6 +257,8 @@ const createdNo = (result: unknown): string | null => {
   const no = result && typeof result === "object" ? (result as { rfqNo?: unknown }).rfqNo : null;
   return typeof no === "string" && RFQ_NO.test(no) ? no : null;
 };
+/** 실행 기록에 남기지 않는 바로 실행(알림 읽음) */
+const QUIET_AUTO = new Set<string>(["notifications_read"]);
 /** 보낸 것 기록의 상태. 승인했지만 결과가 오지 않은 것은 결과 확인 필요로 묶는다 */
 export function sentStatus(st: string): "sent" | "failed" | "unknown" | "rejected" {
   if (st === "sent" || st === "failed" || st === "rejected") return st;
@@ -308,6 +310,12 @@ export function danchuRunRoutes(deps: { api: DanchuApi; runs: RunRepo; catalogs:
     const body = p.data.body ?? {};
     if (a.level === "read") {
       const r = await deps.api.run(t, { action: a.name, rfqNo: p.data.rfqNo ?? null, body });
+      if (r.status === 0) return c.json({ error: "unavailable" }, 503);
+      return c.json({ result: r.body }, readStatus(r.status));
+    }
+    // 알림 읽음 표시는 사람이 화면을 연 것일 뿐이라 실행 기록에 남기지 않는다(실행 기록은 비서가 한 일만)
+    if (QUIET_AUTO.has(a.name) && a.scope === "org") {
+      const r = await deps.api.run(t, { action: a.name, rfqNo: null, body });
       if (r.status === 0) return c.json({ error: "unavailable" }, 503);
       return c.json({ result: r.body }, readStatus(r.status));
     }

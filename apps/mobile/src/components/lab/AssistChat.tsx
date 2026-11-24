@@ -4,7 +4,7 @@
 // 기관의 첫 화면이다(시안 2026-11-20): 가운데 위에 비서 캐릭터, 왼쪽 위 메뉴(받은 요청·실행 기록·질문하기·계정),
 // 답을 준비하는 동안 말풍선에 점 셋이 튄다.
 import { router } from 'expo-router';
-import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, PaperPlaneTilt, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ArrowCounterClockwise, Bell, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, PaperPlaneTilt, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,7 +13,7 @@ import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { TypingBubble } from '@/components/chat/TypingBubble';
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
-import { AgentStatus, useSentCheck } from '@/components/agent/AgentStatus';
+import { AgentStatus, useSentCheck, useUnreadAlerts } from '@/components/agent/AgentStatus';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { LookupCard } from '@/components/agent/LookupCard';
 import { RecordSheet } from '@/components/agent/RecordSheet';
@@ -62,10 +62,11 @@ export function AssistChat() {
   const busy = state.status !== 'idle';
   const { org, status } = useAuth();
   const sent = useSentCheck('cro');
+  const alerts = useUnreadAlerts('cro');
   return (
     <AssistView
       sent={sent}
-      menu={{ title: '비서', sub: org?.name ?? null, items: croMenu(), footer: status === 'disabled' ? [{ key: 'switch', label: '의뢰자 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/') }] : [] }}
+      menu={{ title: '비서', sub: org?.name ?? null, items: croMenu(0, alerts), footer: status === 'disabled' ? [{ key: 'switch', label: '의뢰자 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/') }] : [] }}
       brief={brief}
       messages={state.messages}
       actions={state.actions}
@@ -83,11 +84,12 @@ export function AssistChat() {
   );
 }
 
-/** 기관 메뉴: 받은 요청(목록), 보낸 것(승인해 단추로 나간 것), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
-export function croMenu(newCount = 0): MenuItem[] {
+/** 기관 메뉴: 받은 요청(목록), 알림(읽지 않은 수), 보낸 것(승인해 단추로 나간 것), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
+export function croMenu(newCount = 0, alertCount = 0): MenuItem[] {
   const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
   return [
     { key: 'inbox', label: '받은 요청', icon: ic(Tray), count: newCount, onPress: () => router.push('/lab') },
+    { key: 'alerts', label: '알림', icon: ic(Bell), count: alertCount, onPress: () => router.push({ pathname: '/alerts', params: { role: 'cro' } }) },
     { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'cro' } }) },
     { key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') },
     { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: () => router.push({ pathname: '/ask', params: { role: 'cro' } }) },

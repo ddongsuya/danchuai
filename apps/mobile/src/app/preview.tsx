@@ -24,6 +24,7 @@ import { AssistView, croMenu } from '@/components/lab/AssistChat';
 import { RequesterHomeView, requesterMenu } from '@/components/agent/RequesterHome';
 import { RunsView } from '@/app/lab/runs';
 import { SentView } from '@/app/sent';
+import { AlertsView } from '@/app/alerts';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -383,7 +384,7 @@ const ASSIST_ACTIONS = [
   { key: 'x1', at: 1, label: '안건 단계 옮기기', outcome: 'done' as const, message: null, runId: 'r2', undoable: false, undone: true },
 ];
 
-const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'sent' ? 'sent-cro' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
+const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1, 2).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'sent' ? 'sent-cro' : it.key === 'alerts' ? 'alerts-cro' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
 const ASSIST_RUNS = [
   { id: 'r1', action: 'task_create', label: '할 일 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
   { id: 'r2', action: 'deal_move', label: '안건 단계 옮기기', outcome: 'done' as const, undoable: false, undone: true, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
@@ -403,7 +404,17 @@ const SENT_REQ = [
   { id: 'q3', action: 'create', rfqNo: 'DC-2026-0120', status: 'sent' as const, at: ago(60 * 72), mine: true, reason: null },
 ];
 
-const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : it.key === 'sent' ? 'sent-req' : 'account')) })) };
+const ALERTS_CRO = [
+  { id: 'n1', kind: '선정', title: 'DC-2026-0142 요청에서 선정되었어요', body: '계약서(안)을 보내고 계약 체결을 보고해 주세요.', href: '/cro/quotes/DC-2026-0142', read: false, at: ago(12) },
+  { id: 'n2', kind: '견적', title: '2차 상세 요청이 왔어요', body: 'DC-2026-0138, 회복군 조건이 바뀌었어요. 회신 기한 11.28', href: '/cro/quotes/DC-2026-0138', read: false, at: ago(70) },
+  { id: 'n3', kind: '견적', title: '의뢰자 질의가 왔어요', body: 'DC-2026-0131, 시험물질 조제 방법', href: '/cro/quotes/DC-2026-0131', read: true, at: ago(60 * 26) },
+];
+const ALERTS_REQ = [
+  { id: 'm1', kind: '견적', title: '견적이 도착했어요', body: 'DC-2026-0120, 3곳 중 2곳 회신', href: '/app/r/DC-2026-0120', read: false, at: ago(20) },
+  { id: 'm2', kind: '계약', title: '기관이 계약 체결을 보고했어요', body: '확인 기한 11.30', href: '/app/r/DC-2026-0118', read: true, at: ago(60 * 30) },
+];
+
+const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1, 1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : it.key === 'sent' ? 'sent-req' : it.key === 'alerts' ? 'alerts-req' : 'account')) })) };
 const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], menuOpen = false) => (
   <RequesterHomeView menu={REQ_MENU} initialMenuOpen={menuOpen} recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('inbox'))} />
 );
@@ -458,6 +469,8 @@ const VIEWS: View_[] = [
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
   { key: 'lab-assist-check', label: '비서 홈, 결과 확인 필요 상태 줄', group: '기관' },
   { key: 'sent-cro', label: '보낸 것(기관)', group: '기관' },
+  { key: 'alerts-cro', label: '알림(기관)', group: '기관' },
+  { key: 'alerts-req', label: '알림(의뢰자)', group: '진행·비교' },
   { key: 'sent-req', label: '보낸 것(의뢰자)', group: '진행·비교' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
@@ -701,6 +714,10 @@ function PreviewView({ view }: { view: string }) {
       return <AssistView menu={ASSIST_MENU} sent={{ check: 1, onCheck: () => router.push(toView('sent-cro')) }} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'sent-cro':
       return <SentView role="cro" items={SENT_CRO} error={null} onRetry={noop} />;
+    case 'alerts-cro':
+      return <AlertsView role="cro" items={ALERTS_CRO} error={null} onRetry={noop} />;
+    case 'alerts-req':
+      return <AlertsView role="requester" items={ALERTS_REQ} error={null} onRetry={noop} />;
     case 'sent-req':
       return <SentView role="requester" items={SENT_REQ} error={null} onRetry={noop} />;
     case 'gate-error':

@@ -46,6 +46,7 @@ const CATALOG: DanchuCatalog = {
     { name: "quote_history", scope: "org", level: "read", area: "quote", label: "과거 견적 찾기", description: "견적서를 찾는다.", tool: true, input: { type: "object", properties: { q: { type: "string", maxLength: 100 } }, required: ["q"], additionalProperties: false } },
     { name: "quote_submit", scope: "rfq", level: "confirm", area: "quote", label: "견적 제출", description: "", input: { type: "object" }, tool: false },
     { name: "price_book_apply", scope: "org", level: "confirm", area: "price", label: "단가표 반영", description: "", input: { type: "object" }, tool: false },
+    { name: "notifications_read", scope: "org", level: "auto", area: "brief", label: "알림 읽음", description: "", input: { type: "object" }, tool: false },
     { name: "crm_delete", scope: "org", level: "human", area: "crm", label: "기록 지우기", description: "", input: { type: "object" }, tool: false },
     // 이름이 보내기 계열이면 tool 이어도 비서 도구로 쓰지 않는다
     { name: "send_mail", scope: "org", level: "auto", area: "crm", label: "메일", description: "", input: { type: "object", properties: {}, additionalProperties: false }, tool: true },
@@ -206,6 +207,15 @@ describe("바로 실행·되돌리기 (/v1/danchu/run)", () => {
     expect(await json(await call("POST", `/v1/danchu/runs/${r.run.id}/undo`, T_CRO))).toEqual({ error: "already_undone" });
     const list = await json(await call("GET", "/v1/danchu/runs", T_CRO));
     expect(list.items[0]).toMatchObject({ undone: true, undoable: false });
+  });
+
+  it("알림 읽음은 단추에서 바로 하고 실행 기록에 남기지 않는다", async () => {
+    const { call, consent, runs, ran } = setup();
+    await consent(T_CRO);
+    const r = await call("POST", "/v1/danchu/run", T_CRO, { action: "notifications_read", body: {} });
+    expect(r.status).toBe(200);
+    expect(ran.at(-1)?.action).toBe("notifications_read");
+    expect(runs.rows).toHaveLength(0);
   });
 
   it("단추가 거절하면 422 와 기록(되돌리기 없음)", async () => {
