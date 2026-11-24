@@ -14,10 +14,11 @@ import { Press } from '@/components/ui/Press';
 import { Sheet, SheetBody } from '@/components/ui/Sheet';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
-import { readDanchu } from '@/lib/agentClient';
-import { CRO_STATUS_LABEL, daysFrom, detailReplyBody, detailRequestBody, type CroDetailView, type DetailField, type DetailLine, type RequesterDetailView } from '@/lib/danchuDetail';
+import { AgentHttpError, readDanchu } from '@/lib/agentClient';
+import { CRO_STATUS_LABEL, daysFrom, detailReplyBody, detailRequestBody, reviseCheck, type CroDetailView, type DetailField, type DetailLine, type RequesterDetailView } from '@/lib/danchuDetail';
 import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
-import { sendApproved } from '@/lib/danchuSend';
+import { sendApproved, sendApprovedResult } from '@/lib/danchuSend';
+import type { QuoteSubmitPreview } from '@/lib/danchuQuote';
 import { shortDate } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 
@@ -306,27 +307,68 @@ export function CroDetailCard({ no, initial }: { no: string; initial?: CroDetail
   );
 }
 
-const REPLY_TITLE = { revise: '견적서 금액으로 2차 견적을 보낼까요?', keep: '1차 견적 그대로 진행할까요?', decline: '이번에는 2차 회신을 하지 않을까요?' } as const;
+const REPLY_TITLE = { revise: '이 금액으로 2차 견적을 보낼까요?', keep: '1차 견적 그대로 진행할까요?', decline: '이번에는 2차 회신을 하지 않을까요?' } as const;
 const REPLY_BUTTON = { revise: '2차 견적 보내기', keep: '그대로 진행', decline: '회신 안 함' } as const;
 
+/** 견적서 판 시각 "11.24 10:31"(기기 시간) */
+const stamp = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+type Doc = { kind: 'loading' } | { kind: 'missing' } | { kind: 'error' } | { kind: 'ready'; p: QuoteSubmitPreview };
+
+/**
+ * 2차 회신 시트. 고쳐 보내기는 견적서 제출 미리보기를 읽어 줄 금액·합계·견적서 판을 그대로 보이고, 그 판과 금액을 함께 보낸다.
+ * 그사이 견적서가 바뀌면 단추가 막고(changed) 시트가 새 금액을 다시 읽어 보인다. 사람이 다시 눌러야 나간다(본 금액만 나간다).
+ */
 function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetailView; mode: 'revise' | 'keep' | 'decline' | null; onClose: () => void; onDone: (msg: string) => void }) {
   const [note, setNote] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [doc, setDoc] = useState<Doc>({ kind: 'loading' });
+  const [tick, setTick] = useState(0);
   const [last, setLast] = useState(mode);
   if (mode && mode !== last) setLast(mode);
   const m = mode ?? last;
+
+  useEffect(() => {
+    if (mode !== 'revise') return;
+    let live = true;
+    setDoc({ kind: 'loading' });
+    readDanchu<QuoteSubmitPreview>('quote_submit_preview', {}, no)
+      .then((p) => live && setDoc({ kind: 'ready', p }))
+      .catch((e) => live && setDoc({ kind: e instanceof AgentHttpError && e.status === 404 ? 'missing' : 'error' }));
+    return () => {
+      live = false;
+    };
+  }, [mode, no, tick]);
+
+  const p = doc.kind === 'ready' ? doc.p : null;
+  const check = p ? reviseCheck(v, p) : null;
+  const built = m === 'revise' ? (p ? detailReplyBody(v, 'revise', note, p) : null) : m ? detailReplyBody(v, m, note) : null;
+  const blocked = m === 'revise' && (!built || !built.ok);
+
   const go = async () => {
-    if (!m) return;
-    const b = detailReplyBody(v, m, note);
-    if (!b.ok) return setErr(b.error);
+    if (!m || !built) return;
+    if (!built.ok) return setErr(built.error);
     setBusy(true);
-    const e = await sendApproved('cro', 'detail_reply', b.body, no);
+    setErr(null);
+    const r = await sendApprovedResult('cro', 'detail_reply', built.body, no);
     setBusy(false);
-    // 견적서가 없거나 금액이 빈 줄이 있으면 단추가 막는다. 견적서 툴에서 2차 조건으로 고친 뒤 다시 보낸다
-    if (e) return setErr(e === '단추가 받지 않았어요' && m === 'revise' ? '견적서를 2차 조건으로 고친 뒤 보내 주세요' : e);
-    onDone(m === 'revise' ? '2차 견적을 보냈어요' : '답했어요');
+    if (r.ok) return onDone(m === 'revise' ? '2차 견적을 보냈어요' : '답했어요');
+    if (r.code === 'changed') {
+      setErr('견적서가 바뀌어 새 금액을 불러왔어요. 다시 확인해 주세요');
+      setTick((t) => t + 1);
+      return;
+    }
+    setErr(r.code && REVISE_REFUSED[r.code] ? REVISE_REFUSED[r.code] : r.text);
   };
+
+  const openTool = () => void openWeb(`${DANCHU_URL}${p ? p.path : '/cro'}`);
+
   return (
     <Sheet
       visible={mode !== null}
@@ -337,17 +379,61 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
       }}
     >
       {m && (
-        <SheetBody title={REPLY_TITLE[m]} onClose={onClose} primary={<Button title={REPLY_BUTTON[m]} tall loading={busy} onPress={() => void go()} />}>
+        <SheetBody title={REPLY_TITLE[m]} onClose={onClose} primary={<Button title={REPLY_BUTTON[m]} tall loading={busy} disabled={blocked} onPress={() => void go()} />}>
           <View style={{ gap: space.lg }}>
-            {m === 'revise' && <Button title="견적서 툴에서 고치기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={() => void openWeb(`${DANCHU_URL}/cro`)} />}
+            {m === 'revise' && (
+              <View style={{ gap: u(4) }}>
+                {doc.kind === 'loading' && (
+                  <Txt variant="small" color={tokens.muted}>
+                    견적서 불러오는 중
+                  </Txt>
+                )}
+                {doc.kind === 'missing' && <Err text="견적서가 없어요" />}
+                {doc.kind === 'error' && <Err text="견적서를 불러오지 못했어요" />}
+                {check && (
+                  <>
+                    {check.lines.map((l) => (
+                      <View key={l.seq} style={styles.row}>
+                        <Txt variant="small" color={tokens.muted} style={styles.k} numberOfLines={2}>
+                          {l.name}
+                        </Txt>
+                        <Txt variant="small" tabular color={l.avail === '불가' || l.amount == null ? tokens.muted : tokens.text} style={{ flex: 1, textAlign: 'right' }}>
+                          {l.avail === '불가' ? '불가' : check.mismatched.includes(l.seq) ? '시험 이름 다름' : l.amount == null ? '금액 없음' : l.firstAmount != null && l.firstAmount !== l.amount ? `${won(l.firstAmount)} → ${won(l.amount)}` : won(l.amount)}
+                        </Txt>
+                      </View>
+                    ))}
+                    <View style={[styles.row, styles.line]}>
+                      <Txt variant="small" color={tokens.muted} style={styles.k}>
+                        2차 견적
+                      </Txt>
+                      <Txt variant="small" tabular style={{ flex: 1, textAlign: 'right', fontFamily: fonts.bold }}>
+                        {won(check.total)}
+                      </Txt>
+                    </View>
+                    <Txt variant="caption" color={tokens.muted}>
+                      {`부가세 별도, 견적서 ${stamp(p!.updatedAt)} 기준`}
+                    </Txt>
+                  </>
+                )}
+                <Button title="견적서 툴에서 고치기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.text} />} onPress={openTool} />
+                {doc.kind !== 'loading' && <Button title="견적서 다시 불러오기" kind="text" icon={<ArrowsClockwise size={u(16)} color={tokens.text} />} onPress={() => setTick((t) => t + 1)} />}
+              </View>
+            )}
             <Field label="메모" value={note} onChangeText={setNote} maxLength={2000} multiline style={styles.multi} />
-            <Err text={err} />
+            <Err text={err ?? (m === 'revise' && built && !built.ok && p ? built.error : null)} />
           </View>
         </SheetBody>
       )}
     </Sheet>
   );
 }
+
+/** 단추가 2차 견적을 막은 까닭(단추 detail_reply revise 오류) */
+const REVISE_REFUSED: Record<string, string> = {
+  doc_missing: '견적서가 없어요',
+  amount_missing: '금액 없는 줄이 있어요',
+  mismatched: '요청서와 시험 이름이 다른 줄이 있어요',
+};
 
 const styles = StyleSheet.create({
   card: { backgroundColor: tokens.surface, borderRadius: radius.card, borderWidth: 1, borderColor: tokens.border, paddingHorizontal: space.lg, paddingVertical: u(14), gap: u(8) },
