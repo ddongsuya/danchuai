@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
+import { AgentStatus, useSentCheck } from '@/components/agent/AgentStatus';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { ErrorLine } from '@/components/agent/LiveChat';
 import { ChatShell } from '@/components/chat/ChatShell';
@@ -47,6 +48,7 @@ export function RequesterHome() {
   const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
   const replied = items.filter((i) => i.status === 'replied').length;
+  const sent = useSentCheck('requester', live && (status === 'ready' || status === 'disabled'));
   const recent: RecentState = !live ? { kind: 'error', label: '서버 연결 전이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
   return (
     <RequesterHomeView
@@ -58,6 +60,7 @@ export function RequesterHome() {
         footer: status === 'disabled' ? [{ key: 'switch', label: '기관 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/lab/assist') }] : [],
       }}
       recent={recent}
+      sent={sent}
       onRetry={() => void reload()}
       onStart={startRequest}
       onAsk={openAsk}
@@ -85,6 +88,8 @@ export interface RequesterHomeViewProps {
   /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
   initialMenuOpen?: boolean;
   recent: RecentState;
+  /** 캐릭터 밑 상태 줄: 보낸 것 가운데 결과 확인 필요 건수 */
+  sent?: { check: number; onCheck: () => void };
   onRetry?: () => void;
   /** 첫 글(직접 쓴 글 또는 고른 말)로 새 요청 대화를 연다 */
   onStart: (text: string) => void;
@@ -94,7 +99,7 @@ export interface RequesterHomeViewProps {
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function RequesterHomeView({ menu, initialMenuOpen = false, recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
+export function RequesterHomeView({ menu, initialMenuOpen = false, recent, sent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
   const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
   const nav = (
     <View style={styles.nav}>
@@ -108,6 +113,7 @@ export function RequesterHomeView({ menu, initialMenuOpen = false, recent, onRet
       <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
       <View style={styles.hero}>
         <AgentAvatar size={uc(64)} />
+        {sent && <AgentStatus check={sent.check} onCheck={sent.onCheck} />}
         <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
           어떤 시험이 필요해요?
         </Txt>

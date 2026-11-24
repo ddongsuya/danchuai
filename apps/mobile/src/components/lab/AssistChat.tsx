@@ -13,6 +13,7 @@ import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { TypingBubble } from '@/components/chat/TypingBubble';
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
+import { AgentStatus, useSentCheck } from '@/components/agent/AgentStatus';
 import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { LookupCard } from '@/components/agent/LookupCard';
 import { RecordSheet } from '@/components/agent/RecordSheet';
@@ -60,8 +61,10 @@ export function AssistChat() {
 
   const busy = state.status !== 'idle';
   const { org, status } = useAuth();
+  const sent = useSentCheck('cro');
   return (
     <AssistView
+      sent={sent}
       menu={{ title: '비서', sub: org?.name ?? null, items: croMenu(), footer: status === 'disabled' ? [{ key: 'switch', label: '의뢰자 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/') }] : [] }}
       brief={brief}
       messages={state.messages}
@@ -115,10 +118,12 @@ export interface AssistViewProps {
   /** 미리보기에서 녹음 시트를 연 채로 보여 줄 때만 */
   initialRecordOpen?: boolean;
   onUndo: (runId: string) => void;
+  /** 캐릭터 밑 상태 줄: 보낸 것 가운데 결과 확인 필요 건수 */
+  sent?: { check: number; onCheck: () => void };
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo }: AssistViewProps) {
+export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo, sent }: AssistViewProps) {
   const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
   const [recordOpen, setRecordOpen] = useState(initialRecordOpen);
   const empty = !messages.length && !streaming;
@@ -151,6 +156,7 @@ export function AssistView({ menu, initialMenuOpen = false, brief, messages, act
       {empty && (
         <View style={styles.hero}>
           <AgentAvatar size={uc(64)} state={starting ? 'thinking' : 'idle'} />
+          {sent && <AgentStatus working={starting} check={sent.check} onCheck={sent.onCheck} />}
           <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
             무엇을 맡길까요?
           </Txt>

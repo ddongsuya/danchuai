@@ -23,6 +23,7 @@ import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { AssistView, croMenu } from '@/components/lab/AssistChat';
 import { RequesterHomeView, requesterMenu } from '@/components/agent/RequesterHome';
 import { RunsView } from '@/app/lab/runs';
+import { SentView } from '@/app/sent';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -382,14 +383,27 @@ const ASSIST_ACTIONS = [
   { key: 'x1', at: 1, label: '안건 단계 옮기기', outcome: 'done' as const, message: null, runId: 'r2', undoable: false, undone: true },
 ];
 
-const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
+const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'sent' ? 'sent-cro' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
 const ASSIST_RUNS = [
   { id: 'r1', action: 'task_create', label: '할 일 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
   { id: 'r2', action: 'deal_move', label: '안건 단계 옮기기', outcome: 'done' as const, undoable: false, undone: true, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
   { id: 'r3', action: 'event_create', label: '일정 잡기', outcome: 'failed' as const, undoable: false, undone: false, createdAt: new Date(Date.now() - 86_400_000).toISOString() },
 ];
 
-const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : 'account')) })) };
+const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
+const SENT_CRO = [
+  { id: 's1', action: 'contract_report', rfqNo: 'DC-2026-0142', status: 'unknown' as const, at: ago(8), mine: true, reason: null },
+  { id: 's2', action: 'detail_reply', rfqNo: 'DC-2026-0138', status: 'failed' as const, at: ago(95), mine: false, reason: '회신 기한이 지났어요.' },
+  { id: 's3', action: 'quote_submit', rfqNo: 'DC-2026-0131', status: 'sent' as const, at: ago(60 * 26), mine: true, reason: null },
+  { id: 's4', action: 'join', rfqNo: 'DC-2026-0131', status: 'sent' as const, at: ago(60 * 50), mine: true, reason: null },
+];
+const SENT_REQ = [
+  { id: 'q1', action: 'select', rfqNo: 'DC-2026-0120', status: 'sent' as const, at: ago(30), mine: true, reason: null },
+  { id: 'q2', action: 'ask', rfqNo: 'DC-2026-0120', status: 'sent' as const, at: ago(60 * 20), mine: true, reason: null },
+  { id: 'q3', action: 'create', rfqNo: 'DC-2026-0120', status: 'sent' as const, at: ago(60 * 72), mine: true, reason: null },
+];
+
+const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : it.key === 'sent' ? 'sent-req' : 'account')) })) };
 const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], menuOpen = false) => (
   <RequesterHomeView menu={REQ_MENU} initialMenuOpen={menuOpen} recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('inbox'))} />
 );
@@ -442,6 +456,9 @@ const VIEWS: View_[] = [
   { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
   { key: 'lab-assist-record', label: '비서, 회의 녹음', group: '기관' },
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
+  { key: 'lab-assist-check', label: '비서 홈, 결과 확인 필요 상태 줄', group: '기관' },
+  { key: 'sent-cro', label: '보낸 것(기관)', group: '기관' },
+  { key: 'sent-req', label: '보낸 것(의뢰자)', group: '진행·비교' },
   { key: 'gate-error', label: '계정 불러오기 실패', group: '관문·계정' },
   { key: 'gate-wait', label: '기관 승인 대기', group: '관문·계정' },
   { key: 'gate-plan', label: '기관 요금제 Pro 아님', group: '관문·계정' },
@@ -680,6 +697,12 @@ function PreviewView({ view }: { view: string }) {
       return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
     case 'lab-runs':
       return <RunsView items={ASSIST_RUNS} error={null} onRetry={noop} onUndone={noop} />;
+    case 'lab-assist-check':
+      return <AssistView menu={ASSIST_MENU} sent={{ check: 1, onCheck: () => router.push(toView('sent-cro')) }} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+    case 'sent-cro':
+      return <SentView role="cro" items={SENT_CRO} error={null} onRetry={noop} />;
+    case 'sent-req':
+      return <SentView role="requester" items={SENT_REQ} error={null} onRetry={noop} />;
     case 'gate-error':
     case 'gate-wait':
     case 'gate-plan':
