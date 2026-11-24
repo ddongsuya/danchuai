@@ -2,7 +2,7 @@
 // 왼쪽 위 메뉴에 요청함·질문하기·계정. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
 // 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
 import { router, type Href } from 'expo-router';
-import { CaretRight, ChatCircleText, List, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
+import { CaretRight, ChatCircleText, List, PaperPlaneTilt, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -67,11 +67,12 @@ export function RequesterHome() {
   );
 }
 
-/** 의뢰자 메뉴: 요청함(회신 도착 수), 가이드라인 질문, 계정 */
+/** 의뢰자 메뉴: 요청함(회신 도착 수), 보낸 것, 가이드라인 질문, 계정 */
 export function requesterMenu(repliedCount = 0): MenuItem[] {
   const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
   return [
     { key: 'inbox', label: '요청함', icon: ic(Tray), count: repliedCount, onPress: () => router.push('/requester' as Href) },
+    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'requester' } }) },
     { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: openAsk },
     { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
   ];

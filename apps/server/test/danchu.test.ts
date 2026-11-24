@@ -356,6 +356,35 @@ describe("단추 동작 승인 (연동 4단계)", () => {
     expect((await go()).r.status).toBe("unknown");
     expect((await call("GET", `/v1/danchu/actions/${a.id}`, T_REQ)).status).toBe(404);
   });
+
+  it("보낸 것 기록: 승인한 동작만 최근 것부터, 안쪽 동작·승인 전 초안은 빼고, 본문 원문은 주지 않는다", async () => {
+    const { call, api } = setup();
+    await consent(call, T_CRO);
+    await consent(call, T_REQ);
+    const make = async (action: string, body: Record<string, unknown> = {}) => json(await call("POST", "/v1/danchu/actions", T_CRO, { action, rfqNo: "DC-2026-0010", body }));
+    const approve = async (m: Record<string, unknown>) => {
+      await call("POST", `/v1/outbound/${m.id}/decision`, T_CRO, { decision: "approve", epoch: 1, textHash: m.textHash });
+      return json(await call("POST", `/v1/outbound/${m.id}/dispatch`, T_CRO));
+    };
+    await make("join"); // 승인 전 초안
+    api.actReply = { status: 200, body: { ok: true } };
+    await approve(await make("crm_activity", { note: "통화" })); // 기관 안 기록
+    await approve(await make("contract_report", { amount: 1000 }));
+    api.actReply = { status: 409, body: { error: "회신 기한이 지났어요." } };
+    await approve(await make("join"));
+    api.actReply = { status: 0, body: null };
+    await approve(await make("decline", { reason: "x" }));
+    const got = (await json(await call("GET", "/v1/danchu/sent", T_CRO))) as { items: Array<{ action: string; status: string }> };
+    expect(got.items.map((i) => [i.action, i.status])).toEqual([
+      ["decline", "unknown"],
+      ["join", "failed"],
+      ["contract_report", "sent"],
+    ]);
+    expect(got.items[1]).toMatchObject({ rfqNo: "DC-2026-0010", mine: true, reason: "회신 기한이 지났어요." });
+    expect(JSON.stringify(got)).not.toContain("1000");
+    // 다른 조직은 보이지 않는다
+    expect((await json(await call("GET", "/v1/danchu/sent", T_REQ))).items).toEqual([]);
+  });
 });
 
 describe("말로 맡기는 견적 2단계", () => {

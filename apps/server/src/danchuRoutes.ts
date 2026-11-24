@@ -9,7 +9,7 @@ import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from
 import { RFQ_NO, type DanchuApi, type DanchuError } from "./danchu";
 import type { MarketRepo, RequesterListItem } from "./db/market";
 import { randomUUID } from "node:crypto";
-import { canLinkConversation, checkAction, checkCatalogAction, isKnownAction } from "./danchuActions";
+import { canLinkConversation, checkAction, checkCatalogAction, isKnownAction, parseActionText } from "./danchuActions";
 import type { ConversationRepo } from "./agent/store";
 import { sha256 } from "./hash";
 import type { OutboundRepo } from "./repo";
@@ -223,7 +223,44 @@ export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations
     if (!d || d.orgId !== s.orgId || d.kind !== "danchu") return c.json({ error: "not_found" }, 404);
     return c.json({ id: d.id, text: d.text, textHash: d.textHash, epoch: d.epoch, status: d.status, result: await deps.outbound.getResult(d.id) });
   });
+  // 보낸 것 기록(Muse 승인 이력 패턴, 2026-11-24): 이 조직이 승인해 단추로 보낸 동작. 같은 기관 사람끼리 함께 본다.
+  // 본문 원문은 주지 않는다(동작·요청 번호·결과만). 화면은 요청 상세로 넘어가 거기서 내용을 본다.
+  app.get("/sent", async (c) => {
+    const s = c.get("session");
+    const rows = await deps.outbound.listDanchuSent(s.orgId, SENT_SCAN);
+    const items = rows.flatMap((r) => {
+      const a = parseActionText(r.text);
+      if (!a || INTERNAL_ACTIONS.has(a.action)) return [];
+      const err = r.result && typeof r.result === "object" ? (r.result as { error?: unknown }).error : undefined;
+      return [{
+        id: r.id,
+        action: a.action,
+        // 요청 접수(create)는 단추가 준 새 번호로 잇는다
+        rfqNo: a.rfqNo ?? createdNo(r.result),
+        status: sentStatus(r.status),
+        at: r.decidedAt ?? r.updatedAt,
+        mine: r.decidedBy === s.userId,
+        reason: r.status === "failed" && typeof err === "string" && /[가-힣]/.test(err) ? err : null,
+      }];
+    });
+    return c.json({ items: items.slice(0, SENT_LIMIT) });
+  });
   return app;
+}
+
+/** 기관·의뢰자 바깥으로 나가지 않는 동작(임시 저장, 첨부 주소, 고객관리 기록, 견적서 금액 넣기). 보낸 것 기록에서 뺀다 */
+const INTERNAL_ACTIONS = new Set<string>(["quote_draft", "quote_upload", "crm_activity", "quote_doc_set_amount"]);
+const SENT_LIMIT = 50;
+/** 안쪽 동작을 빼고도 50건이 차도록 더 읽는다 */
+const SENT_SCAN = 150;
+const createdNo = (result: unknown): string | null => {
+  const no = result && typeof result === "object" ? (result as { rfqNo?: unknown }).rfqNo : null;
+  return typeof no === "string" && RFQ_NO.test(no) ? no : null;
+};
+/** 보낸 것 기록의 상태. 승인했지만 결과가 오지 않은 것은 결과 확인 필요로 묶는다 */
+export function sentStatus(st: string): "sent" | "failed" | "unknown" | "rejected" {
+  if (st === "sent" || st === "failed" || st === "rejected") return st;
+  return "unknown";
 }
 
 /**

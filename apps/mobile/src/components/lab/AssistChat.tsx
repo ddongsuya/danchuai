@@ -4,7 +4,7 @@
 // 기관의 첫 화면이다(시안 2026-11-20): 가운데 위에 비서 캐릭터, 왼쪽 위 메뉴(받은 요청·실행 기록·질문하기·계정),
 // 답을 준비하는 동안 말풍선에 점 셋이 튄다.
 import { router } from 'expo-router';
-import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
+import { ArrowCounterClockwise, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, PaperPlaneTilt, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -80,11 +80,12 @@ export function AssistChat() {
   );
 }
 
-/** 기관 메뉴: 받은 요청(목록), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
+/** 기관 메뉴: 받은 요청(목록), 보낸 것(승인해 단추로 나간 것), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
 export function croMenu(newCount = 0): MenuItem[] {
   const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
   return [
     { key: 'inbox', label: '받은 요청', icon: ic(Tray), count: newCount, onPress: () => router.push('/lab') },
+    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'cro' } }) },
     { key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') },
     { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: () => router.push({ pathname: '/ask', params: { role: 'cro' } }) },
     { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
