@@ -1,29 +1,29 @@
 // 아래 탭 5개(Muse 시안 2026-11-25): 대화·소식·맡길 일·할 일·자료. 흰 알약 막대 안에 그림만, 고른 탭은 회색 알약.
 // 그림 뜻은 읽기 프로그램에 탭 이름으로 읽힌다. 키보드가 올라오면 막대를 숨긴다(입력창이 가려지지 않게).
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Article, ChatCircle, CheckSquare, Lightbulb, SquaresFour } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 
+import { MIcon, type MIconName } from '@/components/ui/MIcon';
 import { Press } from '@/components/ui/Press';
 import { tokens } from '@/constants/theme';
 
 import type { TabKey } from './ShellContext';
 
-export const TABS: { key: TabKey; label: string; Icon: typeof ChatCircle }[] = [
-  { key: 'index', label: '대화', Icon: ChatCircle },
-  { key: 'feed', label: '소식', Icon: Article },
-  { key: 'ideas', label: '맡길 일', Icon: Lightbulb },
-  { key: 'todo', label: '할 일', Icon: CheckSquare },
-  { key: 'library', label: '자료', Icon: SquaresFour },
+export const TABS: { key: TabKey; label: string; icon: MIconName }[] = [
+  { key: 'index', label: '대화', icon: 'chat' },
+  { key: 'feed', label: '소식', icon: 'feed' },
+  { key: 'ideas', label: '맡길 일', icon: 'idea' },
+  { key: 'todo', label: '할 일', icon: 'todo' },
+  { key: 'library', label: '자료', icon: 'library' },
 ];
 
 /** 화면 모양만(미리보기에서도 쓴다) */
 export function TabBarView({ active, onPress, unread = 0, bottom = 0 }: { active: TabKey; onPress: (key: TabKey) => void; unread?: number; bottom?: number }) {
   return (
-    <View style={[styles.wrap, { paddingBottom: Math.max(bottom, 10) }]}>
+    <View style={[styles.wrap, { paddingBottom: Math.max(bottom, 20) }]}>
       <View style={styles.bar} accessibilityRole="tablist">
-        {TABS.map(({ key, label, Icon }) => {
+        {TABS.map(({ key, label, icon }) => {
           const on = key === active;
           const dot = key === 'feed' && unread > 0;
           return (
@@ -35,7 +35,7 @@ export function TabBarView({ active, onPress, unread = 0, bottom = 0 }: { active
               onPress={() => onPress(key)}
               style={[styles.item, on && styles.on]}
             >
-              <Icon size={23} weight={on ? 'bold' : 'regular'} color={tokens.text} />
+              <MIcon name={icon} size={22} />
               {dot && <View style={styles.dot} />}
             </Press>
           );
@@ -75,23 +75,22 @@ export function TabBar({ state, emitter, navigateToTab, insets, unread }: Bottom
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 14, paddingTop: 6, backgroundColor: tokens.bg },
+  // .tabs: 좌우 14, 아래 20, 높이 56, 흰 알약, 그림자 0 2 12 8%. 입력창(.comp)은 탭 막대 10 위
+  wrap: { paddingHorizontal: 14, paddingTop: 10, backgroundColor: tokens.bg },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 62,
+    height: 56,
     paddingHorizontal: 6,
-    borderRadius: 31,
-    backgroundColor: tokens.surface,
-    borderWidth: 1,
-    borderColor: tokens.border,
-    shadowColor: tokens.ink,
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
+    borderRadius: 28,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  item: { flex: 1, height: 50, marginHorizontal: 2, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
+  item: { flex: 1, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   on: { backgroundColor: tokens.selected },
-  dot: { position: 'absolute', top: 12, right: '30%', width: 8, height: 8, borderRadius: 4, backgroundColor: tokens.primary, borderWidth: 1.5, borderColor: tokens.surface },
+  dot: { position: 'absolute', top: 9, right: '28%', width: 7, height: 7, borderRadius: 4, backgroundColor: tokens.primary },
 });

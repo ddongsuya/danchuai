@@ -224,7 +224,8 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
     );
   }
 
-  const bottom =
+  // 확인 카드는 대화 안 맨 아래에 놓인다(시안 m03). 입력창 자리는 그대로 둔다
+  const card =
     reviewing && draft && viaDanchu && state.sheet && choices ? (
       <DanchuApprovalCard
         sheet={state.sheet}
@@ -251,7 +252,8 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         onEdit={() => setReviewing(false)}
         onApprove={approve}
       />
-    ) : asking ? (
+    ) : null;
+  const bottom = asking && !card ? (
       <QuestionCard
         key={`${asking.field}-${state.messages.length}`}
         question={asking}
@@ -260,11 +262,11 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         onAnswer={(v) => void send(`${labelOf(asking.field)}: ${v}`)}
       />
     ) : (
-      <Composer disabled={busy || !state.conversationId} onSend={(t) => void send(t)} />
+      <Composer disabled={busy || !state.conversationId || !!card} onSend={(t) => void send(t)} />
     );
 
   return (
-    <ChatShell title={heading} bottom={bottom} dim={reviewing} flushBottom={Boolean(asking) && !(reviewing && draft)}>
+    <ChatShell title={heading} bottom={bottom} flushBottom={Boolean(asking) && !card}>
       {role === 'cro' && state.sheet && <SheetCard sheet={state.sheet} message={requestMessage} />}
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
         <AgentText>어떤 시험 견적을 받아 드릴까요?</AgentText>
@@ -370,6 +372,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       {out.kind === 'error' && <ErrorLine label="보내지 못했어요. 한 번 더 해 볼까요?" onRetry={() => void approve()} />}
       {out.kind === 'failed' && <ErrorLine label={out.message} onRetry={() => setReviewing(true)} />}
 
+      {card}
       {state.error && <ErrorLine label={ERROR_LABEL[state.error]} onRetry={RETRYABLE.includes(state.error) ? retry : undefined} />}
     </ChatShell>
   );

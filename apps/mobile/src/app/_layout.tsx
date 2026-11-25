@@ -65,6 +65,7 @@ function Gate() {
         <Stack.Screen name="sent" />
         <Stack.Screen name="alerts" />
         <Stack.Screen name="account" />
+        <Stack.Screen name="agent" />
       </Stack.Protected>
     </Stack>
   );

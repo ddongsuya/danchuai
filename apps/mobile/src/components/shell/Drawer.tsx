@@ -1,26 +1,29 @@
-// 서랍(Muse 시안 2026-11-25). 왼쪽에서 0.28초 ease-out으로 들어오고 뒤는 흐려진다. 닫을 때 0.2초 ease-in.
-// 맨 위 비서 이름, "탭" 다섯 줄(지금 탭은 회색), "따로 하는 대화"(이어 쓰는 요청·질문), 그 밖의 곳(보낸 것 등),
-// 맨 아래 설정·찾기·새 대화. 찾기에 글을 넣으면 따로 하는 대화와 그 밖의 곳을 이름으로 거른다.
-// 동작 줄이기가 켜지면 이동 없이 0.2초 흐림 전환만.
-import { GearSix, MagnifyingGlass, PencilSimple } from 'phosphor-react-native';
+// 서랍(시안 원본 m09). 지금 화면이 오른쪽으로 300 밀려나고(흰 바탕, 왼쪽 모서리 30, 그림자 -4 0 20 8%),
+// 왼쪽 290 자리에 서랍이 드러난다. 맨 위 비서 이름(22 굵게), "탭" 다섯 줄(지금 탭은 #ececee, 굵기 600),
+// "따로 하는 대화"(이어 쓰는 요청·질문), 맨 아래 설정 원·찾기 알약(#f4f5f7)·새 대화 원.
+// 찾기에 글을 넣으면 따로 하는 대화를 이름으로 거른다. 밀린 화면을 누르면 닫힌다.
+// 들어올 때 0.28초 ease-out, 닫을 때 0.2초 ease-in. 동작 줄이기가 켜지면 밀지 않고 0.2초 흐림 전환만.
 import { useEffect, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { MIcon } from '@/components/ui/MIcon';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
 import { fonts, motion, tokens } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
+import { CircleButton } from './AgentHeader';
 import type { TabKey } from './ShellContext';
 import { TABS } from './TabBar';
 
 export interface DrawerItem {
   key: string;
   label: string;
-  icon?: ReactNode;
+  /** 고정한 대화(핀 그림) */
+  pinned?: boolean;
   /** 오른쪽 작은 숫자. 0이면 숨김 */
   count?: number;
   onPress: () => void;
@@ -34,15 +37,15 @@ export interface DrawerProps {
   onTab: (key: TabKey) => void;
   /** 따로 하는 대화(이어 쓰는 요청, 지난 질문) */
   chats: DrawerItem[];
-  /** 그 밖의 곳(보낸 것, 실행 기록, 질문하기, 계정, 시연 화면 바꾸기) */
-  more: DrawerItem[];
   onSettings: () => void;
   onNew: () => void;
 }
 
-const WIDTH = 300;
+const PUSH = 300;
+const PANEL = 290;
 
-export function Drawer(p: DrawerProps) {
+/** 화면을 밀어내는 서랍 틀. children 은 탭 화면 전체 */
+export function DrawerFrame({ children, ...p }: DrawerProps & { children: ReactNode }) {
   const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(p.visible);
   const v = useSharedValue(0);
@@ -58,127 +61,122 @@ export function Drawer(p: DrawerProps) {
     );
   }, [p.visible, mounted, reduced, v]);
 
-  const panel = useAnimatedStyle(() => ({ opacity: reduced ? v.get() : 1, transform: [{ translateX: reduced ? 0 : (v.get() - 1) * WIDTH }] }));
-  const scrim = useAnimatedStyle(() => ({ opacity: v.get() }));
-  if (!mounted) return null;
+  const page = useAnimatedStyle(() =>
+    reduced
+      ? { transform: [{ translateX: v.get() > 0 ? PUSH : 0 }], borderTopLeftRadius: v.get() > 0 ? 30 : 0, borderBottomLeftRadius: v.get() > 0 ? 30 : 0 }
+      : { transform: [{ translateX: v.get() * PUSH }], borderTopLeftRadius: v.get() * 30, borderBottomLeftRadius: v.get() * 30 },
+  );
+  const panel = useAnimatedStyle(() => ({ opacity: reduced ? v.get() : 1 }));
   return (
-    <Modal transparent visible animationType="none" onRequestClose={p.onClose} statusBarTranslucent>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, scrim]}>
-        <Pressable style={StyleSheet.absoluteFill} accessibilityLabel="서랍 닫기" onPress={p.onClose} />
+    <View style={styles.root}>
+      {mounted && (
+        <Animated.View style={[styles.panel, panel]} accessibilityViewIsModal={p.visible}>
+          <DrawerBody {...p} />
+        </Animated.View>
+      )}
+      <Animated.View style={[styles.page, mounted && styles.pageOpen, page]} importantForAccessibility={p.visible ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={p.visible}>
+        {children}
+        {mounted && <Pressable style={StyleSheet.absoluteFill} accessibilityLabel="서랍 닫기" onPress={p.onClose} />}
       </Animated.View>
-      <Animated.View style={[styles.panel, panel]} accessibilityViewIsModal>
-        <DrawerBody {...p} />
-      </Animated.View>
-    </Modal>
+    </View>
   );
 }
 
 /** 서랍 안쪽(미리보기에서도 쓴다) */
-export function DrawerBody({ onClose, title, active, onTab, chats, more, onSettings, onNew }: DrawerProps) {
+export function DrawerBody({ onClose, title, active, onTab, chats, onSettings, onNew }: DrawerProps) {
   const [q, setQ] = useState('');
   const go = (fn: () => void) => {
     onClose();
     fn();
   };
-  const match = (it: DrawerItem) => !q.trim() || it.label.includes(q.trim());
-  const shownChats = chats.filter(match);
-  const shownMore = more.filter(match);
+  const shown = chats.filter((it) => !q.trim() || it.label.includes(q.trim()));
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.body}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Txt variant="museTitle" accessibilityRole="header" style={styles.title} numberOfLines={1}>
+        <Txt style={styles.title} accessibilityRole="header" numberOfLines={1}>
           {title}
         </Txt>
         {!q.trim() && (
           <>
-            <Txt variant="museSmall" color={tokens.muted} style={styles.section}>
+            <Txt style={[styles.section, { marginTop: 0 }]} color={tokens.muted}>
               탭
             </Txt>
-            {TABS.map(({ key, label, Icon }) => (
-              <Press key={key} label={label} accessibilityState={{ selected: key === active }} onPress={() => go(() => onTab(key))} style={[styles.row, key === active && styles.rowOn]}>
-                <Icon size={21} color={tokens.text} />
-                <Txt variant="museRow" style={styles.rowLabel}>
-                  {label}
+            {TABS.map(({ key, label, icon }) => {
+              const on = key === active;
+              return (
+                <Press key={key} label={label} accessibilityState={{ selected: on }} onPress={() => go(() => onTab(key))} style={[styles.tab, on && styles.tabOn]}>
+                  <MIcon name={icon} size={20} />
+                  <Txt style={[styles.rowText, { fontFamily: on ? fonts.semibold : fonts.medium }]}>{label}</Txt>
+                </Press>
+              );
+            })}
+          </>
+        )}
+        {shown.length > 0 && (
+          <>
+            <Txt style={styles.section} color={tokens.muted}>
+              따로 하는 대화
+            </Txt>
+            {shown.map((it) => (
+              <Press key={it.key} label={it.count ? `${it.label}, ${it.count}건` : it.label} onPress={() => go(it.onPress)} style={styles.chat}>
+                {it.pinned ? <MIcon name="pin" size={15} color={tokens.muted} /> : null}
+                <Txt style={[styles.rowText, { flex: 1 }]} numberOfLines={1}>
+                  {it.label}
                 </Txt>
+                {it.count ? (
+                  <View style={styles.count}>
+                    <Txt style={styles.countText} color={tokens.onPrimary} tabular>
+                      {it.count}
+                    </Txt>
+                  </View>
+                ) : null}
               </Press>
             ))}
           </>
         )}
-        {shownChats.length > 0 && (
-          <>
-            <Txt variant="museSmall" color={tokens.muted} style={styles.section}>
-              따로 하는 대화
-            </Txt>
-            {shownChats.map((it) => (
-              <Row key={it.key} it={it} onPress={() => go(it.onPress)} />
-            ))}
-          </>
-        )}
-        {shownMore.length > 0 && (
-          <>
-            <Txt variant="museSmall" color={tokens.muted} style={styles.section}>
-              그 밖에
-            </Txt>
-            {shownMore.map((it) => (
-              <Row key={it.key} it={it} onPress={() => go(it.onPress)} />
-            ))}
-          </>
-        )}
-        {q.trim() && !shownChats.length && !shownMore.length ? (
-          <Txt variant="museBody" color={tokens.muted} style={styles.none}>
-            {`"${q.trim()}"에 맞는 곳이 없어요`}
+        {q.trim() && !shown.length ? (
+          <Txt style={[styles.rowText, styles.none]} color={tokens.muted}>
+            {`"${q.trim()}"에 맞는 대화가 없어요`}
           </Txt>
         ) : null}
       </ScrollView>
       <View style={styles.foot}>
-        <Press label="설정" onPress={() => go(onSettings)} style={styles.round}>
-          <GearSix size={20} color={tokens.text} />
-        </Press>
+        <CircleButton label="설정" onPress={() => go(onSettings)}>
+          <MIcon name="gear" />
+        </CircleButton>
         <View style={styles.search}>
-          <MagnifyingGlass size={17} color={tokens.muted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="찾기" placeholderTextColor={tokens.faint} accessibilityLabel="찾기" style={styles.input} selectionColor={tokens.primary} returnKeyType="search" />
+          <View style={styles.searchIc}>
+            <MIcon name="search" size={17} color={tokens.muted} />
+          </View>
+          <TextInput value={q} onChangeText={setQ} placeholder="찾기" placeholderTextColor={tokens.muted} accessibilityLabel="찾기" style={styles.input} selectionColor={tokens.primary} returnKeyType="search" />
         </View>
-        <Press label="새 대화" onPress={() => go(onNew)} style={styles.round}>
-          <PencilSimple size={20} color={tokens.text} />
-        </Press>
+        <CircleButton label="새 대화" onPress={() => go(onNew)}>
+          <MIcon name="compose" />
+        </CircleButton>
       </View>
     </SafeAreaView>
   );
 }
 
-function Row({ it, onPress }: { it: DrawerItem; onPress: () => void }) {
-  return (
-    <Press label={it.count ? `${it.label}, ${it.count}건` : it.label} onPress={onPress} style={styles.row}>
-      {it.icon ? <View style={styles.icon}>{it.icon}</View> : null}
-      <Txt variant="museBody" style={[styles.rowLabel, { fontFamily: fonts.medium }]} numberOfLines={1}>
-        {it.label}
-      </Txt>
-      {it.count ? (
-        <View style={styles.count}>
-          <Txt variant="museStatus" color={tokens.onPrimary} style={{ fontFamily: fonts.bold }} tabular>
-            {it.count}
-          </Txt>
-        </View>
-      ) : null}
-    </Press>
-  );
-}
-
 const styles = StyleSheet.create({
-  scrim: { backgroundColor: tokens.overlay },
-  panel: { position: 'absolute', left: 0, top: 0, bottom: 0, width: WIDTH, maxWidth: '86%', backgroundColor: tokens.bg, borderTopRightRadius: 24, borderBottomRightRadius: 24 },
+  root: { flex: 1, backgroundColor: tokens.bg },
+  panel: { position: 'absolute', left: 0, top: 0, bottom: 0, width: PANEL, backgroundColor: tokens.bg },
+  page: { flex: 1, backgroundColor: tokens.bg },
+  pageOpen: { overflow: 'hidden', backgroundColor: '#ffffff', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: -4, height: 0 }, elevation: 6 },
   body: { flex: 1 },
-  scroll: { paddingHorizontal: 12, paddingTop: 18, paddingBottom: 16 },
-  title: { paddingHorizontal: 8, paddingBottom: 14 },
-  section: { paddingHorizontal: 8, paddingTop: 14, paddingBottom: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46, paddingHorizontal: 10, borderRadius: 12 },
-  rowOn: { backgroundColor: tokens.selected },
-  rowLabel: { flex: 1 },
-  icon: { width: 21, alignItems: 'center' },
-  none: { paddingHorizontal: 8, paddingTop: 16 },
-  count: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, backgroundColor: tokens.primary, alignItems: 'center', justifyContent: 'center' },
-  foot: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12 },
-  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: tokens.group, alignItems: 'center', justifyContent: 'center' },
-  search: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, borderRadius: 22, backgroundColor: tokens.group, paddingHorizontal: 14 },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: tokens.text, paddingVertical: 0, height: 44 },
+  // 안쪽 위 30, 왼 18, 오른 14, 아래 20
+  scroll: { paddingTop: 30, paddingLeft: 18, paddingRight: 14, paddingBottom: 12 },
+  title: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 30, marginBottom: 18, color: tokens.text },
+  section: { fontFamily: fonts.semibold, fontSize: 12.5, lineHeight: 18, marginTop: 18, marginBottom: 4 },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12 },
+  tabOn: { backgroundColor: tokens.selected },
+  chat: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 12 },
+  rowText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22.5, color: tokens.text },
+  none: { paddingHorizontal: 12, paddingTop: 12 },
+  count: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, backgroundColor: tokens.primary, alignItems: 'center', justifyContent: 'center' },
+  countText: { fontFamily: fonts.bold, fontSize: 11.5, lineHeight: 15 },
+  foot: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 18, paddingRight: 14, paddingBottom: 20, paddingTop: 8 },
+  search: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, height: 42, borderRadius: 21, backgroundColor: tokens.group, paddingHorizontal: 14 },
+  searchIc: { flexShrink: 0 },
+  input: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 15, color: tokens.text, paddingVertical: 0, height: 42 },
 });

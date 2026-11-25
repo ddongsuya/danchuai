@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentHttpError, createConversation, getConversation, sendTurn, type AgentRole, type ConversationMode } from '@/lib/agentClient';
-import { chatReducer, initialChat } from '@/lib/chat';
+import { chatReducer, initialChat, type ActionCard } from '@/lib/chat';
 
 /** 서버 대화 하나를 연다(conversationId가 있으면 이어서 연다). 화면을 떠나면 진행 중인 턴을 끊는다. */
 export function useAgentChat(role: AgentRole, requestId?: string, conversationId?: string, mode: ConversationMode = 'request') {
@@ -66,5 +66,8 @@ export function useAgentChat(role: AgentRole, requestId?: string, conversationId
   /** 기관 비서: 되돌린 실행 카드를 표시한다 */
   const markUndone = useCallback((runId: string) => dispatch({ type: 'undone', runId }), []);
 
-  return { state, send, retry, refresh, markUndone };
+  /** 기관 비서: "매번 묻기"로 멈춘 카드를 허용·거절한 결과로 바꾼다 */
+  const patchAction = useCallback((key: string, patch: Partial<ActionCard>) => dispatch({ type: 'patchAction', key, patch }), []);
+
+  return { state, send, retry, refresh, markUndone, patchAction };
 }

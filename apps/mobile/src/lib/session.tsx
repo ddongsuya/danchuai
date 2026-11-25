@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { DEFAULT_CHARACTER, characterOf, isCharacterId, type AgentCharacterId } from '@danchuai/core';
 
-import { AccountError, fetchMe, saveCharacter, type AccountOrg } from './accountClient';
+import { AccountError, DEFAULT_PREFS, fetchMe, saveCharacter, savePrefs, type AccountOrg, type AgentPrefs } from './accountClient';
 import { authStorage } from './storage';
 import { supabase } from './supabase';
 
@@ -31,6 +31,10 @@ interface AuthState {
   character: AgentCharacterId;
   /** 캐릭터를 바꾼다. 화면에 먼저 바꾸고, 서버 저장이 안 되면 되돌리고 오류를 던진다 */
   setCharacter: (id: AgentCharacterId) => Promise<void>;
+  /** 권한·목표 */
+  prefs: AgentPrefs;
+  /** 권한·목표를 바꾼다. 화면에 먼저 바꾸고, 서버 저장이 안 되면 되돌리고 오류를 던진다 */
+  setPrefs: (patch: Partial<AgentPrefs>) => Promise<void>;
   /** 조직을 만들거나 참여한 뒤 다시 읽는다. */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -48,6 +52,8 @@ const Ctx = createContext<AuthState>({
   consentVersion: null,
   character: DEFAULT_CHARACTER,
   setCharacter: async () => undefined,
+  prefs: DEFAULT_PREFS,
+  setPrefs: async () => undefined,
   refresh: async () => undefined,
   signOut: async () => undefined,
   setRecovery: () => undefined,
@@ -75,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return DEFAULT_CHARACTER;
     }
   });
+  const [prefs, setPrefsState] = useState<AgentPrefs>(DEFAULT_PREFS);
   const [base, setStatus] = useState<AuthStatus>(supabase ? 'loading' : 'disabled');
   const [recovery, setRecovery] = useState(false);
   const status: AuthStatus = recovery ? 'recovery' : base;
@@ -95,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setConsentAt(me.consent?.agreedAt ?? null);
       setConsentVersion(me.consent?.version ?? null);
       setCharacterState(isCharacterId(me.character) ? me.character : DEFAULT_CHARACTER);
+      setPrefsState({ ...DEFAULT_PREFS, ...me.prefs });
       setBlocked(null);
       if (!me.org) return setStatus('needsOrg');
       setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
@@ -162,8 +170,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw e;
         }
       },
+      prefs,
+      setPrefs: async (patch) => {
+        const prev = prefs;
+        setPrefsState({ ...prefs, ...patch });
+        // 시연 모드는 이번 실행에서만 바꾼다
+        if (!supabase) return;
+        try {
+          setPrefsState(await savePrefs(patch));
+        } catch (e) {
+          setPrefsState(prev);
+          throw e;
+        }
+      },
     }),
-    [status, session, org, blocked, danchu, consentAt, consentVersion, character, load],
+    [status, session, org, blocked, danchu, consentAt, consentVersion, character, prefs, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

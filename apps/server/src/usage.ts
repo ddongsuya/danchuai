@@ -100,6 +100,14 @@ export interface UsageMeter {
   record(s: Session, u: Usage, now?: Date): Promise<void>;
   /** 토큰이 아닌 비용(녹음 전사 등)을 백만분의 1달러로 더한다 */
   recordCost(s: Session, micros: number, now?: Date): Promise<void>;
+  /** 조직 한 달 상한 대비 쓴 비율(0~100). 상한이 없으면 null */
+  monthShare(s: Session, now?: Date): Promise<number | null>;
+}
+
+/** 사용량이 다시 0이 되는 날: 한국 시간 다음 달 1일(YYYY-MM-DD) */
+export function nextMonthStart(now: Date): string {
+  const [y, m] = periods(now).month.split("-").map(Number) as [number, number];
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
 }
 
 export function usageMeter(repo: UsageRepo, cfg: { prices: Prices; caps: Caps }): UsageMeter {
@@ -117,6 +125,12 @@ export function usageMeter(repo: UsageRepo, cfg: { prices: Prices; caps: Caps })
     async record(s, u, now = new Date()) {
       const k = keys(s, now);
       await repo.add(order.map((x) => k[x]), u, costMicros(u, cfg.prices));
+    },
+    async monthShare(s, now = new Date()) {
+      const cap = capOf.org_month;
+      if (cap === null || !(cap > 0)) return null;
+      const [cost] = await repo.costs([keys(s, now).org_month]);
+      return Math.min(100, Math.round(((cost ?? 0) / cap) * 100));
     },
     async recordCost(s, micros, now = new Date()) {
       if (!(micros > 0)) return;

@@ -238,6 +238,8 @@ export interface AssistDeps {
   api: Pick<DanchuApi, "run">;
   runs: RunRepo;
   catalogs: Pick<CatalogCache, "get">;
+  /** 권한 "매번 묻기"면 바로 실행하지 않고 확인 카드로 돌려준다. 없으면 바로 실행 */
+  recordMode?: (userId: string) => Promise<"auto" | "ask">;
 }
 
 /** 한 턴에 바로 실행하는 액션 수 상한 */
@@ -265,7 +267,15 @@ export async function prepareAssist(deps: AssistDeps, token: string, orgId: stri
   return { ok: true, tools: assistTools(cat), context: assistContext(brief, book, report), book, actions: new Map([...assistActions(cat), ...assistLookups(cat)].map((a) => [a.name, a])) };
 }
 
-export type AssistActionEvent = { run: ReturnType<typeof runView> | null; label: string; outcome: "done" | "failed" | "unknown" | "skipped"; message: string | null };
+export type AssistActionEvent = {
+  run: ReturnType<typeof runView> | null;
+  label: string;
+  /** pending: 권한이 "매번 묻기"라 아직 실행하지 않았다. 사람이 허용하면 앱이 action·body로 /v1/danchu/run 을 부른다 */
+  outcome: "done" | "failed" | "unknown" | "skipped" | "pending";
+  message: string | null;
+  action?: string;
+  body?: Record<string, unknown>;
+};
 /** 찾기 카드: 앱이 이 입력으로 단추를 읽는다 */
 export type AssistLookupEvent = { action: string; label: string; body: Record<string, unknown> };
 
@@ -282,6 +292,7 @@ export async function applyAssistCalls(
   const lookups: AssistLookupEvent[] = [];
   const notes: string[] = [];
   let runs = 0;
+  const ask = deps.recordMode ? (await deps.recordMode(s.userId).catch(() => "auto" as const)) === "ask" : false;
   for (const call of calls) {
     const a = prep.actions.get(call.name);
     const label = a?.label ?? "알 수 없는 동작";
@@ -302,6 +313,11 @@ export async function applyAssistCalls(
     if (!r.ok) {
       events.push({ run: null, label, outcome: "skipped", message: null });
       notes.push(`(실행 안 함: ${label}, ${r.reason === "unknown_ref" ? "목록에 없는 번호" : "입력 확인 필요"})`);
+      continue;
+    }
+    if (ask) {
+      events.push({ run: null, label, outcome: "pending", message: null, action: a.name, body: r.body });
+      notes.push(`(허용 기다림: ${label})`);
       continue;
     }
     const done = await runAuto(deps, s, token, a, r.body, conversationId);

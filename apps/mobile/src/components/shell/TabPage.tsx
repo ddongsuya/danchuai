@@ -1,9 +1,9 @@
-// 탭 화면 틀(Muse 시안 2026-11-25): 위 막대(비서), 왼쪽 큰 제목, 본문. 아래 탭 막대는 탭 이동기가 그린다.
+// 탭 화면 틀(시안 원본 .pg): 위 막대(비서), 쪽 제목(.h1 22), 본문(좌우 14). 아래 탭 막대는 탭 이동기가 그린다.
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Txt } from '@/components/ui/Txt';
+import { H1 } from '@/components/ui/Muse';
 import { tokens } from '@/constants/theme';
 
 import { AgentHeader } from './AgentHeader';
@@ -11,11 +11,7 @@ import { AgentHeader } from './AgentHeader';
 export function TabPage({ title, header, right, children, scroll = true }: { title?: string; header?: ReactNode; right?: ReactNode; children: ReactNode; scroll?: boolean }) {
   const head = (
     <>
-      {title ? (
-        <Txt variant="museTitle" accessibilityRole="header" style={styles.title}>
-          {title}
-        </Txt>
-      ) : null}
+      {title ? <H1>{title}</H1> : null}
     </>
   );
   return (
@@ -27,7 +23,7 @@ export function TabPage({ title, header, right, children, scroll = true }: { tit
           {children}
         </ScrollView>
       ) : (
-        <View style={styles.root}>
+        <View style={[styles.root, styles.fixed]}>
           {head}
           {children}
         </View>
@@ -38,6 +34,7 @@ export function TabPage({ title, header, right, children, scroll = true }: { tit
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  content: { paddingBottom: 24 },
-  title: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10 },
+  // .pg: 좌우 14, 위 120(위 막대 106 + 14)
+  content: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 24 },
+  fixed: { flex: 1, paddingHorizontal: 14, paddingTop: 14 },
 });

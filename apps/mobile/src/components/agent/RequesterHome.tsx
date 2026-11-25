@@ -2,7 +2,6 @@
 // 위 막대에 비서 캐릭터·이름·상태, 왼쪽 서랍에 탭·따로 하는 대화. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
 // 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
 import { router, type Href } from 'expo-router';
-import { CaretRight } from 'phosphor-react-native';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,10 +10,13 @@ import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { STATUS_CHIP } from '@/components/inbox/InboxScreen';
 import type { ChipTone } from '@/components/ui/Chip';
+import { AgentText, TaskCard } from '@/components/chat/Messages';
 import { AgentHeader } from '@/components/shell/AgentHeader';
+import { InviteButton } from '@/components/shell/InviteButton';
+import { MIcon } from '@/components/ui/MIcon';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, tokens, uc } from '@/constants/theme';
+import { fonts, tokens } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { agentConfigured } from '@/lib/agentClient';
 import { requesterItem, type InboxItem } from '@/lib/inbox';
@@ -69,90 +71,77 @@ export interface RequesterHomeViewProps {
   onAll: () => void;
 }
 
-/** 화면 모양만(미리보기에서도 쓴다). 위 막대는 비서(서랍·캐릭터·상태), 아래는 입력창과 탭 막대 */
+/** 화면 모양만(미리보기에서도 쓴다). 위 막대는 비서(서랍·캐릭터·상태·초대), 대화는 말풍선, 아래는 입력창과 탭 막대 */
 export function RequesterHomeView({ recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
   return (
-    <ChatShell title="비서" tabs nav={<AgentHeader />} bottom={<Composer placeholder="메시지" onSend={(t) => t && onStart(t)} />}>
-      <View style={styles.hero}>
-        <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
-          어떤 시험 견적을 받아 드릴까요?
-        </Txt>
-      </View>
-      <View style={styles.starters}>
-        {STARTERS.map((s) => (
-          <Press key={s.label} label={s.label} onPress={() => (s.seed ? onStart(s.seed) : onAsk())} style={styles.chip}>
-            <Txt variant="chatLabel">{s.label}</Txt>
-          </Press>
-        ))}
-      </View>
+    <ChatShell title="비서" tabs nav={<AgentHeader right={<InviteButton />} />} bottom={<Composer placeholder="메시지" onPlus={() => router.navigate('/ideas' as Href)} onSend={(t) => t && onStart(t)} />}>
+      <AgentText>어떤 시험 견적을 받아 드릴까요? 시험 이름이나 물질만 알려 주셔도 요청서를 같이 채워요.</AgentText>
+      <TaskCard icon="idea" title="이렇게 시작해 보세요" sub="하나를 고르면 바로 대화를 열어요">
+        <View style={styles.picks}>
+          {STARTERS.map((s) => (
+            <Press key={s.label} label={s.label} onPress={() => (s.seed ? onStart(s.seed) : onAsk())} style={styles.pick}>
+              <Txt style={styles.pickText}>{s.label}</Txt>
+            </Press>
+          ))}
+        </View>
+      </TaskCard>
       <RecentCard recent={recent} onRetry={onRetry} onOpen={onOpen} onAll={onAll} />
     </ChatShell>
   );
 }
 
-/** 최근 요청 세 건. 읽는 중에는 마지막 모양의 뼈대, 요청이 없으면 숨긴다 */
+/** 최근 요청 세 건(.task 모양). 읽는 중에는 마지막 모양의 뼈대, 요청이 없으면 숨긴다 */
 function RecentCard({ recent, onRetry, onOpen, onAll }: { recent: RecentState; onRetry?: () => void; onOpen: (item: InboxItem) => void; onAll: () => void }) {
   if (recent.kind === 'error') return <ErrorLine label={recent.label} onRetry={onRetry} />;
   if (recent.kind === 'ready' && !recent.items.length) return null;
   const shown = recent.kind === 'ready' ? recent.items.slice(0, RECENT) : null;
   return (
-    <View style={styles.card}>
-      <View style={styles.head}>
-        <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, flex: 1 }} accessibilityRole="header">
-          최근 요청
-        </Txt>
-        {recent.kind === 'ready' && (
-          <Press label="요청함 전체" onPress={onAll} style={styles.all}>
-            <Txt variant="chatCaption" color={tokens.muted}>
-              전체
-            </Txt>
-            <CaretRight size={uc(12)} color={tokens.muted} />
-          </Press>
-        )}
-      </View>
-      {shown
-        ? shown.map((it, i) => {
-            const chip = STATUS_CHIP[it.status];
-            return (
-              <Press key={it.id} label={`${it.title}, ${chip.label}`} onPress={() => onOpen(it)} style={[styles.row, i > 0 && styles.line]}>
-                <View style={{ flex: 1, gap: uc(4) }}>
-                  <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
-                    {it.title}
-                  </Txt>
-                  <View style={styles.meta}>
-                    <Txt variant="chatCaption" color={TONE[chip.kind]} style={{ fontFamily: fonts.semibold }}>
-                      {chip.label}
+    <TaskCard icon="list" title="최근 요청" sub={shown ? `${recent.kind === 'ready' ? recent.items.length : 0}건` : '불러오는 중이에요'} action={shown ? '요청 전체 보기' : undefined} onAction={onAll}>
+      <View style={styles.box}>
+        {shown
+          ? shown.map((it, i) => {
+              const chip = STATUS_CHIP[it.status];
+              return (
+                <Press key={it.id} label={`${it.title}, ${chip.label}`} onPress={() => onOpen(it)} style={[styles.row, i > 0 && styles.line]}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Txt style={styles.rowTitle} numberOfLines={1}>
+                      {it.title}
                     </Txt>
-                    <Txt variant="chatCaption" color={tokens.muted} tabular numberOfLines={1} style={{ flexShrink: 1 }}>
-                      {it.when}
-                    </Txt>
+                    <View style={styles.meta}>
+                      <Txt style={styles.metaText} color={TONE[chip.kind]}>
+                        {chip.label}
+                      </Txt>
+                      <Txt style={[styles.metaText, { fontFamily: fonts.regular, flexShrink: 1 }]} color={tokens.muted} tabular numberOfLines={1}>
+                        {it.when}
+                      </Txt>
+                    </View>
                   </View>
+                  <MIcon name="chevron" size={16} color={tokens.icon2} />
+                </Press>
+              );
+            })
+          : [0, 1].map((i) => (
+              <View key={i} style={[styles.row, i > 0 && styles.line]} accessibilityLabel={i === 0 ? '불러오는 중이에요' : undefined} accessibilityRole={i === 0 ? 'progressbar' : undefined}>
+                <View style={{ flex: 1, gap: 8 }}>
+                  <View style={[styles.bone, { width: '58%' }]} />
+                  <View style={[styles.bone, { width: 84 }]} />
                 </View>
-              </Press>
-            );
-          })
-        : [0, 1].map((i) => (
-            <View key={i} style={[styles.row, i > 0 && styles.line]} accessibilityLabel={i === 0 ? '불러오는 중이에요' : undefined} accessibilityRole={i === 0 ? 'progressbar' : undefined}>
-              <View style={{ flex: 1, gap: uc(8) }}>
-                <View style={[styles.bone, { width: '58%' }]} />
-                <View style={[styles.bone, { width: uc(84) }]} />
               </View>
-            </View>
-          ))}
-    </View>
+            ))}
+      </View>
+    </TaskCard>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { alignItems: 'center', paddingTop: uc(28), paddingBottom: uc(4) },
-  heroTitle: { textAlign: 'center' },
-  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8), justifyContent: 'center' },
-  chip: { height: uc(34), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: uc(14), paddingVertical: uc(10), gap: uc(2) },
-  head: { flexDirection: 'row', alignItems: 'center', paddingBottom: uc(6) },
-  all: { flexDirection: 'row', alignItems: 'center', gap: uc(2), minHeight: uc(32), paddingLeft: uc(10) },
-  row: { paddingVertical: uc(10) },
-  line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: uc(8) },
-  bone: { height: uc(13), borderRadius: uc(7), backgroundColor: tokens.sunken },
+  picks: { gap: 8 },
+  pick: { height: 38, borderRadius: 19, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  pickText: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
+  box: { backgroundColor: '#ffffff', borderRadius: 14, paddingHorizontal: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
+  line: { borderTopWidth: 1, borderTopColor: tokens.line },
+  rowTitle: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  metaText: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 17 },
+  bone: { height: 13, borderRadius: 7, backgroundColor: tokens.sunken },
 });

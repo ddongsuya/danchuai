@@ -6,13 +6,14 @@
 // 설계를 고치거나 견적서에 없는 시험을 넣는 것은 견적서 툴에서 한다.
 // 버튼을 누른 것이 승인이다. 실행은 서버 보내기 장부가 한 번만 한다(draft → approve → dispatch).
 // 레퍼런스: Mobbin Snapchat 홍보 검토(구역별 확인 + 아래 합계·주 버튼), Instacart 항목 목록(줄마다 금액 강조).
-import { CheckCircle, WarningCircle } from 'phosphor-react-native';
+import { CheckCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { ErrorLine } from '@/components/agent/LiveChat';
 import { ChatShell } from '@/components/chat/ChatShell';
-import { StepLog } from '@/components/chat/Messages';
+import { ConfirmCard, DocThumb } from '@/components/chat/ConfirmCard';
+import { AgentText, StepLog } from '@/components/chat/Messages';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Txt } from '@/components/ui/Txt';
@@ -72,6 +73,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
   const [put, setPut] = useState<Put | null>(null);
   const [run, setRun] = useState<Run>({ kind: 'idle' });
   const [toolError, setToolError] = useState(false);
+  const [facts, setFacts] = useState(false);
 
   useEffect(() => {
     if (initialPreview && tick === 0) return;
@@ -155,50 +157,21 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
     }
   };
 
-  const title = quote.submittedVersion == null ? '견적 제출' : '수정 내용 제출';
   const submitted = run.kind === 'done' && run.what === 'submit';
+  const missing = lines.filter((l) => l.manual.length > 0);
+  const thumb: [string, string][] = lines.filter((l) => l.state !== 'off').slice(0, 5).map((l) => [l.name, l.amount != null ? l.amount.toLocaleString('ko-KR') : '-']);
+  const verb = quote.submittedVersion == null ? '견적을 제출하려고 해요' : '수정한 견적을 제출하려고 해요';
   return (
-    <ChatShell
-      title={no}
-      bottom={
-        <View style={styles.bar}>
-          <View style={styles.totalRow} accessible accessibilityLabel={built?.ok ? `합계 ${won(built.total)}, 부가세 별도` : `합계, ${blocked}`}>
-            <Txt variant="label" color={tokens.muted}>
-              합계(부가세 별도)
-            </Txt>
-            <Txt variant="heading" tabular color={built?.ok ? tokens.text : tokens.faint}>
-              {built?.ok ? won(built.total) : '-'}
-            </Txt>
-          </View>
-          <Button
-            title={submitted ? '다 됐어요. 견적을 제출했어요. 비교표가 열리면 알려 드릴게요' : (blocked ?? title)}
-            tall
-            disabled={!built?.ok || sending || submittedNow || submitted}
-            loading={run.kind === 'sending' && run.what === 'submit'}
-            onPress={() => void go('submit')}
-          />
-          <View style={styles.subRow}>
-            {onBack && <Button title="대화로 돌아가기" kind="text" disabled={sending} onPress={onBack} />}
-            <Button title="단추에 임시 저장" kind="text" disabled={sending || !p} loading={run.kind === 'sending' && run.what === 'save'} onPress={() => void go('save')} />
-          </View>
-        </View>
-      }
-    >
-      <View style={{ gap: space.xs }}>
-        <Txt variant="small" color={tokens.muted} numberOfLines={2}>
-          {line}
-        </Txt>
-        <Txt variant="title" accessibilityRole="header">
-          {`${subjName(agentName)} ${no}에\n견적을 제출하려고 해요`}
-        </Txt>
-      </View>
+    <ChatShell title={no} bottom={null}>
+      <AgentText>{submitted ? '견적을 제출했어요. 비교표가 열리면 알려 드릴게요.' : line ? `${line} 견적서를 준비했어요. 제출 전에 확인해 주세요.` : '견적서를 준비했어요. 제출 전에 확인해 주세요.'}</AgentText>
 
       {doc.kind === 'loading' && <StepLog steps={[{ label: '단추 견적서를 불러오는 중이에요', state: 'now' }]} />}
       {doc.kind === 'error' && <ErrorLine label="견적서를 못 불러왔어요. 다시 해 볼까요?" onRetry={reload} />}
 
-      {p && (
+      {/* 시험 목록·단가표에 금액이 없는 줄만 여기서 넣는다(누른 것이 허용) */}
+      {missing.length > 0 && (
         <View style={styles.card}>
-          {lines.map((l, i) => (
+          {missing.map((l, i) => (
             <Line
               key={l.seq}
               l={l}
@@ -214,47 +187,60 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
       )}
 
       {p && (
-        <View style={styles.toolRow}>
-          {toolError && (
-            <Txt variant="caption" color={tokens.danger} style={{ flex: 1 }}>
-              견적서를 열지 못했어요
-            </Txt>
-          )}
-          <Button title="다시 불러오기" kind="text" disabled={sending} onPress={reload} />
-          <Button title="견적서 툴에서 열기" kind="text" disabled={sending} onPress={() => void openTool()} />
-        </View>
+        <ConfirmCard
+          title={`${subjName(agentName)} ${no}에 ${verb}`}
+          note="견적서 금액과 조건을 확인한 뒤 허용해 주세요."
+          preview={<DocThumb name={p.docNo} lines={thumb} />}
+          previewAction={{ label: '견적서 보기', onPress: () => void openTool() }}
+          recipient={{ title: '받는 곳: 의뢰자', sub: '선정 전이라 회사명은 가려져요', icon: 'person' }}
+          total={{ label: '예상 합계', value: built?.ok ? won(built.total) : '-', onInfo: () => setFacts((v) => !v) }}
+          extra={
+            facts || toolError ? (
+              <View style={styles.facts}>
+                {toolError && (
+                  <Txt variant="caption" color={tokens.danger}>
+                    견적서를 열지 못했어요
+                  </Txt>
+                )}
+                {facts && (
+                  <>
+                    <Fact k="견적서" v={p.docNo} />
+                    <Fact k="착수 가능일" v={quote.common.startDate || '미정'} line />
+                    <Fact k="견적 유효기간" v={quote.common.validUntil || '-'} line />
+                    <Fact k="결제 조건" v={quote.common.payTerms || '-'} line />
+                    {p.discount > 0 ? <Fact k="할인" v={`${won(p.discount)}, 줄마다 나눠 반영`} line /> : null}
+                    {p.unlinked.length ? <Fact k="제출 제외" v={p.unlinked.join(', ')} line /> : null}
+                    {quote.note ? <Fact k="전달 사항" v={quote.note} line /> : null}
+                  </>
+                )}
+              </View>
+            ) : null
+          }
+          issue={run.kind === 'error' ? run.message : !built?.ok ? blocked : null}
+          onReject={() => onBack?.()}
+          onAllow={() => void go('submit')}
+          busy={run.kind === 'sending' && run.what === 'submit'}
+          disabled={!built?.ok || sending || submittedNow || submitted}
+          allowLabel={submitted || submittedNow ? '제출했어요' : '허용'}
+          foot="허용하면 이 견적서 그대로 한 번 제출돼요. 부가세 별도."
+        />
       )}
 
-      <View style={[styles.card, styles.facts]}>
-        {p ? <Fact k="견적서" v={p.docNo} /> : null}
-        <Fact k="착수 가능일" v={quote.common.startDate || '미정'} line={!!p} />
-        <Fact k="견적 유효기간" v={quote.common.validUntil || '-'} line />
-        <Fact k="결제 조건" v={quote.common.payTerms || '-'} line />
-        {p && p.discount > 0 ? <Fact k="할인" v={`${won(p.discount)}, 줄마다 나눠 반영`} line /> : null}
-        {p && p.unlinked.length ? <Fact k="제출 제외" v={p.unlinked.join(', ')} line /> : null}
-        {quote.note ? <Fact k="전달 사항" v={quote.note} line /> : null}
-      </View>
-
-      {run.kind === 'done' && (
+      {run.kind === 'done' && run.what === 'save' && (
         <View style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={u(16)} weight="fill" color={tokens.accent} />
           <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-            {run.what === 'submit' ? '단추에 제출했어요' : '임시 저장해 뒀어요'}
-          </Txt>
-        </View>
-      )}
-      {run.kind === 'error' && (
-        <View style={styles.row} accessibilityRole="alert">
-          <WarningCircle size={u(16)} weight="fill" color={tokens.danger} />
-          <Txt variant="caption" color={tokens.danger} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-            {run.message}
+            임시 저장해 뒀어요
           </Txt>
         </View>
       )}
 
-      <Txt variant="caption" color={tokens.muted}>
-        {submittedNow ? '제출한 견적, 비교표 열리기 전까지 수정 가능' : '견적서 금액 기준, 비교표 열리기 전까지 수정 가능'}
-      </Txt>
+      {p && (
+        <View style={styles.toolRow}>
+          <Button title="다시 불러오기" kind="text" disabled={sending} onPress={reload} />
+          <Button title="단추에 임시 저장" kind="text" disabled={sending} loading={run.kind === 'sending' && run.what === 'save'} onPress={() => void go('save')} />
+        </View>
+      )}
     </ChatShell>
   );
 }
@@ -361,11 +347,11 @@ const styles = StyleSheet.create({
   input: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: u(6), height: u(44), paddingHorizontal: u(14), borderRadius: radius.inner, borderWidth: 1, borderColor: tokens.borderInput },
   inputEmpty: { borderColor: tokens.wait, backgroundColor: tokens.waitSoft },
   inputText: { flex: 1, minWidth: 0, textAlign: 'right', fontFamily: fonts.bold, fontSize: u(15), color: tokens.text, paddingVertical: 0 },
-  facts: { paddingHorizontal: space.lg },
+  facts: { backgroundColor: tokens.group, borderRadius: 12, paddingHorizontal: 12 },
   tr: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: u(12), gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: u(8) },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
   totalRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: space.sm, marginBottom: space.xs },
   subRow: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
-  toolRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginTop: -space.sm },
+  toolRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
 });

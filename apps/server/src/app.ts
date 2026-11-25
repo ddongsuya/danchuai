@@ -188,7 +188,7 @@ export function createApp(deps: Deps) {
       outbound: deps.outbound,
       market: deps.market,
       usage: deps.usage,
-      assist: deps.danchu && catalogs ? { api: deps.danchu.api, runs, catalogs } : undefined,
+      assist: deps.danchu && catalogs ? { api: deps.danchu.api, runs, catalogs, recordMode: (u: string) => deps.danchu!.workspaces.prefs(u).then((p) => p.recordMode) } : undefined,
     }),
   );
 

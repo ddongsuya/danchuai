@@ -1,5 +1,5 @@
 // Muse 시안 (2026-11-25, 사용자 승인 "좋아 전체 반영하자"). 시안: claude.ai/artifact/28gXYnuMwCfn2XP8uZJC7o
-// 색은 Muse 화면 픽셀에서 잰 값이다. 색은 이 파일에서만 정한다. 화면은 이름(tokens.ink 등)으로만 쓴다.
+// 색·크기는 시안 원본(muse-sian-source-1125/muse.css, m01~m15.html)의 값이다. 색은 이 파일에서만 정한다. 화면은 이름(tokens.ink 등)으로만 쓴다.
 // 파랑(primary) 하나가 허용·주 버튼·확인 필요에 쓰인다. 초록(ok)은 "연결됨"·"지켜보는 중" 점에만, 호박(wait)은 기한·기다림에만.
 
 export const tokens = {
@@ -11,13 +11,35 @@ export const tokens = {
   group: '#f4f5f7',
   /** 칩·회색 버튼·뼈대 */
   sunken: '#eeeff1',
-  /** 지금 고른 탭·서랍 줄 */
-  selected: '#e9eaed',
-  border: '#e3e4e8',
+  /** 지금 고른 탭·서랍 줄·회색 버튼(muse.css #ececee) */
+  selected: '#ececee',
+  /** 줄 사이 선(--line) */
+  line: '#ececee',
+  border: '#e3e3e6',
   borderInput: '#8a8b91',
   text: '#121214',
-  muted: '#64656b',
-  faint: '#6c6d73',
+  /** 본문 보조(--sub) */
+  sub: '#3a3a3e',
+  /** 안내 한 줄(#55555a) */
+  note: '#55555a',
+  muted: '#6e6e73',
+  faint: '#6e6e73',
+  /** 체크칸·점 세 개 */
+  icon2: '#9a9aa0',
+  /** 두 칸·다섯 칸 전환 바탕과 고른 칸 */
+  seg: '#f6f6f7',
+  segOn: '#e6e6e9',
+  /** 고른 캐릭터 칸 */
+  pickBg: '#eef3fe',
+  /** 소식·맡길 일 색 칸 */
+  tintBlue: '#e6f0ff',
+  tintYellow: '#fff3dd',
+  tintPurple: '#efe9ff',
+  tintGreen: '#e7f6ec',
+  /** 비서 활동 기록 동그라미 */
+  logIcon: '#7e7f9a',
+  /** 설정·권한 시트 뒤 */
+  backdrop: '#c9c9c9',
   ink: '#121214',
   onInk: '#ffffff',
   /** 비서 말풍선 */
@@ -33,11 +55,11 @@ export const tokens = {
   accent: '#0447d6',
   accentSoft: '#e4ecfd',
   /** 연결됨·지켜보는 중 점 */
-  ok: '#1e8e4e',
+  ok: '#2f9e57',
   okSoft: '#e3f4ea',
   wait: '#8a5a00',
   waitSoft: '#fbf0d9',
-  danger: '#b0362e',
+  danger: '#d93a3a',
   scrim: 'rgba(18, 18, 20, 0.04)',
   /** 시트·서랍 뒤를 어둡게 하는 막 */
   overlay: 'rgba(18, 18, 20, 0.32)',
@@ -93,6 +115,16 @@ export const type = {
   museSmall: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
   museName: { fontFamily: fonts.bold, fontSize: 12.5, lineHeight: 16 },
   museStatus: { fontFamily: fonts.medium, fontSize: 11.5, lineHeight: 15 },
+  /** 시안 원본 글자(muse.css): 쪽 제목 22, 시트 제목 20, 소식 제목 15, 본문 13.5, 말풍선 14.5 */
+  mH1: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.4 },
+  mSheet: { fontFamily: fonts.semibold, fontSize: 20, lineHeight: 27, letterSpacing: -0.3 },
+  mBubble: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 21.75 },
+  mPost: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20.25 },
+  mPostBody: { fontFamily: fonts.regular, fontSize: 13.5, lineHeight: 20.25 },
+  mItem: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22.5 },
+  mItemSub: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18.85 },
+  mBody: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22.5 },
+  mSmall: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 17.5 },
   /** 화면에 하나만 두는 상태 숫자(제출 2/4곳, 3일 남음) */
   stat: { fontFamily: fonts.bold, fontSize: u(32), lineHeight: u(38), letterSpacing: u(-0.6) },
 } as const;

@@ -5,9 +5,10 @@
 // 승인 기록(epoch + 해시)과 한 번만 실행은 서버가 맡는다. 화면은 보낼 값(payload)으로만 그린다.
 // 단추 양식을 받았으면 분야마다 시험 종류와 조건부 필수 칸(PK 동물 시험의 군 수·군당 마릿수)을 줄로 보여 주고, 비면 묻는다.
 import type { RequestSheet } from '@danchuai/core';
-import { X } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+
+import { ConfirmCard } from '@/components/chat/ConfirmCard';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/Button';
@@ -83,7 +84,6 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
     return { key: f.key, label: items ? '시험 종류' : f.label, value: v && items && many ? `${cat}: ${v}` : v, field: { detail: f } as Ask };
   });
   const rows: { key: string; label: string; value: string | null; field?: Ask }[] = [
-    { key: 'to', label: '받는 곳', value: '분야가 맞는 참여 기관 전체' },
     { key: 'substance', label: '시험물질', value: sheet.substance?.trim() || null },
     ...detailRows,
     { key: 'purpose', label: FIELD_LABEL.purpose, value: value('purpose'), field: 'purpose' },
@@ -100,69 +100,65 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
           : { title: '허용', onPress: () => onApprove({ ...c, agreed: true }) };
 
   return (
-    <Animated.View entering={lineEnter(0, reduced)} style={styles.card} accessibilityViewIsModal>
-      <View style={styles.head}>
-        <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
-          {`${subjName(agentName)} 기관에 견적 요청을 보내려고 해요`}
-        </Txt>
-        <Press label="닫기" onPress={onClose} style={styles.close}>
-          <X size={u(22)} color={tokens.text} />
-        </Press>
-      </View>
-
-      <ScrollView style={{ maxHeight: u(360) }} contentContainerStyle={{ paddingBottom: u(2) }}>
-        {rows.map((r, i) => {
-          const empty = !r.value;
-          const inner = (
-            <>
-              <Txt variant="small" color={tokens.muted} style={styles.label}>
-                {r.label}
-              </Txt>
-              <Txt variant="small" color={empty ? tokens.wait : tokens.text} style={styles.value} numberOfLines={2}>
-                {r.value ?? '아직 정하지 않았어요'}
-              </Txt>
-            </>
-          );
-          // 카드 안 줄도 위에서부터 한 줄씩(줄 단위 등장 규칙)
-          return (
-            <Animated.View key={r.key} entering={lineEnter(i + 1, reduced)}>
-              {r.field ? (
-                <Press label={`${r.label} ${r.value ?? '비어 있음'}`} onPress={() => setAsking(r.field!)} style={[styles.row, i > 0 && styles.line]}>
-                  {inner}
-                </Press>
-              ) : (
-                <View style={[styles.row, i > 0 && styles.line]}>{inner}</View>
-              )}
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
-
-      {issue ? (
-        <Txt variant="small" color={tokens.danger} style={{ marginTop: space.sm }} accessibilityLiveRegion="polite">
-          {issue}
-        </Txt>
-      ) : null}
-
-      <Txt variant="caption" color={tokens.muted} style={styles.once}>
-        허용하면 이 내용 그대로 한 번 보내요
-      </Txt>
-      <Txt variant="caption" color={tokens.muted} style={styles.agree}>
-        {AGREEMENTS.map((a, i) => (
-          <Txt key={a.id} variant="caption" color={tokens.muted}>
-            <Txt variant="caption" color={tokens.muted} accessibilityRole="link" onPress={() => void openWeb(`${DANCHU_URL}${a.href}`)}>
-              {a.label}
+    <>
+      <ConfirmCard
+        title={`${subjName(agentName)} 기관에 견적 요청을 보내려고 해요`}
+        note="요청서 내용을 확인한 뒤 허용해 주세요."
+        preview={
+          <View style={styles.rows}>
+            {rows.map((r, i) => {
+              const empty = !r.value;
+              const inner = (
+                <>
+                  <Txt variant="small" color={tokens.muted} style={styles.label}>
+                    {r.label}
+                  </Txt>
+                  <Txt variant="small" color={empty ? tokens.wait : tokens.text} style={styles.value} numberOfLines={2}>
+                    {r.value ?? '아직 정하지 않았어요'}
+                  </Txt>
+                </>
+              );
+              // 카드 안 줄도 위에서부터 한 줄씩(줄 단위 등장 규칙)
+              return (
+                <Animated.View key={r.key} entering={lineEnter(i + 1, reduced)}>
+                  {r.field ? (
+                    <Press label={`${r.label} ${r.value ?? '비어 있음'}`} onPress={() => setAsking(r.field!)} style={[styles.row, i > 0 && styles.line]}>
+                      {inner}
+                    </Press>
+                  ) : (
+                    <View style={[styles.row, i > 0 && styles.line]}>{inner}</View>
+                  )}
+                </Animated.View>
+              );
+            })}
+          </View>
+        }
+        recipient={{ title: '받는 곳: 분야가 맞는 참여 기관 전체', sub: '의뢰자 정보는 선정 뒤에 보여요', icon: 'person' }}
+        issue={issue}
+        rejectLabel="거절"
+        allowLabel={sending ? '보내는 중이에요' : primary.title}
+        busy={sending}
+        onReject={onClose}
+        onAllow={primary.onPress}
+        foot={
+          <View style={{ gap: 4 }}>
+            <Txt variant="caption" color={tokens.muted} style={styles.center}>
+              허용하면 이 내용 그대로 한 번 보내요
             </Txt>
-            {i < AGREEMENTS.length - 1 ? ', ' : ''}
-          </Txt>
-        ))}
-        에 동의해요
-      </Txt>
-
-      <View>
-        <Button title={primary.title} tall loading={sending} loadingTitle="보내는 중이에요" onPress={primary.onPress} />
-      </View>
-
+            <Txt variant="caption" color={tokens.muted} style={styles.center}>
+              {AGREEMENTS.map((a, i) => (
+                <Txt key={a.id} variant="caption" color={tokens.muted}>
+                  <Txt variant="caption" color={tokens.muted} accessibilityRole="link" onPress={() => void openWeb(`${DANCHU_URL}${a.href}`)}>
+                    {a.label}
+                  </Txt>
+                  {i < AGREEMENTS.length - 1 ? ', ' : ''}
+                </Txt>
+              ))}
+              에 동의해요
+            </Txt>
+          </View>
+        }
+      />
       <Picker
         field={asking}
         choices={c}
@@ -172,7 +168,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
           setAsking(null);
         }}
       />
-    </Animated.View>
+    </>
   );
 }
 
@@ -257,29 +253,13 @@ function Picker({ field, choices, onClose, onPick }: { field: Ask; choices: Send
 }
 
 const styles = StyleSheet.create({
-  card: {
-    // 시안 A08: 입력창 자리(좌우 12), 모서리 28, 안쪽 20
-    marginHorizontal: space.md,
-    backgroundColor: tokens.surface,
-    borderRadius: radius.approval,
-    borderWidth: 1,
-    borderColor: tokens.border,
-    padding: space.xl,
-    shadowColor: tokens.ink,
-    shadowOpacity: 0.16,
-    shadowRadius: u(24),
-    shadowOffset: { width: 0, height: u(10) },
-    elevation: 8,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: u(6) },
-  close: { width: u(24), height: u(24), alignItems: 'center', justifyContent: 'center' },
+  rows: { paddingHorizontal: 14, paddingVertical: 4 },
+  center: { textAlign: 'center' },
   // 시안 .kv: 이름표 88, 간격 12, 위아래 9, 값은 보통 굵기, 줄 사이에만 선
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: u(9) },
-  line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  label: { width: u(88) },
+  line: { borderTopWidth: 1, borderTopColor: tokens.line },
+  label: { width: u(80) },
   value: { flex: 1 },
-  once: { marginTop: space.sm },
-  agree: { marginTop: u(2), marginBottom: u(10) },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: u(56), borderTopWidth: 1, borderTopColor: tokens.border },
   input: { height: u(52), borderRadius: radius.inner, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, paddingHorizontal: space.lg, fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
 });

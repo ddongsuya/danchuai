@@ -48,6 +48,8 @@ export interface Me {
   consentVersion?: string;
   /** 고른 비서 캐릭터(계정별, Muse 시안 2026-11-25). 옛 서버는 보내지 않는다 */
   character?: string;
+  /** 권한·목표(Muse 시안 2026-11-25) */
+  prefs?: AgentPrefs;
 }
 export const fetchMe = () => call<Me>('/me');
 /** 국외 이전·AI 처리 동의. 서버가 판(version)을 확인한다 */
@@ -56,3 +58,13 @@ export const agreeConsent = (version: string) => call<{ consent: { version: stri
 export const revokeConsent = (version: string) => call<{ revoked: { version: string } }>('/consent/revoke', { version });
 /** 비서 캐릭터 고르기(계정별). 서버가 목록에 있는 값인지 확인한다 */
 export const saveCharacter = (character: string) => call<{ character: string }>('/character', { character });
+
+/** 단추에 기록하는 일: 바로 하고 알리기(auto)·매번 묻기(ask). 밖으로 보내는 일은 늘 묻는다 */
+export type RecordMode = 'auto' | 'ask';
+export interface AgentPrefs {
+  recordMode: RecordMode;
+  /** 이번 달 수주 목표 건수(기관). 없으면 null */
+  winGoal: number | null;
+}
+export const DEFAULT_PREFS: AgentPrefs = { recordMode: 'auto', winGoal: null };
+export const savePrefs = (patch: Partial<AgentPrefs>) => call<{ prefs: AgentPrefs }>('/prefs', patch).then((r) => r.prefs);

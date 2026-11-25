@@ -271,3 +271,10 @@ export async function approveDanchuAction(role: AgentRole, d: DanchuActionDraft)
   const status = r.status === 'sent' || r.status === 'failed' ? r.status : 'unknown';
   return { status, result: r.result && typeof r.result === 'object' ? (r.result as Record<string, unknown>) : null };
 }
+
+/** 이번 달 사용량(설정 시트 막대). percent 는 조직 한 달 한도 대비 0~100, 한도가 없으면 null. resetsOn 은 다음 달 1일(YYYY-MM-DD) */
+export interface UsageView {
+  percent: number | null;
+  resetsOn: string;
+}
+export const getUsage = (role: AgentRole) => call<UsageView>(role, '/v1/agent/usage');

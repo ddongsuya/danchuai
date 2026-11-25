@@ -8,7 +8,7 @@ import { danchuApi, type DanchuApi, type DanchuMe } from "../src/danchu";
 import { CONSENT_VERSION, danchuIdentity, MemoryWorkspaceRepo, workspaceKey } from "../src/danchuAuth";
 import { MemoryOutboundRepo } from "../src/repo";
 import { purgeSignature, verifyPurge, type PurgeReason, type PurgeRepo } from "../src/purge";
-import { costMicros, MemoryUsageRepo, periods, usageConfigFromEnv, usageMeter, type UsageMeter } from "../src/usage";
+import { costMicros, MemoryUsageRepo, nextMonthStart, periods, usageConfigFromEnv, usageMeter, type UsageMeter } from "../src/usage";
 import { afterDanchuSent, canonical, checkAction, outcomeOf, parseActionText } from "../src/danchuActions";
 
 /* 단추 계정 연동(연동 2단계): 신원은 단추에서만, 동의 전 AI 금지, 읽기는 단추에서 */
@@ -197,6 +197,21 @@ describe("단추 신원", () => {
     // 다른 계정에는 번지지 않는다
     const other = (await (await call("GET", "/account/me", T_CRO)).json()) as { character: string };
     expect(other.character).toBe("danchu");
+  });
+
+  it("권한·목표: 처음엔 바로 하고 알리기·목표 없음, 정한 값만 계정별로. 밖으로 보내는 일은 받지 않는다", async () => {
+    const { call } = setup();
+    const before = (await (await call("GET", "/account/me", T_CRO)).json()) as { prefs: { recordMode: string; winGoal: number | null } };
+    expect(before.prefs).toEqual({ recordMode: "auto", winGoal: null });
+    expect((await call("POST", "/account/prefs", T_CRO, { sendMode: "auto" })).status).toBe(400);
+    expect((await call("POST", "/account/prefs", T_CRO, { recordMode: "never" })).status).toBe(400);
+    expect((await call("POST", "/account/prefs", T_CRO, {})).status).toBe(400);
+    expect((await call("POST", "/account/prefs", T_CRO, { winGoal: 0 })).status).toBe(400);
+    expect((await call("POST", "/account/prefs", T_CRO, { recordMode: "ask", winGoal: 5 })).status).toBe(200);
+    const after = (await (await call("GET", "/account/me", T_CRO)).json()) as { prefs: unknown };
+    expect(after.prefs).toEqual({ recordMode: "ask", winGoal: 5 });
+    const other = (await (await call("GET", "/account/me", T_REQ)).json()) as { prefs: unknown };
+    expect(other.prefs).toEqual({ recordMode: "auto", winGoal: null });
   });
 
   it("가입·조직·초대는 단추에서 관리", async () => {
@@ -692,5 +707,21 @@ describe("AI 이용량 상한", () => {
     expect(await meter.over(b, now)).toBe("all_month");
     // 다음 달에는 다시 열린다
     expect(await meter.over(a, new Date("2026-12-05T00:00:00Z"))).toBeNull();
+  });
+
+  it("설정 시트 사용량: 조직 한 달 상한 대비 비율과 한국 시간 다음 달 1일", async () => {
+    const repo = new MemoryUsageRepo();
+    const meter = usageMeter(repo, { prices: { input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, caps: { userDay: null, orgMonth: 4_000_000, allMonth: null } });
+    const a = { userId: "a", orgId: "11111111-1111-4111-8111-111111111111", role: "cro" as const };
+    const now = new Date("2026-11-19T00:00:00Z");
+    expect(await meter.monthShare(a, now)).toBe(0);
+    await meter.record(a, { inputTokens: 1, outputTokens: 0 }, now);
+    expect(await meter.monthShare(a, now)).toBe(25);
+    // 11월 30일 16시(UTC)는 한국 시간 12월 1일
+    expect(nextMonthStart(new Date("2026-11-30T16:00:00Z"))).toBe("2027-01-01");
+    expect(nextMonthStart(new Date("2026-12-31T16:00:00Z"))).toBe("2027-02-01");
+    expect(nextMonthStart(now)).toBe("2026-12-01");
+    const off = usageMeter(repo, { prices: { input: 1, output: 0, cacheRead: 0, cacheWrite: 0 }, caps: { userDay: null, orgMonth: null, allMonth: null } });
+    expect(await off.monthShare(a, now)).toBeNull();
   });
 });
