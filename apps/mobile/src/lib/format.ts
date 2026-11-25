@@ -55,3 +55,9 @@ export function localDay(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+/** 부를 때 붙는 말: "비비라고", "몽글이라고"(받침이 있으면 "이라고") */
+export const callName = (name: string) => {
+  const code = name.charCodeAt(name.length - 1) - 0xac00;
+  return code >= 0 && code <= 11171 && code % 28 !== 0 ? `${name}이라고` : `${name}라고`;
+};

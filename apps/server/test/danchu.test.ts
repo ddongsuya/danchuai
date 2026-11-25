@@ -185,6 +185,20 @@ describe("단추 신원", () => {
     expect(api.calls.filter((c) => c === `me:${T_CRO}`)).toHaveLength(1);
   });
 
+  it("비서 캐릭터: 처음엔 단추, 목록에 있는 값만 계정별로 저장", async () => {
+    const { call } = setup();
+    const before = (await (await call("GET", "/account/me", T_REQ)).json()) as { character: string };
+    expect(before.character).toBe("danchu");
+    expect((await call("POST", "/account/character", T_REQ, { character: "kit" })).status).toBe(400);
+    expect((await call("POST", "/account/character", T_REQ, { character: "bibi", orgId: "x" })).status).toBe(400);
+    expect((await call("POST", "/account/character", T_REQ, { character: "bibi" })).status).toBe(200);
+    const after = (await (await call("GET", "/account/me", T_REQ)).json()) as { character: string };
+    expect(after.character).toBe("bibi");
+    // 다른 계정에는 번지지 않는다
+    const other = (await (await call("GET", "/account/me", T_CRO)).json()) as { character: string };
+    expect(other.character).toBe("danchu");
+  });
+
   it("가입·조직·초대는 단추에서 관리", async () => {
     const { call } = setup();
     expect((await call("POST", "/account/org", T_REQ, { kind: "cro", name: "x", displayName: "x" })).status).toBe(404);

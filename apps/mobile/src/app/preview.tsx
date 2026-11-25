@@ -1,7 +1,7 @@
 // 화면 미리보기. 예시 값만 쓰고 서버를 부르지 않는다. 로그인 없이 열린다(_layout).
 // /preview 는 목록, /preview?view=<이름> 은 그 화면 하나. 실제 화면과 같은 컴포넌트를 그대로 쓴다.
 // 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
-import { applyQuotePatch, quoteDraftFromBrief, SHEET_LABELS, type RequestSheet, type SheetField } from '@danchuai/core';
+import { applyQuotePatch, characterOf, type AgentCharacterId, quoteDraftFromBrief, SHEET_LABELS, type RequestSheet, type SheetField } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { CaretRight, ChatCircleText, ClockCounterClockwise, Lightbulb, PaperPlaneTilt, SquaresFour, UserCircle, X } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
@@ -9,6 +9,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountView } from '@/app/account/index';
+import { CharacterView } from '@/app/account/character';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { ConsentBody } from '@/components/auth/ConsentBody';
 import { GateState, type GateKind } from '@/components/auth/GateState';
@@ -431,6 +432,8 @@ const VIEWS: View_[] = [
   { key: 'req-home-loading', label: '의뢰자 첫 화면, 불러오는 중', group: '첫 화면' },
   { key: 'req-home-menu', label: '의뢰자 대화 탭, 서랍 열림', group: '첫 화면' },
   { key: 'tab-feed-req', label: '소식 탭(의뢰자)', group: '탭' },
+  { key: 'character', label: '비서 캐릭터 고르기(비비 고름)', group: '탭' },
+  { key: 'lab-assist-bibi', label: '비서를 비비로 바꾼 뒤 대화', group: '탭' },
   { key: 'tab-feed-lab', label: '소식 탭(기관)', group: '탭' },
   { key: 'tab-todo-req', label: '할 일 탭(의뢰자 요청함)', group: '탭' },
   { key: 'tab-todo-lab', label: '할 일 탭(기관 받은 요청)', group: '탭' },
@@ -501,9 +504,9 @@ const TAB_VIEW: Record<'requester' | 'cro', Record<TabKey, string>> = {
   requester: { index: 'req-home', feed: 'tab-feed-req', ideas: 'tab-ideas', todo: 'tab-todo-req', library: 'tab-library' },
   cro: { index: 'lab-assist', feed: 'tab-feed-lab', ideas: 'tab-ideas', todo: 'tab-todo-lab', library: 'tab-library' },
 };
-function InTabs({ role, tab, check = 0, drawer = false, children }: { role: 'requester' | 'cro'; tab: TabKey; check?: number; drawer?: boolean; children: React.ReactNode }) {
+function InTabs({ role, tab, check = 0, drawer = false, character = 'danchu', children }: { role: 'requester' | 'cro'; tab: TabKey; check?: number; drawer?: boolean; character?: AgentCharacterId; children: React.ReactNode }) {
   const [open, setOpen] = useState(drawer);
-  const shell = { role, agentName: '단추', live: true, check, onCheck: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')), unread: 2, openDrawer: () => setOpen(true), chatKey: 0 };
+  const shell = { role, character, agentName: characterOf(character).name, live: true, check, onCheck: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')), unread: 2, openDrawer: () => setOpen(true), chatKey: 0 };
   const ic = (I: typeof PaperPlaneTilt) => <I size={20} color={tokens.text} />;
   const chats: DrawerItem[] =
     role === 'cro'
@@ -527,7 +530,7 @@ function InTabs({ role, tab, check = 0, drawer = false, children }: { role: 'req
         <View style={{ flex: 1 }}>{children}</View>
         <TabBarView active={tab} unread={2} onPress={(k) => router.replace(toView(TAB_VIEW[role][k]))} />
       </View>
-      <Drawer visible={open} onClose={() => setOpen(false)} title="단추" active={tab} onTab={(k) => router.replace(toView(TAB_VIEW[role][k]))} chats={chats} more={more} onSettings={() => router.push(toView('account'))} onNew={noop} />
+      <Drawer visible={open} onClose={() => setOpen(false)} title={characterOf(character).name} active={tab} onTab={(k) => router.replace(toView(TAB_VIEW[role][k]))} chats={chats} more={more} onSettings={() => router.push(toView('account'))} onNew={noop} />
     </ShellProvider>
   );
 }
@@ -590,6 +593,14 @@ function PreviewView({ view }: { view: string }) {
       return reqHome({ kind: 'loading' });
     case 'req-home-menu':
       return reqHome({ kind: 'ready', items: REQ_ITEMS }, true);
+    case 'character':
+      return <CharacterView current="danchu" initial="bibi" onSave={() => router.push(toView('lab-assist-bibi'))} />;
+    case 'lab-assist-bibi':
+      return (
+        <InTabs role="cro" tab="index" character="bibi">
+          <AssistView brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'tab-feed-req':
       return (
         <InTabs role="requester" tab="feed">
@@ -713,7 +724,7 @@ function PreviewView({ view }: { view: string }) {
         </ChatShell>
       );
     case 'account':
-      return <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} onManage={noop} onDelete={noop} onRevoke={noop} onLogout={() => router.push(toView('logout'))} />;
+      return <AccountView name="바이오랩" role="의뢰자" consent={day(0).slice(5).replace('-', '.')} character="danchu" onCharacter={() => router.push(toView('character'))} onManage={noop} onDelete={noop} onRevoke={noop} onLogout={() => router.push(toView('logout'))} />;
     case 'approve':
       return (
         <ChatShell

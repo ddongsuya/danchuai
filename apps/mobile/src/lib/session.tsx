@@ -4,8 +4,14 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { AccountError, fetchMe, type AccountOrg } from './accountClient';
+import { DEFAULT_CHARACTER, isCharacterId, type AgentCharacterId } from '@danchuai/core';
+
+import { AccountError, fetchMe, saveCharacter, type AccountOrg } from './accountClient';
+import { authStorage } from './storage';
 import { supabase } from './supabase';
+
+/** 시연 모드(로그인 꺼짐)에서 고른 캐릭터를 기기에 둔다. 로그인하면 서버(계정별)가 원본 */
+const DEMO_CHARACTER_KEY = 'danchuai.character';
 
 export type AuthStatus = 'disabled' | 'loading' | 'signedOut' | 'recovery' | 'needsOrg' | 'needsConsent' | 'blocked' | 'ready' | 'error';
 export type BlockedReason = 'org_not_ready' | 'plan_required' | 'forbidden';
@@ -21,6 +27,10 @@ interface AuthState {
   consentAt: string | null;
   /** 동의한 판(철회할 때 보낸다) */
   consentVersion: string | null;
+  /** 고른 비서 캐릭터(계정별). 이름도 이 캐릭터 이름을 쓴다 */
+  character: AgentCharacterId;
+  /** 캐릭터를 바꾼다. 화면에 먼저 바꾸고, 서버 저장이 안 되면 되돌리고 오류를 던진다 */
+  setCharacter: (id: AgentCharacterId) => Promise<void>;
   /** 조직을 만들거나 참여한 뒤 다시 읽는다. */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -36,6 +46,8 @@ const Ctx = createContext<AuthState>({
   danchu: false,
   consentAt: null,
   consentVersion: null,
+  character: DEFAULT_CHARACTER,
+  setCharacter: async () => undefined,
   refresh: async () => undefined,
   signOut: async () => undefined,
   setRecovery: () => undefined,
@@ -50,6 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [danchu, setDanchu] = useState(false);
   const [consentAt, setConsentAt] = useState<string | null>(null);
   const [consentVersion, setConsentVersion] = useState<string | null>(null);
+  const [character, setCharacterState] = useState<AgentCharacterId>(() => {
+    // 시연 모드는 기기에 둔 값을 쓴다
+    if (supabase) return DEFAULT_CHARACTER;
+    try {
+      const v = authStorage?.getItem(DEMO_CHARACTER_KEY);
+      return isCharacterId(v) ? v : DEFAULT_CHARACTER;
+    } catch {
+      return DEFAULT_CHARACTER;
+    }
+  });
   const [base, setStatus] = useState<AuthStatus>(supabase ? 'loading' : 'disabled');
   const [recovery, setRecovery] = useState(false);
   const status: AuthStatus = recovery ? 'recovery' : base;
@@ -69,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setDanchu(me.source === 'danchu');
       setConsentAt(me.consent?.agreedAt ?? null);
       setConsentVersion(me.consent?.version ?? null);
+      setCharacterState(isCharacterId(me.character) ? me.character : DEFAULT_CHARACTER);
       setBlocked(null);
       if (!me.org) return setStatus('needsOrg');
       setStatus(me.source === 'danchu' && !me.consent ? 'needsConsent' : 'ready');
@@ -117,8 +140,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await load(null);
       },
       setRecovery,
+      character,
+      setCharacter: async (id) => {
+        const prev = character;
+        setCharacterState(id);
+        if (!supabase) {
+          try {
+            authStorage?.setItem(DEMO_CHARACTER_KEY, id);
+          } catch {
+            // 기기에 못 남겨도 이번 실행에서는 바뀐 채로 둔다
+          }
+          return;
+        }
+        try {
+          await saveCharacter(id);
+        } catch (e) {
+          setCharacterState(prev);
+          throw e;
+        }
+      },
     }),
-    [status, session, org, blocked, danchu, consentAt, consentVersion, load],
+    [status, session, org, blocked, danchu, consentAt, consentVersion, character, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

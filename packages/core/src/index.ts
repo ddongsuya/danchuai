@@ -5,3 +5,4 @@ export * from "./provider";
 export * from "./agent";
 export * from "./intent";
 export * from "./danchuQuote";
+export * from "./characters";

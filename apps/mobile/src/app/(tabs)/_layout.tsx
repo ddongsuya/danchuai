@@ -1,6 +1,7 @@
 // 탭 묶음(Muse 시안 2026-11-25). 아래 탭 5개(대화·소식·맡길 일·할 일·자료)와 서랍을 의뢰자·기관이 같이 쓴다.
 // 역할은 로그인한 조직 종류로 정한다. 시연 모드(로그인 꺼짐)에서만 서랍의 "화면 바꾸기"나 주소 ?as=cro로 바꾼다.
 // 보낸 것 확인 필요 수와 읽지 않은 소식 수는 여기서 한 번 읽어 위 막대·아래 탭이 나눠 쓴다.
+import { characterOf } from '@danchuai/core';
 import { Redirect, router, useGlobalSearchParams, useSegments, type Href } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { ChatCircleText, ClockCounterClockwise, PaperPlaneTilt, UserCircle, UserSwitch } from 'phosphor-react-native';
@@ -21,7 +22,8 @@ import { useAuth } from '@/lib/session';
 export const tabHref = (key: TabKey): Href => (key === 'index' ? '/' : (`/${key}` as Href));
 
 export default function TabsLayout() {
-  const { status, org } = useAuth();
+  const { status, org, character } = useAuth();
+  const agentName = characterOf(character).name;
   const { as } = useGlobalSearchParams<{ as?: string }>();
   const [demoRole, setDemoRole] = useState<AgentRole>(as === 'cro' ? 'cro' : 'requester');
   // 주소의 ?as= 가 바뀌면(옛 기관 비서 주소로 들어옴) 시연 역할을 따라 바꾼다
@@ -42,13 +44,17 @@ export default function TabsLayout() {
   const active = (segments.at(-1) && ['feed', 'ideas', 'todo', 'library'].includes(segments.at(-1)!) ? segments.at(-1) : 'index') as TabKey;
 
   const shell = useMemo(
-    () => ({ role, agentName: '단추', live, check: sent.check, onCheck: sent.onCheck, unread, openDrawer: () => {
+    () => ({
+      role,
+      character,
+      agentName,
+      live, check: sent.check, onCheck: sent.onCheck, unread, openDrawer: () => {
         setDrawer(true);
         if (live && inApp) void loadChats();
       },
       chatKey,
     }),
-    [role, live, inApp, sent.check, sent.onCheck, unread, chatKey, loadChats],
+    [role, character, agentName, live, inApp, sent.check, sent.onCheck, unread, chatKey, loadChats],
   );
 
   if (status === 'signedOut') return <Redirect href="/welcome" />;
@@ -77,7 +83,7 @@ export default function TabsLayout() {
       <Drawer
         visible={drawer}
         onClose={() => setDrawer(false)}
-        title="단추"
+        title={agentName}
         active={active}
         onTab={(key) => router.navigate(tabHref(key))}
         chats={chats}

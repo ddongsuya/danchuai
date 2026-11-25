@@ -5,6 +5,7 @@ import type { AuthResolver, Session } from "./auth";
 import type { DanchuApi, DanchuError, DanchuMe } from "./danchu";
 import { sha256 } from "./hash";
 import type { Pool } from "./db/pool";
+import type { AgentCharacterId } from "@danchuai/core";
 
 /** 국외 이전·AI 처리 동의 판. 문구가 바뀌면 올리고, 다시 동의받는다. */
 export const CONSENT_VERSION = "2026-11-17";
@@ -16,6 +17,9 @@ export interface WorkspaceRepo {
   agree(userId: string, version: string): Promise<void>;
   /** 이 계정의 동의를 철회로 표시한다(기록은 남긴다) */
   revoke(userId: string): Promise<void>;
+  /** 고른 비서 캐릭터(없으면 null, 앱이 기본 "단추"를 쓴다) */
+  character(userId: string): Promise<string | null>;
+  setCharacter(userId: string, id: AgentCharacterId): Promise<void>;
 }
 
 export interface DanchuIdentity {
@@ -89,6 +93,16 @@ export class PgWorkspaceRepo implements WorkspaceRepo {
   async revoke(userId: string) {
     await this.pool.query(`update agent_consents set revoked_at = now() where danchu_user_id = $1 and revoked_at is null`, [userId]);
   }
+  async character(userId: string) {
+    const { rows } = await this.pool.query<{ character: string }>(`select character from agent_prefs where danchu_user_id = $1`, [userId]);
+    return rows[0]?.character ?? null;
+  }
+  async setCharacter(userId: string, id: AgentCharacterId) {
+    await this.pool.query(
+      `insert into agent_prefs (danchu_user_id, character) values ($1, $2) on conflict (danchu_user_id) do update set character = excluded.character, updated_at = now()`,
+      [userId, id],
+    );
+  }
 }
 
 export class MemoryWorkspaceRepo implements WorkspaceRepo {
@@ -111,5 +125,12 @@ export class MemoryWorkspaceRepo implements WorkspaceRepo {
   }
   async revoke(userId: string) {
     for (const k of [...this.consents.keys()]) if (k.startsWith(`${userId}:`)) this.consents.delete(k);
+  }
+  private characters = new Map<string, string>();
+  async character(userId: string) {
+    return this.characters.get(userId) ?? null;
+  }
+  async setCharacter(userId: string, id: AgentCharacterId) {
+    this.characters.set(userId, id);
   }
 }

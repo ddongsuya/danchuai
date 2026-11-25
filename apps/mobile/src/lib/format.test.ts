@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { daysLeft, localDay, shortDate } from './format';
+import { callName, daysLeft, localDay, shortDate } from './format';
 
 describe('shortDate', () => {
   it('월.일(요일)로 줄인다', () => {
@@ -30,5 +30,15 @@ describe('localDay', () => {
   it('기기 날짜로 바꾼다', () => {
     const d = new Date(2026, 10, 12, 1, 0);
     expect(localDay(d.toISOString())).toBe('2026-11-12');
+  });
+});
+
+describe('callName', () => {
+  it('받침이 있으면 이라고, 없으면 라고', () => {
+    expect(callName('비비')).toBe('비비라고');
+    expect(callName('몽글')).toBe('몽글이라고');
+    expect(callName('펭')).toBe('펭이라고');
+    expect(callName('캡캡')).toBe('캡캡이라고');
+    expect(callName('단추')).toBe('단추라고');
   });
 });

@@ -1,5 +1,6 @@
 // 위 막대(Muse 시안 2026-11-25): 왼쪽 서랍 단추, 가운데 비서 캐릭터 + 이름 + 상태, 오른쪽은 화면마다(없으면 빈 자리).
 // 상태는 두세 단어 하나만: 일하는 중 > 확인 필요(파랑, 누르면 볼 곳) > 연결됨(초록 점) / 연결 전.
+import type { AgentCharacterId } from '@danchuai/core';
 import { Info, List } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -27,15 +28,15 @@ export function CircleButton({ label, onPress, children, disabled }: { label: st
 export function AgentHeader({ working = false, right, onMenu, onAgent }: { working?: boolean; right?: ReactNode; onMenu?: () => void; onAgent?: () => void }) {
   const shell = useShell();
   const status = headerStatus(working, shell.check, shell.live);
-  return <AgentHeaderView name={shell.agentName} status={status} onMenu={onMenu ?? shell.openDrawer} onCheck={shell.onCheck} onAgent={onAgent} right={right} />;
+  return <AgentHeaderView name={shell.agentName} character={shell.character} status={status} onMenu={onMenu ?? shell.openDrawer} onCheck={shell.onCheck} onAgent={onAgent} right={right} />;
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AgentHeaderView({ name, status, onMenu, onCheck, onAgent, right }: { name: string; status: HeaderStatus; onMenu: () => void; onCheck?: () => void; onAgent?: () => void; right?: ReactNode }) {
+export function AgentHeaderView({ name, character, status, onMenu, onCheck, onAgent, right }: { name: string; character?: AgentCharacterId; status: HeaderStatus; onMenu: () => void; onCheck?: () => void; onAgent?: () => void; right?: ReactNode }) {
   const label = STATUS_LABEL[status];
   const mid = (
     <>
-      <AgentAvatar size={44} state={status === 'working' ? 'thinking' : 'idle'} />
+      <AgentAvatar size={44} character={character} state={status === 'working' ? 'thinking' : 'idle'} />
       <Txt variant="museName" numberOfLines={1}>
         {name}
       </Txt>
