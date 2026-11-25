@@ -1,10 +1,9 @@
 // 기관 비서(에이전트 액션 등록부 1~3단계). 단추 고객관리·일정·할 일을 말로 맡긴다.
 // 비서는 기관 안 기록만 바로 하고(실행 카드, 되돌리기), 밖으로 나가는 일은 받은 요청 화면의 확인 카드로만 나간다.
 // 처음 열면 단추 브리핑(오늘 할 일·손이 필요한 안건)을 보여 준다. 숫자·금액은 단추가 계산한 화면에서 본다.
-// 기관의 첫 화면이다(시안 2026-11-20): 가운데 위에 비서 캐릭터, 왼쪽 위 메뉴(받은 요청·실행 기록·질문하기·계정),
-// 답을 준비하는 동안 말풍선에 점 셋이 튄다.
-import { router } from 'expo-router';
-import { ArrowCounterClockwise, Bell, ChatCircleText, CheckCircle, ClockCounterClockwise, List, Microphone, MinusCircle, PaperPlaneTilt, Question, Tray, UserCircle, UserSwitch, WarningCircle } from 'phosphor-react-native';
+// 기관의 대화 탭이다(Muse 시안 2026-11-25): 위 가운데 비서 캐릭터·이름·상태, 왼쪽 서랍(탭·따로 하는 대화·설정),
+// 답을 준비하는 동안 말풍선에 점 셋이 튀고 위 상태는 "일하는 중".
+import { ArrowCounterClockwise, CheckCircle, Microphone, MinusCircle, Question, WarningCircle } from 'phosphor-react-native';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,19 +11,15 @@ import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
 import { TypingBubble } from '@/components/chat/TypingBubble';
-import { AgentAvatar } from '@/components/agent/AgentAvatar';
-import { AgentStatus, useSentCheck, useUnreadAlerts } from '@/components/agent/AgentStatus';
-import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { LookupCard } from '@/components/agent/LookupCard';
 import { RecordSheet } from '@/components/agent/RecordSheet';
-import { IconButton } from '@/components/ui/IconButton';
+import { AgentHeader, CircleButton } from '@/components/shell/AgentHeader';
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from '@/components/agent/LiveChat';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, tokens, u, uc } from '@/constants/theme';
+import { fonts, radius, tokens, uc } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { AgentHttpError, readDanchu, undoRun, type AssistBriefView, type QuoteHitView } from '@/lib/agentClient';
-import { useAuth } from '@/lib/session';
 import type { ActionCard, ChatErrorCode, ChatMessage, LookupCard as LookupItem } from '@/lib/chat';
 
 /** 빈 대화에서 바로 보낼 말 */
@@ -60,13 +55,8 @@ export function AssistChat() {
   };
 
   const busy = state.status !== 'idle';
-  const { org, status } = useAuth();
-  const sent = useSentCheck('cro');
-  const alerts = useUnreadAlerts('cro');
   return (
     <AssistView
-      sent={sent}
-      menu={{ title: '비서', sub: org?.name ?? null, items: croMenu(0, alerts), footer: status === 'disabled' ? [{ key: 'switch', label: '의뢰자 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/') }] : [] }}
       brief={brief}
       messages={state.messages}
       actions={state.actions}
@@ -84,23 +74,7 @@ export function AssistChat() {
   );
 }
 
-/** 기관 메뉴: 받은 요청(목록), 알림(읽지 않은 수), 보낸 것(승인해 단추로 나간 것), 비서가 한 일(실행 기록), 가이드라인 질문, 계정 */
-export function croMenu(newCount = 0, alertCount = 0): MenuItem[] {
-  const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
-  return [
-    { key: 'inbox', label: '받은 요청', icon: ic(Tray), count: newCount, onPress: () => router.push('/lab') },
-    { key: 'alerts', label: '알림', icon: ic(Bell), count: alertCount, onPress: () => router.push({ pathname: '/alerts', params: { role: 'cro' } }) },
-    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'cro' } }) },
-    { key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') },
-    { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: () => router.push({ pathname: '/ask', params: { role: 'cro' } }) },
-    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
-  ];
-}
-
 export interface AssistViewProps {
-  menu: { title: string; sub?: string | null; items: MenuItem[]; footer?: MenuItem[] };
-  /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
-  initialMenuOpen?: boolean;
   brief: AssistBriefView | null | 'error';
   messages: ChatMessage[];
   actions: ActionCard[];
@@ -120,13 +94,10 @@ export interface AssistViewProps {
   /** 미리보기에서 녹음 시트를 연 채로 보여 줄 때만 */
   initialRecordOpen?: boolean;
   onUndo: (runId: string) => void;
-  /** 캐릭터 밑 상태 줄: 보낸 것 가운데 결과 확인 필요 건수 */
-  sent?: { check: number; onCheck: () => void };
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ menu, initialMenuOpen = false, brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo, sent }: AssistViewProps) {
-  const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
+export function AssistView({ brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo }: AssistViewProps) {
   const [recordOpen, setRecordOpen] = useState(initialRecordOpen);
   const empty = !messages.length && !streaming;
   const cardsAt = (i: number) => actions.filter((a) => a.at === i);
@@ -135,30 +106,24 @@ export function AssistView({ menu, initialMenuOpen = false, brief, messages, act
   const tail = actions.filter((a) => a.at >= messages.length);
   const findTail = lookups.filter((a) => a.at >= messages.length);
   const thinking = !!streaming && !streaming.text;
-  // 위 막대: 왼쪽 메뉴, 가운데는 대화가 시작되면 작은 캐릭터(처음에는 본문 가운데 큰 캐릭터)
+  // 위 막대: 서랍, 가운데 비서 캐릭터·이름·상태(답을 준비하는 동안 "일하는 중"), 오른쪽 회의 녹음
   const nav = (
-    <View style={styles.nav}>
-      <IconButton label="메뉴" onPress={() => setMenuOpen(true)}>
-        <List size={u(22)} color={tokens.text} />
-      </IconButton>
-      <View style={styles.navMid}>{!empty && <AgentAvatar size={uc(30)} state={streaming ? 'thinking' : 'idle'} />}</View>
-      {onTranscript ? (
-        <IconButton label="회의 녹음" onPress={() => canSend && setRecordOpen(true)}>
-          <Microphone size={u(22)} color={canSend ? tokens.text : tokens.faint} />
-        </IconButton>
-      ) : (
-        <View style={styles.navSpacer} />
-      )}
-    </View>
+    <AgentHeader
+      working={!!streaming || !!starting}
+      right={
+        onTranscript ? (
+          <CircleButton label="회의 녹음" disabled={!canSend} onPress={() => setRecordOpen(true)}>
+            <Microphone size={20} color={canSend ? tokens.text : tokens.faint} />
+          </CircleButton>
+        ) : undefined
+      }
+    />
   );
   return (
-    <ChatShell title="비서" nav={nav} bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
-      <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
+    <ChatShell title="비서" tabs nav={nav} bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
       {onTranscript && <RecordSheet visible={recordOpen} onClose={() => setRecordOpen(false)} onTranscript={onTranscript} />}
       {empty && (
         <View style={styles.hero}>
-          <AgentAvatar size={uc(64)} state={starting ? 'thinking' : 'idle'} />
-          {sent && <AgentStatus working={starting} check={sent.check} onCheck={sent.onCheck} />}
           <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
             무엇을 맡길까요?
           </Txt>
@@ -298,10 +263,7 @@ function RunCard({ card, busy, onUndo }: { card: ActionCard; busy: boolean; onUn
 }
 
 const styles = StyleSheet.create({
-  nav: { flexDirection: 'row', alignItems: 'center', height: u(50), paddingHorizontal: u(6) },
-  navMid: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  navSpacer: { width: u(44) },
-  hero: { alignItems: 'center', gap: uc(10), paddingTop: uc(10), paddingBottom: uc(4) },
+  hero: { alignItems: 'center', paddingTop: uc(28), paddingBottom: uc(4) },
   heroTitle: { textAlign: 'center' },
   card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: uc(14), paddingVertical: uc(10), gap: uc(2) },
   head: { flexDirection: 'row', alignItems: 'center', paddingBottom: uc(6) },

@@ -16,6 +16,7 @@ export function ChatShell({
   dim,
   nav,
   flushBottom,
+  tabs,
 }: {
   title: string;
   children: ReactNode;
@@ -25,6 +26,8 @@ export function ChatShell({
   nav?: ReactNode;
   /** bottom 이 화면 아래 끝까지 닿는다(질문 카드). 아래 안전 영역은 bottom 이 직접 띄운다 */
   flushBottom?: boolean;
+  /** 탭 안의 대화(Muse 시안 2026-11-25): 아래 안전 영역은 탭 막대가 맡는다 */
+  tabs?: boolean;
 }) {
   const o = useSharedValue(dim ? 0.45 : 1);
   useEffect(() => {
@@ -32,7 +35,7 @@ export function ChatShell({
   }, [dim, o]);
   const fade = useAnimatedStyle(() => ({ opacity: o.get() }));
   return (
-    <SafeAreaView style={styles.root} edges={flushBottom ? ['top'] : ['top', 'bottom']}>
+    <SafeAreaView style={styles.root} edges={flushBottom || tabs ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {nav ?? <NavBar title={title} />}
         <ScrollView
@@ -43,7 +46,7 @@ export function ChatShell({
         >
           <Animated.View style={[styles.stack, fade]}>{children}</Animated.View>
         </ScrollView>
-        <View style={!flushBottom && styles.bottom}>{bottom}</View>
+        <View style={tabs ? styles.tabBottom : !flushBottom && styles.bottom}>{bottom}</View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -54,4 +57,5 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: uc(18), paddingTop: u(6), paddingBottom: space.lg },
   stack: { gap: uc(16) },
   bottom: { paddingBottom: space.md },
+  tabBottom: { paddingBottom: 2 },
 });

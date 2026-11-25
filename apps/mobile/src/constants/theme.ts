@@ -1,42 +1,59 @@
-// 시안 v3 (2026-11-15). 시안: danchuai-design/v3/screens-v3.html, 근거: v3/recon.md, tokens.json
-// 색은 이 파일에서만 정한다. 화면은 이름(tokens.ink 등)으로만 쓴다.
-// 청록(accent)은 "에이전트가 일하는 중"과 "기관끼리 다른 항목"에만, 호박(wait)은 "기다리는 중"에만 쓴다.
+// Muse 시안 (2026-11-25, 사용자 승인 "좋아 전체 반영하자"). 시안: claude.ai/artifact/28gXYnuMwCfn2XP8uZJC7o
+// 색은 Muse 화면 픽셀에서 잰 값이다. 색은 이 파일에서만 정한다. 화면은 이름(tokens.ink 등)으로만 쓴다.
+// 파랑(primary) 하나가 허용·주 버튼·확인 필요에 쓰인다. 초록(ok)은 "연결됨"·"지켜보는 중" 점에만, 호박(wait)은 기한·기다림에만.
 
 export const tokens = {
-  bg: '#f6f6f5',
-  surface: '#fdfdfc',
-  sunken: '#ededeb',
-  border: '#e2e2df',
-  borderInput: '#8a8b87',
-  text: '#1e1f22',
-  muted: '#64655f',
-  faint: '#6f706a',
-  ink: '#1e1f22',
-  onInk: '#fdfdfc',
-  accent: '#0a7360',
-  accentSoft: '#e3f1ed',
+  /** 바탕 */
+  bg: '#fdfdfd',
+  /** 카드·확인 카드·탭 막대 */
+  surface: '#ffffff',
+  /** 설정 묶음·시트 바탕 */
+  group: '#f4f5f7',
+  /** 칩·회색 버튼·뼈대 */
+  sunken: '#eeeff1',
+  /** 지금 고른 탭·서랍 줄 */
+  selected: '#e9eaed',
+  border: '#e3e4e8',
+  borderInput: '#8a8b91',
+  text: '#121214',
+  muted: '#64656b',
+  faint: '#6c6d73',
+  ink: '#121214',
+  onInk: '#ffffff',
+  /** 비서 말풍선 */
+  agentBubble: '#e8e8ea',
+  /** 내 말풍선 */
+  myBubble: '#b2d5ff',
+  /** 허용·주 버튼 */
+  primary: '#0447d6',
+  onPrimary: '#ffffff',
+  /** 링크 */
+  link: '#2862cd',
+  /** 일하는 중·확인 필요(Muse 파랑과 같은 색) */
+  accent: '#0447d6',
+  accentSoft: '#e4ecfd',
+  /** 연결됨·지켜보는 중 점 */
+  ok: '#1e8e4e',
+  okSoft: '#e3f4ea',
   wait: '#8a5a00',
   waitSoft: '#fbf0d9',
   danger: '#b0362e',
-  scrim: 'rgba(30, 31, 34, 0.04)',
-  /** 시트·팝업 뒤를 어둡게 하는 막 */
-  overlay: 'rgba(30, 31, 34, 0.38)',
+  scrim: 'rgba(18, 18, 20, 0.04)',
+  /** 시트·서랍 뒤를 어둡게 하는 막 */
+  overlay: 'rgba(18, 18, 20, 0.32)',
 } as const;
 
 /**
- * 화면 비율 (2026-11-17 사용자 선택, 고르기 보드 "시안과 같은 비율").
- * 시안은 300px 폭 화면에 그렸다. 390px 휴대폰에서 같은 비율로 보이도록 모든 크기(글자·여백·버튼·아이콘·모서리)를 1.3배로 쓴다.
- * 화면에 숫자 크기를 쓸 때는 u(시안 px)로 쓴다.
+ * 화면 비율. 2026-11-17에 1.3배로 정했다가, 2026-11-25 사용자 선택 "모든 화면을 시안 크기로"(Muse 시안 반영)에 따라 1배로 바꿨다.
+ * Muse 시안은 390px 휴대폰 화면 그대로 쟀으므로 배율 없이 쓴다. 숫자 크기는 그대로 u(px)로 쓴다.
  */
-export const SCALE = 1.3;
+export const SCALE = 1;
 export const u = (px: number) => Math.round(px * SCALE * 10) / 10;
 
-/**
- * 대화 화면 비율 (2026-11-20 사용자: "채팅 화면의 UI 사이즈를 작게").
- * 말풍선·비서 글·입력창·단계 표시·비서 홈은 1.3배 대신 1.1배로 쓴다. 다른 화면(목록·카드·시트)은 u() 그대로.
- */
-export const CHAT_SCALE = 1.1;
+/** 대화 화면 비율. 2026-11-20에 1.1배였다가 2026-11-25부터 다른 화면과 같이 1배(시안 크기). */
+export const CHAT_SCALE = 1;
 export const uc = (px: number) => Math.round(px * CHAT_SCALE * 10) / 10;
+
 
 /** 원티드 산스(OFL). assets/fonts/OFL.txt */
 export const fonts = {
@@ -61,13 +78,21 @@ export const type = {
   label: { fontFamily: fonts.semibold, fontSize: u(15), lineHeight: u(20) },
   small: { fontFamily: fonts.regular, fontSize: u(14), lineHeight: u(20) },
   caption: { fontFamily: fonts.medium, fontSize: u(13), lineHeight: u(18) },
-  /** 대화 화면(1.1배): 비서 글, 내 말풍선, 작은 글, 단계·보조 글, 라벨, 비서 홈 제목 */
+  /** 대화 화면: 비서 글, 내 말풍선, 작은 글, 단계·보조 글, 라벨, 비서 홈 제목 */
   chatAgent: { fontFamily: fonts.regular, fontSize: uc(15), lineHeight: uc(24) },
   chatBody: { fontFamily: fonts.regular, fontSize: uc(15), lineHeight: uc(22) },
   chatSmall: { fontFamily: fonts.regular, fontSize: uc(13.5), lineHeight: uc(19) },
   chatCaption: { fontFamily: fonts.medium, fontSize: uc(12), lineHeight: uc(17) },
   chatLabel: { fontFamily: fonts.semibold, fontSize: uc(14), lineHeight: uc(19) },
   chatTitle: { fontFamily: fonts.bold, fontSize: uc(20), lineHeight: uc(27), letterSpacing: uc(-0.3) },
+  /** Muse 탭 화면: 큰 제목, 줄 제목, 줄 본문, 작은 글, 머리 이름·상태 */
+  museTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 32, letterSpacing: -0.4 },
+  museHead: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 24, letterSpacing: -0.2 },
+  museRow: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 23, letterSpacing: -0.1 },
+  museBody: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 22 },
+  museSmall: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
+  museName: { fontFamily: fonts.bold, fontSize: 12.5, lineHeight: 16 },
+  museStatus: { fontFamily: fonts.medium, fontSize: 11.5, lineHeight: 15 },
   /** 화면에 하나만 두는 상태 숫자(제출 2/4곳, 3일 남음) */
   stat: { fontFamily: fonts.bold, fontSize: u(32), lineHeight: u(38), letterSpacing: u(-0.6) },
 } as const;

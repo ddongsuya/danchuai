@@ -3,7 +3,7 @@
 // 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
 import { applyQuotePatch, quoteDraftFromBrief, SHEET_LABELS, type RequestSheet, type SheetField } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
-import { CaretRight, X } from 'phosphor-react-native';
+import { CaretRight, ChatCircleText, ClockCounterClockwise, Lightbulb, PaperPlaneTilt, SquaresFour, UserCircle, X } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,11 +20,16 @@ import { AgentText, UserMessage } from '@/components/chat/Messages';
 import { NotFound } from '@/components/chat/NotFound';
 import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
-import { AssistView, croMenu } from '@/components/lab/AssistChat';
-import { RequesterHomeView, requesterMenu } from '@/components/agent/RequesterHome';
+import { AssistView } from '@/components/lab/AssistChat';
+import { RequesterHomeView } from '@/components/agent/RequesterHome';
+import { Drawer, type DrawerItem } from '@/components/shell/Drawer';
+import { EmptyTab } from '@/components/shell/EmptyTab';
+import { ShellProvider, type TabKey } from '@/components/shell/ShellContext';
+import { TabBarView } from '@/components/shell/TabBar';
+import { TabPage } from '@/components/shell/TabPage';
 import { RunsView } from '@/app/lab/runs';
 import { SentView } from '@/app/sent';
-import { AlertsView } from '@/app/alerts';
+import { AlertsList, AlertsView } from '@/app/alerts';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -384,7 +389,6 @@ const ASSIST_ACTIONS = [
   { key: 'x1', at: 1, label: '안건 단계 옮기기', outcome: 'done' as const, message: null, runId: 'r2', undoable: false, undone: true },
 ];
 
-const ASSIST_MENU = { title: '비서', sub: '가 기관', items: croMenu(1, 2).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'runs' ? 'lab-runs' : it.key === 'sent' ? 'sent-cro' : it.key === 'alerts' ? 'alerts-cro' : it.key === 'inbox' ? 'inbox-lab' : 'account')) })) };
 const ASSIST_RUNS = [
   { id: 'r1', action: 'task_create', label: '할 일 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
   { id: 'r2', action: 'deal_move', label: '안건 단계 옮기기', outcome: 'done' as const, undoable: false, undone: true, createdAt: new Date(Date.now() - 6 * 60_000).toISOString() },
@@ -414,9 +418,10 @@ const ALERTS_REQ = [
   { id: 'm2', kind: '계약', title: '기관이 계약 체결을 보고했어요', body: '확인 기한 11.30', href: '/app/r/DC-2026-0118', read: true, at: ago(60 * 30) },
 ];
 
-const REQ_MENU = { title: '비서', sub: '가 제약', items: requesterMenu(1, 1).map((it) => ({ ...it, onPress: () => router.push(toView(it.key === 'inbox' ? 'inbox' : it.key === 'sent' ? 'sent-req' : it.key === 'alerts' ? 'alerts-req' : 'account')) })) };
-const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], menuOpen = false) => (
-  <RequesterHomeView menu={REQ_MENU} initialMenuOpen={menuOpen} recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('inbox'))} />
+const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], drawer = false) => (
+  <InTabs role="requester" tab="index" drawer={drawer}>
+    <RequesterHomeView recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('tab-todo-req'))} />
+  </InTabs>
 );
 
 type View_ = { key: string; label: string; group: string };
@@ -424,7 +429,13 @@ const VIEWS: View_[] = [
   { key: 'req-home', label: '의뢰자 첫 화면, 최근 요청', group: '첫 화면' },
   { key: 'req-home-new', label: '의뢰자 첫 화면, 요청 없음', group: '첫 화면' },
   { key: 'req-home-loading', label: '의뢰자 첫 화면, 불러오는 중', group: '첫 화면' },
-  { key: 'req-home-menu', label: '의뢰자 첫 화면, 메뉴 열림', group: '첫 화면' },
+  { key: 'req-home-menu', label: '의뢰자 대화 탭, 서랍 열림', group: '첫 화면' },
+  { key: 'tab-feed-req', label: '소식 탭(의뢰자)', group: '탭' },
+  { key: 'tab-feed-lab', label: '소식 탭(기관)', group: '탭' },
+  { key: 'tab-todo-req', label: '할 일 탭(의뢰자 요청함)', group: '탭' },
+  { key: 'tab-todo-lab', label: '할 일 탭(기관 받은 요청)', group: '탭' },
+  { key: 'tab-ideas', label: '맡길 일 탭, 아직 없음', group: '탭' },
+  { key: 'tab-library', label: '자료 탭, 아직 없음', group: '탭' },
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
   { key: 'inbox-lab', label: '요청함(기관)', group: '요청함' },
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
@@ -463,11 +474,11 @@ const VIEWS: View_[] = [
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
   { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
-  { key: 'lab-assist-menu', label: '비서, 메뉴 열림', group: '기관' },
+  { key: 'lab-assist-menu', label: '비서, 서랍 열림', group: '기관' },
   { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
   { key: 'lab-assist-record', label: '비서, 회의 녹음', group: '기관' },
   { key: 'lab-runs', label: '실행 기록', group: '기관' },
-  { key: 'lab-assist-check', label: '비서 홈, 결과 확인 필요 상태 줄', group: '기관' },
+  { key: 'lab-assist-check', label: '비서, 위 막대 확인 필요', group: '기관' },
   { key: 'sent-cro', label: '보낸 것(기관)', group: '기관' },
   { key: 'alerts-cro', label: '알림(기관)', group: '기관' },
   { key: 'alerts-req', label: '알림(의뢰자)', group: '진행·비교' },
@@ -484,6 +495,42 @@ const VIEWS: View_[] = [
 
 const toView = (key: string): Href => ({ pathname: '/preview', params: { view: key } });
 const noop = () => undefined;
+
+/** 탭 화면 미리보기 틀: 위 막대 상태, 아래 탭 막대, 서랍(예시 값) */
+const TAB_VIEW: Record<'requester' | 'cro', Record<TabKey, string>> = {
+  requester: { index: 'req-home', feed: 'tab-feed-req', ideas: 'tab-ideas', todo: 'tab-todo-req', library: 'tab-library' },
+  cro: { index: 'lab-assist', feed: 'tab-feed-lab', ideas: 'tab-ideas', todo: 'tab-todo-lab', library: 'tab-library' },
+};
+function InTabs({ role, tab, check = 0, drawer = false, children }: { role: 'requester' | 'cro'; tab: TabKey; check?: number; drawer?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(drawer);
+  const shell = { role, agentName: '단추', live: true, check, onCheck: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')), unread: 2, openDrawer: () => setOpen(true), chatKey: 0 };
+  const ic = (I: typeof PaperPlaneTilt) => <I size={20} color={tokens.text} />;
+  const chats: DrawerItem[] =
+    role === 'cro'
+      ? [
+          { key: 'a1', label: 'DC-2026-0142 견적', onPress: () => router.push(toView('lab-quote')) },
+          { key: 'a2', label: '랫드 13주 회복군 기간', onPress: noop },
+        ]
+      : [
+          { key: 'r1', label: '복귀돌연변이시험', onPress: () => router.push(toView('approve')) },
+          { key: 'a1', label: '반복투여 회복군 기간', onPress: noop },
+        ];
+  const more: DrawerItem[] = [
+    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), count: check, onPress: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')) },
+    ...(role === 'cro' ? [{ key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push(toView('lab-runs')) }] : []),
+    { key: 'ask', label: '가이드라인 질문', icon: ic(ChatCircleText), onPress: noop },
+    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push(toView('account')) },
+  ];
+  return (
+    <ShellProvider value={shell}>
+      <View style={styles.root}>
+        <View style={{ flex: 1 }}>{children}</View>
+        <TabBarView active={tab} unread={2} onPress={(k) => router.replace(toView(TAB_VIEW[role][k]))} />
+      </View>
+      <Drawer visible={open} onClose={() => setOpen(false)} title="단추" active={tab} onTab={(k) => router.replace(toView(TAB_VIEW[role][k]))} chats={chats} more={more} onSettings={() => router.push(toView('account'))} onNew={noop} />
+    </ShellProvider>
+  );
+}
 
 export default function Preview() {
   const { view } = useLocalSearchParams<{ view?: string }>();
@@ -543,6 +590,50 @@ function PreviewView({ view }: { view: string }) {
       return reqHome({ kind: 'loading' });
     case 'req-home-menu':
       return reqHome({ kind: 'ready', items: REQ_ITEMS }, true);
+    case 'tab-feed-req':
+      return (
+        <InTabs role="requester" tab="feed">
+          <TabPage title="소식">
+            <AlertsList role="requester" items={ALERTS_REQ} error={null} onRetry={noop} />
+          </TabPage>
+        </InTabs>
+      );
+    case 'tab-feed-lab':
+      return (
+        <InTabs role="cro" tab="feed">
+          <TabPage title="소식">
+            <AlertsList role="cro" items={ALERTS_CRO} error={null} onRetry={noop} />
+          </TabPage>
+        </InTabs>
+      );
+    case 'tab-todo-req':
+      return (
+        <InTabs role="requester" tab="todo">
+          <InboxScreen inTab role="requester" title="할 일" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />
+        </InTabs>
+      );
+    case 'tab-todo-lab':
+      return (
+        <InTabs role="cro" tab="todo">
+          <InboxScreen inTab role="cro" title="할 일" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} />
+        </InTabs>
+      );
+    case 'tab-ideas':
+      return (
+        <InTabs role="cro" tab="ideas">
+          <TabPage title="맡길 일">
+            <EmptyTab Icon={Lightbulb} title="아직 맡길 일이 없어요" body="제가 먼저 할 수 있는 일이 생기면 여기에 올려 둘게요." />
+          </TabPage>
+        </InTabs>
+      );
+    case 'tab-library':
+      return (
+        <InTabs role="cro" tab="library">
+          <TabPage title="자료">
+            <EmptyTab Icon={SquaresFour} title="아직 만든 게 없어요" body="견적서나 보고서를 만들면 여기 모여요." />
+          </TabPage>
+        </InTabs>
+      );
     case 'inbox':
       return <InboxScreen role="requester" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />;
     case 'inbox-lab':
@@ -697,21 +788,49 @@ function PreviewView({ view }: { view: string }) {
         />
       );
     case 'lab-assist':
-      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-assist-typing':
-      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES.slice(0, 1)} actions={[]} streaming={{ step: '브리핑 확인', text: '' }} canSend={false} error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES.slice(0, 1)} actions={[]} streaming={{ step: '브리핑 확인', text: '' }} canSend={false} error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-assist-run':
-      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView brief={ASSIST_BRIEF} messages={ASSIST_MESSAGES} actions={ASSIST_ACTIONS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-assist-find':
-      return <AssistView menu={ASSIST_MENU} brief={ASSIST_BRIEF} messages={FIND_MESSAGES} actions={[]} lookups={FIND_LOOKUPS} lookupPreview={FIND_HITS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView brief={ASSIST_BRIEF} messages={FIND_MESSAGES} actions={[]} lookups={FIND_LOOKUPS} lookupPreview={FIND_HITS} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-assist-record':
-      return <AssistView menu={ASSIST_MENU} initialRecordOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onTranscript={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView initialRecordOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onTranscript={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-assist-menu':
-      return <AssistView menu={ASSIST_MENU} initialMenuOpen brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index" drawer>
+          <AssistView brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'lab-runs':
       return <RunsView items={ASSIST_RUNS} error={null} onRetry={noop} onUndone={noop} />;
     case 'lab-assist-check':
-      return <AssistView menu={ASSIST_MENU} sent={{ check: 1, onCheck: () => router.push(toView('sent-cro')) }} brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />;
+      return (
+        <InTabs role="cro" tab="index" check={1}>
+          <AssistView brief={ASSIST_BRIEF} messages={[]} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} />
+        </InTabs>
+      );
     case 'sent-cro':
       return <SentView role="cro" items={SENT_CRO} error={null} onRetry={noop} />;
     case 'alerts-cro':
