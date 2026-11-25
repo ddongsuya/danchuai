@@ -14,6 +14,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Press } from '@/components/ui/Press';
 import { StateView } from '@/components/ui/StateView';
 import { Txt } from '@/components/ui/Txt';
+import { AgentHeader } from '@/components/shell/AgentHeader';
 import { fonts, radius, space, tokens, u } from '@/constants/theme';
 
 import type { InboxItem, InboxStatus } from '@/lib/inbox';
@@ -43,9 +44,11 @@ interface Props {
   onRetry?: () => void;
   emptyLabel?: string;
   hrefOf: (id: string) => Href;
+  /** 할 일 탭 안에서(Muse 시안 2026-11-25): 뒤로 가기 대신 비서 위 막대, 아래 안전 영역은 탭 막대가 맡는다 */
+  inTab?: boolean;
 }
 
-export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf }: Props) {
+export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, inTab }: Props) {
   const [active, setActive] = useState(0);
   // 거름 칸은 화면마다 정한 것만(의뢰자 3칸, 기관 4칸). 건수는 1 이상일 때만 숫자로 붙는다. 숫자는 고정폭.
   const tabs = useMemo(() => filters.map((f) => ({ ...f, count: f.match ? items.filter((i) => f.match!.includes(i.status)).length : items.length })), [filters, items]);
@@ -53,11 +56,14 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
   const shown = useMemo(() => (current?.match ? items.filter((i) => current.match!.includes(i.status)) : items), [current, items]);
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.root} edges={inTab ? ['top'] : ['top', 'bottom']}>
       <View style={styles.root}>
+        {inTab ? (
+          <AgentHeader />
+        ) : (
         <View style={styles.nav}>
           {/* 받은 요청·요청함은 비서 메뉴에서 연다. 계정·화면 바꾸기도 비서 메뉴에 있다 */}
-          <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace(role === 'cro' ? '/lab/assist' : '/'))}>
+          <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
             <CaretLeft size={u(22)} color={tokens.text} />
           </IconButton>
           <Press label="질문하기" onPress={() => router.push({ pathname: '/ask', params: { role } })} style={styles.ask}>
@@ -67,7 +73,8 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
             </Txt>
           </Press>
         </View>
-        <Txt variant="title" accessibilityRole="header" style={styles.title}>
+        )}
+        <Txt variant={inTab ? 'museTitle' : 'title'} accessibilityRole="header" style={inTab ? styles.tabTitle : styles.title}>
           {title}
         </Txt>
         {load === 'ready' && items.length > 0 && (
@@ -176,6 +183,7 @@ const styles = StyleSheet.create({
   nav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: u(14), paddingTop: u(6), paddingBottom: u(10) },
   ask: { flexDirection: 'row', alignItems: 'center', gap: u(6), height: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken },
   title: { paddingHorizontal: space.xl, paddingTop: u(4), paddingBottom: space.md },
+  tabTitle: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 12 },
   filters: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl, paddingBottom: u(14) },
   filter: { flexDirection: 'row', alignItems: 'center', gap: u(6), height: u(36), paddingHorizontal: u(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, justifyContent: 'center' },
   filterOn: { backgroundColor: tokens.ink },

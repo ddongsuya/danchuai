@@ -7,7 +7,7 @@
 - 액션 등록부·기관 비서 사양: docs/spec/agent-actions.md (단추 액션 목록을 읽어 비서 도구·확인 카드를 만든다. 실행 수준 read·auto·confirm·human)
 - 출시 계획·운영 전 필수 확인: docs/product/launch.md (최종 목표는 휴대폰 앱 출시. 운영 전 필수 항목이 남으면 출시하지 않는다)
 - 기술 결정: docs/adr/0001-stack.md (0001~0004는 연동 전 독립 앱 기준이라 일부 낡음. 연동 규칙은 아래 "단추 연동"이 우선)
-- 디자인: 시안 v3 (Manus·Codex·Perplexity 흐름 기반, 무채색 + 청록·호박 상태색, 원티드 산스). 색은 apps/mobile/src/constants/theme.ts 에서만 정한다. 단추 디자인은 쓰지 않는다.
+- 디자인: Muse 시안(2026-11-25) https://claude.ai/artifact/28gXYnuMwCfn2XP8uZJC7o . 하단 탭 5개(대화·소식·맡길 일·할 일·자료)와 서랍, 위 가운데 비서 캐릭터·이름·상태, 회색·하늘색 말풍선, 파랑 허용 버튼, 시안 크기 1배(2026-11-25 사용자 선택). 글꼴은 원티드 산스. 색은 apps/mobile/src/constants/theme.ts 에서만 정한다. Muse의 캡처·로고·아이콘·캐릭터 원본은 앱에 넣지 않는다.
 
 ## 구조
 

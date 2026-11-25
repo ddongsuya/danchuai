@@ -52,9 +52,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: uc(14),
     borderRadius: uc(18),
     borderBottomLeftRadius: uc(6),
-    backgroundColor: tokens.surface,
-    borderWidth: 1,
-    borderColor: tokens.border,
+    backgroundColor: tokens.agentBubble,
   },
   dot: { width: uc(6), height: uc(6), borderRadius: uc(3), backgroundColor: tokens.muted },
 });

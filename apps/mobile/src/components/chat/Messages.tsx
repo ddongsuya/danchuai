@@ -8,7 +8,7 @@ import { splitAnswer } from '@/lib/chat';
 import { lineEnter } from '@/lib/motion';
 import { tokens, uc } from '@/constants/theme';
 
-/** 내 메시지만 말풍선. 에이전트 글은 말풍선 없이 본문으로 쓴다. fresh 면 아래에서 8px 올라오며 나타난다. */
+/** 말풍선(Muse 시안 2026-11-25): 비서는 왼쪽 회색, 나는 오른쪽 하늘색. fresh 면 아래에서 8px 올라오며 나타난다. */
 export function UserMessage({ text, fresh }: { text: string; fresh?: boolean }) {
   const reduced = useReducedMotion();
   const answer = splitAnswer(text);
@@ -27,8 +27,8 @@ export function UserMessage({ text, fresh }: { text: string; fresh?: boolean }) 
 export function AgentText({ children, fresh }: { children: string; fresh?: boolean }) {
   const reduced = useReducedMotion();
   return (
-    <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined}>
-      <Txt variant="chatAgent">{children}</Txt>
+    <Animated.View entering={fresh ? lineEnter(0, reduced) : undefined} style={styles.agent}>
+      <Txt variant="chatBody">{children}</Txt>
     </Animated.View>
   );
 }
@@ -66,7 +66,8 @@ export function StepLog({ steps }: { steps: Step[] }) {
 }
 
 const styles = StyleSheet.create({
-  me: { alignSelf: 'flex-end', maxWidth: '82%', backgroundColor: tokens.sunken, borderRadius: uc(18), paddingVertical: uc(9), paddingHorizontal: uc(14) },
+  me: { alignSelf: 'flex-end', maxWidth: '82%', backgroundColor: tokens.myBubble, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 15 },
+  agent: { alignSelf: 'flex-start', maxWidth: '88%', backgroundColor: tokens.agentBubble, borderRadius: 20, paddingVertical: 11, paddingHorizontal: 15 },
   steps: { gap: uc(7), marginBottom: uc(10) },
   // 시안 .step: 13 중간 굵기, 진행 중은 청록
   step: { flexDirection: 'row', alignItems: 'center', gap: uc(6) },

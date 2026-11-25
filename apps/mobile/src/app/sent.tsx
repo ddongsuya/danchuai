@@ -1,5 +1,6 @@
 // 보낸 것: 우리 조직이 승인해 단추로 보낸 동작(최근 50건, 의뢰자·기관 공통). 결과 확인 필요·받지 않음은 색으로 먼저 보인다.
 // 줄을 누르면 그 요청 화면으로 간다. 본문 원문은 요청 화면의 카드에서 본다.
+import { useCallback } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +28,8 @@ export default function SentRoute() {
   const { role: raw } = useLocalSearchParams<{ role?: string }>();
   const role: AgentRole = raw === 'cro' ? 'cro' : 'requester';
   const live = agentConfigured();
-  const { state, reload } = useRemote(() => listSent(role), live);
+  const load = useCallback(() => listSent(role), [role]);
+  const { state, reload } = useRemote(load, live);
   if (!live) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
   return <SentView role={role} items={state.kind === 'ready' ? state.data : null} error={state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} />;
 }

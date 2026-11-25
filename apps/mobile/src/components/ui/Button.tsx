@@ -1,4 +1,4 @@
-// 버튼 세 종류: ink(주 버튼, 화면에 하나), soft(회색 채움, 중립 동작), text(글자, 빠지는 동작).
+// 버튼 세 종류: ink(주 버튼, 화면에 하나. Muse 시안 2026-11-25부터 파랑 primary), soft(회색 채움, 중립 동작), text(글자, 빠지는 동작).
 // 테두리 버튼은 쓰지 않는다(토스 결과 화면 방식, Mobbin aaa9c213·678d2a8c).
 // 비활성은 흐리게 하지 않고 연한 회색 바탕 + 옅은 글자(대비 4.2:1 이상).
 // 처리 중에는 글자 대신 점 셋. 폭은 그대로 두고, loadingTitle 이 있으면 "요청할게요"처럼 그 말과 함께 보인다.
@@ -30,7 +30,7 @@ interface Props {
   chat?: boolean;
 }
 
-const fg: Record<ButtonKind, string> = { ink: tokens.onInk, soft: tokens.text, text: tokens.muted };
+const fg: Record<ButtonKind, string> = { ink: tokens.onPrimary, soft: tokens.text, text: tokens.muted };
 
 export function Button({ title, onPress, kind = 'ink', icon, tall, flex, disabled, loading, loadingTitle, bar, chat }: Props) {
   const label = chat ? 'chatLabel' : 'label';
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   hide: { opacity: 0 },
   over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
-  ink: { backgroundColor: tokens.ink },
+  ink: { backgroundColor: tokens.primary },
   soft: { backgroundColor: tokens.sunken },
   text: { paddingHorizontal: space.md },
   off: { backgroundColor: tokens.sunken },

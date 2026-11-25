@@ -33,7 +33,7 @@ export function Composer({
         // 웹은 여러 줄 입력칸이 기본 두 줄 높이라 한 줄로 시작하게 한다(앱은 글 길이만큼 늘어남)
         {...(Platform.OS === 'web' ? ({ rows: 1 } as object) : null)}
         style={styles.input}
-        selectionColor={tokens.accent}
+        selectionColor={tokens.primary}
       />
       {/* 파일 첨부·음성 입력은 기능이 생기면 단다(누를 수 없는 버튼을 두지 않는다) */}
       <Press
@@ -43,9 +43,9 @@ export function Composer({
             onSend?.(text.trim());
             setText('');
           }}
-          style={[styles.send, ready && { backgroundColor: tokens.ink }]}
+          style={[styles.send, ready && { backgroundColor: tokens.primary }]}
         >
-          <ArrowUp size={uc(17)} weight="bold" color={ready ? tokens.onInk : tokens.muted} />
+          <ArrowUp size={uc(17)} weight="bold" color={ready ? tokens.onPrimary : tokens.muted} />
       </Press>
     </View>
   );

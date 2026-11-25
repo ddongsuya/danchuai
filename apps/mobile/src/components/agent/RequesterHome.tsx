@@ -1,23 +1,20 @@
-// 의뢰자 첫 화면(시안 2026-11-20, 기관 비서 홈과 같은 틀). 열자마자 "어떤 시험이 필요해요?"로 대화를 시작한다.
-// 왼쪽 위 메뉴에 요청함·질문하기·계정. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
+// 의뢰자 대화 탭(Muse 시안 2026-11-25, 기관 비서와 같은 틀). 열자마자 "어떤 시험이 필요해요?"로 대화를 시작한다.
+// 위 막대에 비서 캐릭터·이름·상태, 왼쪽 서랍에 탭·따로 하는 대화. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
 // 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
 import { router, type Href } from 'expo-router';
-import { Bell, CaretRight, ChatCircleText, List, PaperPlaneTilt, Tray, UserCircle, UserSwitch } from 'phosphor-react-native';
-import { useMemo, useState } from 'react';
+import { CaretRight } from 'phosphor-react-native';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AgentAvatar } from '@/components/agent/AgentAvatar';
-import { AgentStatus, useSentCheck, useUnreadAlerts } from '@/components/agent/AgentStatus';
-import { AppMenu, type MenuItem } from '@/components/agent/AppMenu';
 import { ErrorLine } from '@/components/agent/LiveChat';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { Composer } from '@/components/chat/Composer';
 import { STATUS_CHIP } from '@/components/inbox/InboxScreen';
 import type { ChipTone } from '@/components/ui/Chip';
-import { IconButton } from '@/components/ui/IconButton';
+import { AgentHeader } from '@/components/shell/AgentHeader';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, tokens, u, uc } from '@/constants/theme';
+import { fonts, radius, tokens, uc } from '@/constants/theme';
 import { REMOTE_ERROR, useRemote } from '@/hooks/useRemote';
 import { agentConfigured } from '@/lib/agentClient';
 import { requesterItem, type InboxItem } from '@/lib/inbox';
@@ -43,55 +40,27 @@ const startRequest = (seed: string) => router.push({ pathname: '/requester/[id]'
 const openAsk = () => router.push({ pathname: '/ask', params: { role: 'requester' } });
 
 export function RequesterHome() {
-  const { status, org } = useAuth();
+  const { status } = useAuth();
   const live = agentConfigured();
   const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
-  const replied = items.filter((i) => i.status === 'replied').length;
-  const sent = useSentCheck('requester', live && (status === 'ready' || status === 'disabled'));
-  const alerts = useUnreadAlerts('requester', live && (status === 'ready' || status === 'disabled'));
   const recent: RecentState = !live ? { kind: 'error', label: '서버 연결 전이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
   return (
     <RequesterHomeView
-      menu={{
-        title: '비서',
-        sub: org?.name ?? null,
-        items: requesterMenu(replied, alerts),
-        // 시연 모드에서만 의뢰자·기관 화면을 오간다. 로그인하면 조직 종류로 정해진다
-        footer: status === 'disabled' ? [{ key: 'switch', label: '기관 화면으로 바꾸기', icon: <UserSwitch size={u(20)} color={tokens.text} />, onPress: () => router.replace('/lab/assist') }] : [],
-      }}
       recent={recent}
-      sent={sent}
       onRetry={() => void reload()}
       onStart={startRequest}
       onAsk={openAsk}
       onOpen={(it) => router.push(requesterHref(it.id))}
-      onAll={() => router.push('/requester' as Href)}
+      onAll={() => router.navigate('/todo' as Href)}
     />
   );
-}
-
-/** 의뢰자 메뉴: 요청함(회신 도착 수), 알림(읽지 않은 수), 보낸 것, 가이드라인 질문, 계정 */
-export function requesterMenu(repliedCount = 0, alertCount = 0): MenuItem[] {
-  const ic = (I: typeof Tray) => <I size={u(20)} color={tokens.text} />;
-  return [
-    { key: 'inbox', label: '요청함', icon: ic(Tray), count: repliedCount, onPress: () => router.push('/requester' as Href) },
-    { key: 'alerts', label: '알림', icon: ic(Bell), count: alertCount, onPress: () => router.push({ pathname: '/alerts', params: { role: 'requester' } }) },
-    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), onPress: () => router.push({ pathname: '/sent', params: { role: 'requester' } }) },
-    { key: 'ask', label: '질문하기', icon: ic(ChatCircleText), onPress: openAsk },
-    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
-  ];
 }
 
 export type RecentState = { kind: 'loading' } | { kind: 'error'; label: string } | { kind: 'ready'; items: InboxItem[] };
 
 export interface RequesterHomeViewProps {
-  menu: { title: string; sub?: string | null; items: MenuItem[]; footer?: MenuItem[] };
-  /** 미리보기에서 메뉴를 연 채로 보여 줄 때만 */
-  initialMenuOpen?: boolean;
   recent: RecentState;
-  /** 캐릭터 밑 상태 줄: 보낸 것 가운데 결과 확인 필요 건수 */
-  sent?: { check: number; onCheck: () => void };
   onRetry?: () => void;
   /** 첫 글(직접 쓴 글 또는 고른 말)로 새 요청 대화를 연다 */
   onStart: (text: string) => void;
@@ -100,22 +69,11 @@ export interface RequesterHomeViewProps {
   onAll: () => void;
 }
 
-/** 화면 모양만(미리보기에서도 쓴다) */
-export function RequesterHomeView({ menu, initialMenuOpen = false, recent, sent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
-  const [menuOpen, setMenuOpen] = useState(initialMenuOpen);
-  const nav = (
-    <View style={styles.nav}>
-      <IconButton label="메뉴" onPress={() => setMenuOpen(true)}>
-        <List size={u(22)} color={tokens.text} />
-      </IconButton>
-    </View>
-  );
+/** 화면 모양만(미리보기에서도 쓴다). 위 막대는 비서(서랍·캐릭터·상태), 아래는 입력창과 탭 막대 */
+export function RequesterHomeView({ recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
   return (
-    <ChatShell title="비서" nav={nav} bottom={<Composer placeholder="필요한 시험" onSend={(t) => t && onStart(t)} />}>
-      <AppMenu visible={menuOpen} onClose={() => setMenuOpen(false)} title={menu.title} sub={menu.sub} items={menu.items} footer={menu.footer} />
+    <ChatShell title="비서" tabs nav={<AgentHeader />} bottom={<Composer placeholder="필요한 시험" onSend={(t) => t && onStart(t)} />}>
       <View style={styles.hero}>
-        <AgentAvatar size={uc(64)} />
-        {sent && <AgentStatus check={sent.check} onCheck={sent.onCheck} />}
         <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
           어떤 시험이 필요해요?
         </Txt>
@@ -186,8 +144,7 @@ function RecentCard({ recent, onRetry, onOpen, onAll }: { recent: RecentState; o
 }
 
 const styles = StyleSheet.create({
-  nav: { flexDirection: 'row', alignItems: 'center', height: u(50), paddingHorizontal: u(6) },
-  hero: { alignItems: 'center', gap: uc(10), paddingTop: uc(10), paddingBottom: uc(4) },
+  hero: { alignItems: 'center', paddingTop: uc(28), paddingBottom: uc(4) },
   heroTitle: { textAlign: 'center' },
   starters: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8), justifyContent: 'center' },
   chip: { height: uc(34), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },

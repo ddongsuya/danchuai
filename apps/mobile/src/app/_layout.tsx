@@ -52,8 +52,8 @@ function Gate() {
       <Stack.Protected guard={status === 'needsConsent'}>
         <Stack.Screen name="consent" />
       </Stack.Protected>
-      {/* "/"는 항상 열고, 들어온 뒤 상태에 맞는 화면으로 보낸다(app/index.tsx). */}
-      <Stack.Screen name="index" />
+      {/* 탭 묶음(대화·소식·맡길 일·할 일·자료)은 항상 열고, 들어온 뒤 상태에 맞는 화면으로 보낸다(app/(tabs)/_layout.tsx). */}
+      <Stack.Screen name="(tabs)" />
       {/* 움직임 기준 미리보기(예시 값만, 로그인 없이 열림) */}
       <Stack.Screen name="motion" />
       {/* 화면 미리보기(예시 값만, 서버 없이, 로그인 없이 열림) */}
