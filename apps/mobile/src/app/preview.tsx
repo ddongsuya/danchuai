@@ -38,6 +38,7 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { REMOTE_ERROR } from '@/hooks/useRemote';
 import type { AgentQuestion } from '@/lib/chat';
 import type { ContractView } from '@/lib/danchuContract';
+import type { ReceivedDraftView } from '@/lib/danchuRequester';
 import type { QnaView } from '@/lib/danchuQna';
 import type { QuoteSubmitPreview } from '@/lib/danchuQuote';
 import type { SendChoices } from '@/lib/danchuRequest';
@@ -90,6 +91,24 @@ const REQUEST: DanchuRequest = {
   selected: false,
 };
 const WAITING: DanchuCompare = { open: false, joined: 4, submitted: 2, replyBy: day(9) };
+/** 받은 계약서(안) 예시. 금액은 예시 값(공급가액 + 부가세 10%) */
+const DRAFT_REQ: ReceivedDraftView = {
+  sentAt: `${day(-1)}T10:00:00+09:00`,
+  path: '/app/r/DC-2026-0142/contract',
+  draft: {
+    title: '위탁연구 계약서(안)',
+    tests: [{ seq: 1, name: '랫드 4주 반복투여독성', amount: 38_000_000, weeks: 16 }],
+    supply: 38_000_000,
+    vat: 3_800_000,
+    total: 41_800_000,
+    articles: [
+      { no: 1, title: '목적', body: ['의뢰자가 위탁한 비임상시험을 기관이 수행하는 데 필요한 사항을 정한다.'] },
+      { no: 2, title: '계약 금액', body: ['계약 금액은 부가세를 포함해 41,800,000원으로 한다.'] },
+    ],
+    special: ['시험물질은 착수 2주 전까지 보낸다.'],
+    cro: { name: '나 기관' },
+  },
+};
 const OPEN: DanchuCompare = {
   open: true,
   columns: [
@@ -448,6 +467,8 @@ const VIEWS: View_[] = [
   { key: 'qna-req', label: '비교표 열림, 질의응답', group: '진행·비교' },
   { key: 'detail-req', label: '비교표 열림, 2차 상세 요청', group: '진행·비교' },
   { key: 'detail-req-sent', label: '2차 상세 요청 보낸 뒤', group: '진행·비교' },
+  { key: 'held', label: '보류한 요청(다시 열기)', group: '진행·비교' },
+  { key: 'draft-req', label: '받은 계약서(안)', group: '진행·비교' },
   { key: 'lab', label: '받은 요청, 할 일 있음', group: '기관' },
   { key: 'lab-join', label: '받은 요청, 참여하기 시트', group: '기관' },
   { key: 'lab-decline', label: '받은 요청, 불참 시트', group: '기관' },
@@ -665,6 +686,10 @@ function PreviewView({ view }: { view: string }) {
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} detailPreview={DETAIL_REQ} />;
     case 'detail-req-sent':
       return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true }, compare: OPEN }} detailPreview={DETAIL_REQ_SENT} />;
+    case 'held':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, status: 'closed', outcome: '보류' }, compare: OPEN }} />;
+    case 'draft-req':
+      return <DanchuRequestView data={{ request: { ...REQUEST, submitted: 3, compareOpen: true, selected: true, status: 'contracting' }, compare: { open: true, columns: OPEN.open ? OPEN.columns.map((c, i) => ({ ...c, selected: i === 1 })) : [] } }} contractPreview={CONTRACT_TO_CONFIRM} draftPreview={DRAFT_REQ} />;
     case 'lab-detail':
       return <DanchuLabView it={LAB_SENT} detailPreview={DETAIL_LAB} />;
     case 'lab':

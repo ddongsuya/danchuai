@@ -240,7 +240,12 @@ export type DanchuActionName =
   | 'crm_activity'
   /** 단추 액션 목록에서 온 승인 액션(계약서(안) 보내기, 견적서 금액 넣기 등). 서버가 목록의 수준을 다시 본다 */
   | 'contract_draft_send'
-  | 'quote_doc_set_amount';
+  | 'quote_doc_set_amount'
+  /** 의뢰자: 선정 없이 마무리, 보류한 요청 다시 열기, 요청 첨부 올릴 주소·올림 확인 */
+  | 'request_close'
+  | 'request_reopen'
+  | 'request_file_url'
+  | 'request_file_done';
 
 /** 단추 계약서(안) 요약(금액은 제출한 견적 그대로, 단추 계산) */
 export interface ContractDraftView {

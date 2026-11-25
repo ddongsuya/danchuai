@@ -31,6 +31,9 @@ export const SENT_LABEL: Record<string, string> = {
   detail_reply: '2차 회신',
   contract_report: '계약 체결 보고',
   contract_draft_send: '계약서(안) 보내기',
+  request_close: '선정 없이 마무리',
+  request_reopen: '요청 다시 열기',
+  request_file_done: '첨부 추가',
 };
 
 export const STATUS_LABEL: Record<SentStatus, string> = {
