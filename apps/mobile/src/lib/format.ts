@@ -57,7 +57,12 @@ export function localDay(iso: string): string {
 }
 
 /** 부를 때 붙는 말: "비비라고", "몽글이라고"(받침이 있으면 "이라고") */
-export const callName = (name: string) => {
+const hasBatchim = (name: string) => {
   const code = name.charCodeAt(name.length - 1) - 0xac00;
-  return code >= 0 && code <= 11171 && code % 28 !== 0 ? `${name}이라고` : `${name}라고`;
+  return code >= 0 && code <= 11171 && code % 28 !== 0;
 };
+
+export const callName = (name: string) => (hasBatchim(name) ? `${name}이라고` : `${name}라고`);
+
+/** 비서 이름 + 주격 조사("비비가", "몽글이"). 확인 카드 제목에 쓴다 */
+export const subjName = (name: string) => (hasBatchim(name) ? `${name}이` : `${name}가`);

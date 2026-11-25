@@ -19,6 +19,8 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
+import { subjName } from '@/lib/format';
+import { useAgentName } from '@/lib/session';
 import {
   AGREEMENTS,
   FIELD_LABEL,
@@ -64,6 +66,7 @@ interface Props {
 }
 
 export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, issue, sending, onClose, onApprove }: Props) {
+  const agentName = useAgentName();
   const [asking, setAsking] = useState<Ask>(null);
   const reduced = useReducedMotion();
   const gap = nextMissing(sheet, c, schema);
@@ -94,13 +97,13 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
         ? { title: `${gap.detail.key.endsWith('.items') || gap.detail.key.endsWith('.segment') ? '시험 종류' : gap.detail.label} 정하기`, onPress: () => setAsking(gap) }
         : gap && gap !== 'agreed'
           ? { title: `${FIELD_LABEL[gap]} 정하기`, onPress: () => setAsking(gap) }
-          : { title: '동의하고 요청하기', onPress: () => onApprove({ ...c, agreed: true }) };
+          : { title: '허용', onPress: () => onApprove({ ...c, agreed: true }) };
 
   return (
     <Animated.View entering={lineEnter(0, reduced)} style={styles.card} accessibilityViewIsModal>
       <View style={styles.head}>
         <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
-          이대로 단추에 요청할까요?
+          {`${subjName(agentName)} 기관에 견적 요청을 보내려고 해요`}
         </Txt>
         <Press label="닫기" onPress={onClose} style={styles.close}>
           <X size={u(22)} color={tokens.text} />
@@ -116,7 +119,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
                 {r.label}
               </Txt>
               <Txt variant="small" color={empty ? tokens.wait : tokens.text} style={styles.value} numberOfLines={2}>
-                {r.value ?? '정해 주세요'}
+                {r.value ?? '아직 정하지 않았어요'}
               </Txt>
             </>
           );
@@ -141,6 +144,9 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
         </Txt>
       ) : null}
 
+      <Txt variant="caption" color={tokens.muted} style={styles.once}>
+        허용하면 이 내용 그대로 한 번 보내요
+      </Txt>
       <Txt variant="caption" color={tokens.muted} style={styles.agree}>
         {AGREEMENTS.map((a, i) => (
           <Txt key={a.id} variant="caption" color={tokens.muted}>
@@ -154,7 +160,7 @@ export function DanchuApprovalCard({ sheet, body, choices: c, onChange, schema, 
       </Txt>
 
       <View>
-        <Button title={primary.title} tall loading={sending} loadingTitle="요청할게요" onPress={primary.onPress} />
+        <Button title={primary.title} tall loading={sending} loadingTitle="보내는 중이에요" onPress={primary.onPress} />
       </View>
 
       <Picker
@@ -272,7 +278,8 @@ const styles = StyleSheet.create({
   line: { borderTopWidth: 1, borderTopColor: tokens.border },
   label: { width: u(88) },
   value: { flex: 1 },
-  agree: { marginTop: space.sm, marginBottom: u(10) },
+  once: { marginTop: space.sm },
+  agree: { marginTop: u(2), marginBottom: u(10) },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: u(56), borderTopWidth: 1, borderTopColor: tokens.border },
   input: { height: u(52), borderRadius: radius.inner, backgroundColor: tokens.surface, borderWidth: 1, borderColor: tokens.borderInput, paddingHorizontal: space.lg, fontFamily: fonts.regular, fontSize: u(16), color: tokens.text },
 });

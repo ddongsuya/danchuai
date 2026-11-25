@@ -100,7 +100,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
           )}
         </View>
       )}
-      {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
+      {state.status === 'starting' && <StepLog steps={[{ label: '대화를 여는 중이에요', state: 'now' }]} />}
 
       {state.messages.map((m, i) =>
         m.role === 'user' ? (
@@ -112,7 +112,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
             {role === 'requester' && m === lastAgent && !busy && lastQuestion && (
               <View style={styles.next}>
                 <Button
-                  title="이 시험 견적 요청하기"
+                  title="이 시험 견적 받아 주세요"
                   kind="soft"
                   onPress={() =>
                     router.push({ pathname: '/requester/[id]', params: { id: 'new', seed: `${lastQuestion}\n이 시험 견적을 요청하고 싶어요.` } })
@@ -126,7 +126,7 @@ export function AskChat({ role, conversationId, seed }: { role: AgentRole; conve
 
       {state.status === 'streaming' && (
         <View>
-          <StepLog steps={[{ label: state.step ?? '원문 찾는 중', state: 'now' }]} />
+          <StepLog steps={[{ label: state.step ?? '가이드라인 원문을 찾는 중이에요', state: 'now' }]} />
           {state.streaming ? <Answer text={state.streaming} /> : null}
         </View>
       )}

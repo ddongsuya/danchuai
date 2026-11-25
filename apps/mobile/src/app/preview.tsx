@@ -61,7 +61,7 @@ const day = (n: number) => {
 const REQ_FILTERS = [
   { label: '전체', match: null },
   { label: '회신 도착', match: ['replied' as const] },
-  { label: '승인 대기', match: ['waiting' as const] },
+  { label: '허용 전', match: ['waiting' as const] },
 ];
 const LAB_FILTERS = [
   { label: '전체', match: null },
@@ -230,11 +230,11 @@ const BODY = '시험물질 후보물질 A를 랫드에 4주간 경구 투여하�
 /** 새 요청 대화 앞부분(시안 A07·A08과 같은 문장) */
 const CHAT_HEAD = (
   <>
-    <AgentText>어떤 시험 견적이 필요해요?</AgentText>
+    <AgentText>어떤 시험 견적을 받아 드릴까요?</AgentText>
     <UserMessage text="랫드 4주 반복투여독성, 회복군 포함이요" />
   </>
 );
-const CHAT_FILLED = <AgentText>요청서를 다 채웠어요.</AgentText>;
+const CHAT_FILLED = <AgentText>다 됐어요. 요청서를 채웠어요. 보내기 전에 한 번만 봐 주세요</AgentText>;
 
 // 질문 카드 예시(시안 danchuai-question-card). 근거 원문 조각은 지식 검색 결과 그대로(ICH M3 5.1, 앞 220자).
 const IND_HEAD = (
@@ -383,7 +383,7 @@ const FIND_HITS = [
 
 const ASSIST_MESSAGES = [
   { id: 'u1', role: 'user' as const, text: '다 바이오텍 다음 주 화요일에 후속 연락 잡고, 라 제약 PK는 협의로 옮겨 줘' },
-  { id: 'a1', role: 'agent' as const, text: '다 바이오텍 후속 연락을 11월 25일 할 일로 잡고, 라 제약 랫드 PK는 협의 단계로 옮길게요.' },
+  { id: 'a1', role: 'agent' as const, text: '다 바이오텍 후속 연락을 11월 25일 할 일로 잡고, 라 제약 랫드 PK는 협의 단계로 옮겨 둘게요. 바로 하는 기록이라 되돌리기를 누르면 원래대로 돌아가요' },
 ];
 const ASSIST_ACTIONS = [
   { key: 'x0', at: 1, label: '할 일 만들기', outcome: 'done' as const, message: null, runId: 'r1', undoable: true, undone: false },
@@ -475,12 +475,12 @@ const VIEWS: View_[] = [
   { key: 'lab-qna', label: '받은 요청, 의뢰자 질의에 답할 차례', group: '기관' },
   { key: 'lab-detail', label: '받은 요청, 2차 회신할 차례', group: '기관' },
   { key: 'lab-assist', label: '비서 홈(기관 첫 화면), 오늘 브리핑', group: '기관' },
-  { key: 'lab-assist-typing', label: '비서, 답 준비 중(점 셋)', group: '기관' },
+  { key: 'lab-assist-typing', label: '비서, 생각하는 중(점 셋)', group: '기관' },
   { key: 'lab-assist-run', label: '비서, 바로 실행·되돌리기', group: '기관' },
   { key: 'lab-assist-menu', label: '비서, 서랍 열림', group: '기관' },
   { key: 'lab-assist-find', label: '비서, 과거 견적 찾기', group: '기관' },
   { key: 'lab-assist-record', label: '비서, 회의 녹음', group: '기관' },
-  { key: 'lab-runs', label: '실행 기록', group: '기관' },
+  { key: 'lab-runs', label: '활동', group: '기관' },
   { key: 'lab-assist-check', label: '비서, 위 막대 확인 필요', group: '기관' },
   { key: 'sent-cro', label: '보낸 것(기관)', group: '기관' },
   { key: 'alerts-cro', label: '알림(기관)', group: '기관' },
@@ -520,7 +520,7 @@ function InTabs({ role, tab, check = 0, drawer = false, character = 'danchu', ch
         ];
   const more: DrawerItem[] = [
     { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), count: check, onPress: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')) },
-    ...(role === 'cro' ? [{ key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push(toView('lab-runs')) }] : []),
+    ...(role === 'cro' ? [{ key: 'runs', label: '활동', icon: ic(ClockCounterClockwise), onPress: () => router.push(toView('lab-runs')) }] : []),
     { key: 'ask', label: '가이드라인 질문', icon: ic(ChatCircleText), onPress: noop },
     { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push(toView('account')) },
   ];
@@ -704,7 +704,7 @@ function PreviewView({ view }: { view: string }) {
     case 'q-fold':
       return (
         <ChatShell title="새 요청" flushBottom bottom={qCard(Q_CLINICAL, '필수 7칸 남음', { folded: true })}>
-          <AgentText>어떤 시험 견적이 필요해요?</AgentText>
+          <AgentText>어떤 시험 견적을 받아 드릴까요?</AgentText>
           {IND_HEAD}
         </ChatShell>
       );
@@ -742,10 +742,10 @@ function PreviewView({ view }: { view: string }) {
           {CHAT_HEAD}
           {CHAT_FILLED}
           <ResultBlock
-            title="단추에 요청했어요"
+            title="다 됐어요. 단추에 요청을 보냈어요"
             meta="DC-2026-0142"
             rows={[['회신 기한', '11.26(목)']]}
-            action={<Button title="진행 보기" tall onPress={() => router.push(toView('request'))} />}
+            action={<Button title="진행 상황 보기" tall onPress={() => router.push(toView('request'))} />}
           />
         </ChatShell>
       );
@@ -881,7 +881,7 @@ function PreviewView({ view }: { view: string }) {
         </>
       );
     case 'notfound':
-      return <NotFound label="요청을 찾을 수 없어요" />;
+      return <NotFound label="이 요청을 찾지 못했어요" />;
     default:
       return <NotFound label="없는 미리보기예요" reason="목록에 없는 화면이에요." />;
   }

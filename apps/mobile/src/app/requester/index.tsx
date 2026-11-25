@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/session';
 const FILTERS = [
   { label: '전체', match: null },
   { label: '회신 도착', match: ['replied' as const] },
-  { label: '승인 대기', match: ['waiting' as const] },
+  { label: '허용 전', match: ['waiting' as const] },
 ];
 
 export default function RequesterInbox() {
@@ -31,7 +31,7 @@ export default function RequesterInbox() {
       role="requester"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
-      errorLabel={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
+      errorLabel={!live ? '아직 연결하는 중이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
       onRetry={() => void reload()}
       filters={FILTERS}
       hrefOf={requesterHref}

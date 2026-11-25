@@ -42,9 +42,9 @@ export function ContractDraftCard({ no, initial }: { no: string; initial?: Contr
       const r = await approveDanchuAction('cro', d);
       if (r.status === 'sent') return setSend({ kind: 'sent', at: typeof r.result?.sentAt === 'string' ? r.result.sentAt : new Date().toISOString() });
       const reason = typeof r.result?.error === 'string' && /[가-힣]/.test(r.result.error) ? r.result.error : null;
-      setSend({ kind: 'error', message: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요') : '결과 확인 필요' });
+      setSend({ kind: 'error', message: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요. 확인하고 다시 보내 주세요') : '결과를 확인해 주세요' });
     } catch {
-      setSend({ kind: 'error', message: '연결이 끊겼어요' });
+      setSend({ kind: 'error', message: '연결이 잠깐 끊겼어요' });
     }
   };
 
@@ -66,7 +66,7 @@ export function ContractDraftCard({ no, initial }: { no: string; initial?: Contr
         <View style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={u(16)} weight="fill" color={tokens.accent} />
           <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold }}>
-            {`의뢰자에게 보냄 ${shortDate(sentAt.slice(0, 10))}`}
+            {`${shortDate(sentAt.slice(0, 10))} 의뢰자에게 보냈어요`}
           </Txt>
         </View>
       ) : null}

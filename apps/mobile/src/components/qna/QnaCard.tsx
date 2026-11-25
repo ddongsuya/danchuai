@@ -97,8 +97,8 @@ export function QnaCard({ role, no, initial }: { role: AgentRole; no: string; in
 
       {v.qna.canAsk && <Button title={role === 'requester' ? '기관에 질의' : '의뢰자에게 질의'} kind="text" onPress={() => setAsking(true)} />}
 
-      <AskSheet role={role} no={no} v={v} visible={asking} onClose={() => setAsking(false)} onDone={() => finish('질의를 보냈어요')} />
-      <AnswerSheet role={role} no={no} q={answering} onClose={() => setAnswering(null)} onDone={() => finish('답변을 보냈어요')} />
+      <AskSheet role={role} no={no} v={v} visible={asking} onClose={() => setAsking(false)} onDone={() => finish('다 됐어요. 질의를 보냈어요. 답이 오면 알려 드릴게요')} />
+      <AnswerSheet role={role} no={no} q={answering} onClose={() => setAnswering(null)} onDone={() => finish('다 됐어요. 답변을 보냈어요')} />
     </View>
   );
 }

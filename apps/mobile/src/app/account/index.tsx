@@ -45,7 +45,7 @@ export default function Account() {
       setRevoke({ open: false, busy: false, error: null });
       router.replace('/');
     } catch {
-      setRevoke({ open: true, busy: false, error: '철회하지 못했어요. 다시 시도해 주세요.' });
+      setRevoke({ open: true, busy: false, error: '철회하지 못했어요. 한 번 더 해 볼까요?' });
     }
   };
 

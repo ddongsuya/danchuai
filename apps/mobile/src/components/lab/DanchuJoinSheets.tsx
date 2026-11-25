@@ -23,9 +23,9 @@ async function send(action: 'join' | 'decline', body: Record<string, unknown>, n
     const r = await approveDanchuAction('cro', d);
     if (r.status === 'sent') return null;
     const reason = typeof r.result?.error === 'string' ? r.result.error : null;
-    return r.status === 'failed' ? (reason ?? '단추가 받지 않았어요') : '결과 확인 필요';
+    return r.status === 'failed' ? (reason ?? '단추가 받지 않았어요. 확인하고 다시 보내 주세요') : '결과를 확인해 주세요';
   } catch {
-    return '연결이 끊겼어요';
+    return '연결이 잠깐 끊겼어요';
   }
 }
 

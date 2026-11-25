@@ -16,11 +16,11 @@ import { AgentHttpError, agentConfigured, listRuns, undoRun, type AssistRunView 
 export default function RunsRoute() {
   const live = agentConfigured();
   const { state, reload } = useRemote(listRuns, live);
-  if (!live) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
+  if (!live) return <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
   return <RunsView items={state.kind === 'ready' ? state.data : null} error={state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} onUndone={() => void reload()} />;
 }
 
-const OUTCOME = { done: '완료', failed: '거절됨', unknown: '결과 확인 필요' } as const;
+const OUTCOME = { done: '다 했어요', failed: '거절했어요', unknown: '결과를 확인해 주세요' } as const;
 /** "11.20 09:41" (기기 시간) */
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -45,14 +45,14 @@ export function RunsView({ items, error, onRetry, onUndone }: { items: AssistRun
   };
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <NavBar title="실행 기록" />
+      <NavBar title="활동" />
       <ScrollView contentContainerStyle={styles.content}>
         {error ? (
           <StateView tone="error" title={error} actions={<Button title="다시 시도" kind="soft" tall onPress={onRetry} />} />
         ) : items === null ? (
-          <StateView tone="wait" title="불러오는 중" />
+          <StateView tone="wait" title="불러오는 중이에요" />
         ) : !items.length ? (
-          <StateView tone="empty" title="비서가 한 일 없음" />
+          <StateView tone="empty" title="아직 비서가 한 일이 없어요" reason="제가 일을 하면 여기 하나씩 남겨 둘게요" />
         ) : (
           <View style={styles.card}>
             {items.map((r, i) => (
@@ -62,7 +62,7 @@ export function RunsView({ items, error, onRetry, onUndone }: { items: AssistRun
                     {r.label}
                   </Txt>
                   <Txt variant="caption" color={r.outcome === 'failed' ? tokens.danger : tokens.muted} tabular>
-                    {[when(r.createdAt), r.undone ? '되돌림' : OUTCOME[r.outcome]].join(', ')}
+                    {[when(r.createdAt), r.undone ? '되돌렸어요' : OUTCOME[r.outcome]].join(', ')}
                   </Txt>
                 </View>
                 {r.undoable && <Button title="되돌리기" kind="text" loading={busy === r.id} disabled={!!busy} onPress={() => void undo(r.id)} />}

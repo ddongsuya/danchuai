@@ -22,25 +22,25 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { approveAndSend, approveDanchuAction, createOutbound, draftDanchuAction, readDanchu, type AgentRole, type DanchuActionDraft, type OutboundDraftView } from '@/lib/agentClient';
 import { buildPayload, checkBody, fillFromChat, type RequestCheckView, type RequestSchemaView, type SendChoices } from '@/lib/danchuRequest';
-import { shortDate } from '@/lib/format';
+import { shortDate, subjName } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { lineEnter } from '@/lib/motion';
-import { useAuth } from '@/lib/session';
+import { useAgentName, useAuth } from '@/lib/session';
 import type { AgentQuestion, ChatErrorCode } from '@/lib/chat';
 
 export const ERROR_LABEL: Record<ChatErrorCode, string> = {
-  agent_unavailable: '에이전트 연결 전이에요',
-  turn_limit: '이 대화는 한도에 닿았어요',
-  turn_in_progress: '앞 답을 기다리는 중이에요',
-  refused: '이 요청에는 답할 수 없어요',
-  truncated: '답이 길어 중간에 끊겼어요',
-  provider_error: '답을 받지 못했어요',
-  network: '연결이 끊겼어요',
-  unauthorized: '로그인이 필요해요',
+  agent_unavailable: '아직 비서를 연결하는 중이에요',
+  turn_limit: '이 대화가 길어졌어요. 새 대화에서 이어 가 주세요',
+  turn_in_progress: '앞 질문에 먼저 답하고 있어요',
+  refused: '이 요청에는 제가 답할 수 없어요',
+  truncated: '답이 길어서 중간에 끊겼어요. 다시 답해 볼까요?',
+  provider_error: '답을 드리지 못했어요. 한 번 더 물어봐 주세요',
+  network: '연결이 잠깐 끊겼어요',
+  unauthorized: '다시 로그인해 주세요',
   quote_unavailable: '지금은 이 요청의 견적을 쓸 수 없어요',
   undo_unavailable: '되돌릴 수 없어요',
-  usage_limit: 'AI 사용 한도에 닿았어요',
-  ai_quota: '지금은 AI 답을 받을 수 없어요',
+  usage_limit: '이번 달 쓸 수 있는 만큼 다 썼어요',
+  ai_quota: '지금은 답을 드릴 수 없어요. 조금 뒤에 다시 물어봐 주세요',
 };
 export const RETRYABLE: readonly ChatErrorCode[] = ['provider_error', 'network', 'truncated', 'turn_in_progress', 'agent_unavailable'];
 
@@ -103,6 +103,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
   const asking = state.question && !busy && state.conversationId ? state.question : null;
   // 단추 연동 모드의 의뢰자: 받는 기관을 고르지 않고 단추 요청서로 보낸다(연동 4단계)
   const { danchu } = useAuth();
+  const agentName = useAgentName();
   const viaDanchu = danchu && role === 'requester';
   const [choices, setChoices] = useState<SendChoices | null>(null);
   // 단추 요청서 양식(request_schema). undefined 는 아직 안 읽음, null 은 못 읽음(분야만 보낸다)
@@ -125,7 +126,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
         const chk = await readDanchu<RequestCheckView>('request_check', checkBody(payload), undefined, 'requester').catch(() => null);
         if (chk?.outdated) {
           setSchema(await loadSchema());
-          setIssue('요청서 양식이 바뀌었어요. 다시 확인해 주세요');
+          setIssue('그사이 요청서 양식이 바뀌었어요. 한 번만 다시 봐 주세요');
           setOut({ kind: 'idle' });
           return;
         }
@@ -145,7 +146,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       danchuMade.current = null;
       if (r.status === 'failed') {
         haptic.error();
-        setOut({ kind: 'failed', message: typeof r.result?.error === 'string' ? r.result.error : '단추가 받지 않았어요' });
+        setOut({ kind: 'failed', message: typeof r.result?.error === 'string' ? r.result.error : '단추가 받지 않았어요. 확인하고 다시 보내 주세요' });
         setReviewing(false);
         return;
       }
@@ -241,7 +242,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
       />
     ) : reviewing && draft ? (
       <ApprovalCard
-        title={role === 'cro' ? '견적 회신 보내기' : '견적 요청 보내기'}
+        title={role === 'cro' ? `${subjName(agentName)} 의뢰자에게 견적 회신을 보내려고 해요` : `${subjName(agentName)} 기관에 견적 요청을 보내려고 해요`}
         recipients={role === 'cro' ? [{ id: 'requester', name: '의뢰자' }] : recipients}
         body={outBody}
         attachment={role === 'cro' ? '견적서 1건' : '요청서 1건'}
@@ -266,18 +267,18 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
     <ChatShell title={heading} bottom={bottom} dim={reviewing} flushBottom={Boolean(asking) && !(reviewing && draft)}>
       {role === 'cro' && state.sheet && <SheetCard sheet={state.sheet} message={requestMessage} />}
       {role === 'requester' && !state.messages.length && state.status !== 'starting' && !state.error && (
-        <AgentText>어떤 시험 견적이 필요해요?</AgentText>
+        <AgentText>어떤 시험 견적을 받아 드릴까요?</AgentText>
       )}
       {role === 'cro' && !state.messages.length && !draft && !quoteLines.length && state.status === 'idle' && !state.error && (
         <AgentText>견적 금액부터 넣을까요?</AgentText>
       )}
-      {state.status === 'starting' && <StepLog steps={[{ label: '대화 여는 중', state: 'now' }]} />}
+      {state.status === 'starting' && <StepLog steps={[{ label: '대화를 여는 중이에요', state: 'now' }]} />}
 
       {state.messages.map((m, i) => (m.role === 'user' ? <UserMessage key={m.id} text={m.text} fresh={isFresh(i)} /> : <AgentText key={m.id}>{m.text}</AgentText>))}
 
       {state.status === 'streaming' && (
         <View>
-          <StepLog steps={[{ label: state.step ?? '답 준비 중', state: 'now' }]} />
+          <StepLog steps={[{ label: state.step ?? '생각하는 중', state: 'now' }]} />
           {state.streaming ? <AgentText>{state.streaming}</AgentText> : null}
         </View>
       )}
@@ -343,17 +344,17 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           <Animated.View entering={lineEnter(0, reduced)} style={styles.row} accessibilityLiveRegion="polite">
             <CheckCircle size={u(16)} weight="fill" color={tokens.wait} />
             <Txt variant="caption" color={tokens.wait} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-              {viaDanchu ? '접수 결과 확인 필요' : `${out.sent}곳 보냄, ${out.unknown}곳 결과 확인 필요`}
+              {viaDanchu ? '접수 결과를 확인해 주세요' : `${out.sent}곳에 보냈어요. ${out.unknown}곳은 결과를 확인해 주세요`}
             </Txt>
           </Animated.View>
         ) : (
           <ResultBlock
-            title={viaDanchu ? '단추에 요청했어요' : role === 'cro' ? '회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
+            title={viaDanchu ? '다 됐어요. 단추에 요청을 보냈어요' : role === 'cro' ? '다 됐어요. 회신을 보냈어요' : `${out.sent}곳에 보냈어요`}
             meta={viaDanchu ? out.rfqNo : undefined}
             rows={viaDanchu && choices?.replyBy ? [['회신 기한', shortDate(choices.replyBy)]] : undefined}
             action={
               role === 'requester' && sentRequestId ? (
-                <Button title="진행 보기" tall onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
+                <Button title="진행 상황 보기" tall onPress={() => router.replace({ pathname: '/requester/[id]', params: { id: sentRequestId } })} />
               ) : undefined
             }
           />
@@ -366,7 +367,7 @@ export function LiveChat({ role, title, requestId, conversationId, recipients: g
           </Txt>
         </View>
       )}
-      {out.kind === 'error' && <ErrorLine label="보내지 못했어요" onRetry={() => void approve()} />}
+      {out.kind === 'error' && <ErrorLine label="보내지 못했어요. 한 번 더 해 볼까요?" onRetry={() => void approve()} />}
       {out.kind === 'failed' && <ErrorLine label={out.message} onRetry={() => setReviewing(true)} />}
 
       {state.error && <ErrorLine label={ERROR_LABEL[state.error]} onRetry={RETRYABLE.includes(state.error) ? retry : undefined} />}

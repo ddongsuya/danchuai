@@ -30,7 +30,7 @@ export default function SentRoute() {
   const live = agentConfigured();
   const load = useCallback(() => listSent(role), [role]);
   const { state, reload } = useRemote(load, live);
-  if (!live) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
+  if (!live) return <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
   return <SentView role={role} items={state.kind === 'ready' ? state.data : null} error={state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} />;
 }
 
@@ -44,9 +44,9 @@ export function SentView({ role, items, error, onRetry }: { role: AgentRole; ite
         {error ? (
           <StateView tone="error" title={error} actions={<Button title="다시 시도" kind="soft" tall onPress={onRetry} />} />
         ) : items === null ? (
-          <StateView tone="wait" title="불러오는 중" />
+          <StateView tone="wait" title="불러오는 중이에요" />
         ) : !items.length ? (
-          <StateView tone="empty" title="보낸 것 없음" />
+          <StateView tone="empty" title="아직 보낸 게 없어요" reason="허용한 일은 보낸 뒤 여기 남아요" />
         ) : (
           <View style={styles.card}>
             {items.map((it, i) => {

@@ -44,7 +44,7 @@ export function DanchuRequest({ no }: { no: string }) {
       <ChatShell title="요청" bottom={null}>
         {state.kind === "loading" ? (
           <View
-            accessibilityLabel="불러오는 중"
+            accessibilityLabel="불러오는 중이에요"
             accessibilityRole="progressbar"
             style={{ gap: space.md }}
           >

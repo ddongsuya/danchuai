@@ -12,9 +12,9 @@ export async function sendApprovedResult(role: AgentRole, action: DanchuActionNa
     if (r.status === 'sent') return { ok: true };
     const code = typeof r.result?.error === 'string' ? r.result.error : null;
     const reason = code && /[가-힣]/.test(code) ? code : null;
-    return { ok: false, code, text: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요') : '결과 확인 필요' };
+    return { ok: false, code, text: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요. 확인하고 다시 보내 주세요') : '결과를 확인해 주세요' };
   } catch {
-    return { ok: false, code: null, text: '연결이 끊겼어요' };
+    return { ok: false, code: null, text: '연결이 잠깐 끊겼어요' };
   }
 }
 

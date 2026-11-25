@@ -63,7 +63,7 @@ export default function TabsLayout() {
   const ic = (I: typeof PaperPlaneTilt) => <I size={20} color={tokens.text} />;
   const more: DrawerItem[] = [
     { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), count: sent.check, onPress: () => router.push({ pathname: '/sent', params: { role } }) },
-    ...(role === 'cro' ? [{ key: 'runs', label: '실행 기록', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') }] : []),
+    ...(role === 'cro' ? [{ key: 'runs', label: '활동', icon: ic(ClockCounterClockwise), onPress: () => router.push('/lab/runs') }] : []),
     { key: 'ask', label: '가이드라인 질문', icon: ic(ChatCircleText), onPress: () => router.push({ pathname: '/ask', params: { role } }) },
     { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push('/account') },
     ...(status === 'disabled'

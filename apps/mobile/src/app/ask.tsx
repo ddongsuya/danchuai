@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/session';
 export default function Ask() {
   const { status, org } = useAuth();
   const { role, conv, seed } = useLocalSearchParams<{ role?: string; conv?: string; seed?: string }>();
-  if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
+  if (!agentConfigured()) return <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
   const r = status === 'disabled' ? (role === 'cro' ? 'cro' : 'requester') : org?.kind === 'cro' ? 'cro' : 'requester';
   const id = conv && isUuid(conv) ? conv : undefined;
   return <AskChat key={`${r}-${id ?? 'new'}`} role={r} conversationId={id} seed={!id && seed ? seed.slice(0, 1000) : undefined} />;

@@ -31,7 +31,7 @@ export function DanchuLab({ no }: { no: string }) {
     return (
       <ChatShell title="받은 요청" bottom={null}>
         {state.kind === 'loading' ? (
-          <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
+          <View accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar" style={{ gap: space.md }}>
             <View style={[styles.bone, { width: '60%' }]} />
             <View style={[styles.card, { height: u(200) }]} />
           </View>
@@ -71,9 +71,12 @@ export function canQuote(it: Pick<DanchuLabItem, 'join' | 'group' | 'stage' | 'n
   return it.group === 'sent' && it.next === '비교표 열리면 알려요';
 }
 
+/** 단추가 주는 다음 할 일 문장 가운데 비서 말투로 바꿔 보여 줄 것(비교는 단추 원문으로 한다) */
+const NEXT_TEXT: Record<string, string> = { '비교표 열리면 알려요': '비교표가 열리면 알려 드릴게요' };
+
 function task(it: DanchuLabItem) {
   if (it.join || it.group === 'decide') return { title: '참여 여부를\n정해 주세요', button: '단추에서 참여 정하기' };
-  return { title: it.next === '할 일 없음' ? it.stage : it.next, button: `단추에서 ${it.next}` };
+  return { title: it.next === '할 일 없음' ? it.stage : (NEXT_TEXT[it.next] ?? it.next), button: `단추에서 ${it.next}` };
 }
 
 /** 화면에 그리는 부분만. 미리보기(/preview)는 예시 값으로 이것만 쓴다. */
@@ -101,7 +104,7 @@ export function DanchuLabView({ it, onChanged, initialSheet = null, contractPrev
             </>
           ) : quotable ? (
             <>
-              <Button title="AI와 견적 초안 만들기" tall onPress={() => router.push({ pathname: '/lab/quote/[no]', params: { no: it.no } })} />
+              <Button title="견적서 초안 맡기기" tall onPress={() => router.push({ pathname: '/lab/quote/[no]', params: { no: it.no } })} />
               <Button title="단추에서 열기" kind="text" icon={<ArrowSquareOut size={u(16)} color={tokens.muted} />} onPress={open} />
             </>
           ) : act ? (

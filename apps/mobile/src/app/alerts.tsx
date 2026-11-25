@@ -37,7 +37,7 @@ export default function AlertsRoute() {
   useEffect(() => {
     if (unread > 0) readAllAlerts(role).catch(() => undefined);
   }, [unread, role]);
-  if (!live) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
+  if (!live) return <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
   return <AlertsView role={role} items={items} error={state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} />;
 }
 
@@ -69,7 +69,7 @@ export function AlertsList({ role, items, error, onRetry, now }: { role: AgentRo
   };
   if (error) return <View style={styles.pad}><StateView tone="error" title={error} actions={<Button title="다시 시도" kind="soft" tall onPress={onRetry} />} /></View>;
   if (items === null) return <Skeleton />;
-  if (!items.length) return <View style={styles.pad}><StateView tone="empty" title="알림 없음" /></View>;
+  if (!items.length) return <View style={styles.pad}><StateView tone="empty" title="아직 소식이 없어요" reason="요청이 움직이면 여기 알려 드릴게요" /></View>;
   return (
     <View>
       {items.map((a, i) => {
@@ -121,7 +121,7 @@ export function ago(iso: string, now = new Date()): string {
 
 function Skeleton() {
   return (
-    <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar">
+    <View accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar">
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.row}>
           {i > 0 && <View style={styles.line} />}

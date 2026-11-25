@@ -79,7 +79,7 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
       )}
 
       {state.kind === 'loading' ? (
-        <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar">
+        <View accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar">
           {[0, 1, 2, 3].map((i) => (
             <View key={i} style={[styles.lab, i > 0 && styles.line]}>
               <View style={styles.lav} />
@@ -105,7 +105,7 @@ export function LabPicker({ initial, onClose, onDone }: Props) {
           }
           ListEmptyComponent={
             <Txt variant="small" color={tokens.muted} style={styles.empty}>
-              {labs.length ? '검색 결과 없음' : '가입 기관 없음'}
+              {labs.length ? '맞는 기관이 없어요' : '아직 가입한 기관이 없어요'}
             </Txt>
           }
           renderItem={({ item, index }) => {

@@ -54,8 +54,8 @@ function QuoteHits({ card, initial }: { card: Card; initial?: QuoteHitView[] }) 
           </Txt>
         )}
       </View>
-      {load.kind === 'loading' && <StepLog steps={[{ label: '단추에서 찾는 중', state: 'now' }]} />}
-      {load.kind === 'error' && <ErrorLine label="견적을 불러오지 못했어요" onRetry={() => {
+      {load.kind === 'loading' && <StepLog steps={[{ label: '단추에서 찾는 중이에요', state: 'now' }]} />}
+      {load.kind === 'error' && <ErrorLine label="견적을 못 불러왔어요. 다시 해 볼까요?" onRetry={() => {
             setLoad({ kind: 'loading' });
             setTick((t) => t + 1);
           }} />}

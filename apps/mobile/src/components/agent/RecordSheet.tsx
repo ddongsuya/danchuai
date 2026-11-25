@@ -25,12 +25,12 @@ export const MAX_MINUTES = 180;
 const PRESET = { ...RecordingPresets.HIGH_QUALITY, numberOfChannels: 1, bitRate: 64_000, web: { mimeType: 'audio/webm', bitsPerSecond: 64_000 } };
 
 const FAIL: Record<SttFailure | 'mic', string> = {
-  not_configured: '녹음 전사가 아직 설정되지 않았어요',
-  usage_limit: 'AI 사용 한도에 닿았어요',
+  not_configured: '아직 회의 녹음을 쓸 수 없어요',
+  usage_limit: '이번 달 쓸 수 있는 만큼 다 썼어요',
   too_long: `${MAX_MINUTES}분까지 옮길 수 있어요`,
-  stt_failed: '글로 옮기지 못했어요',
-  empty: '들리는 말이 없어요',
-  network: '연결이 끊겼어요',
+  stt_failed: '글로 옮기지 못했어요. 한 번 더 해 볼까요?',
+  empty: '들리는 말이 없었어요. 한 번 더 녹음해 볼까요?',
+  network: '연결이 잠깐 끊겼어요',
   mic: '마이크 권한이 필요해요',
 };
 
@@ -143,7 +143,7 @@ function RecordBody({ onClose, onTranscript }: { onClose: () => void; onTranscri
     ) : phase.kind === 'recorded' ? (
       <Button title="글로 옮기기" tall onPress={() => void run(phase)} />
     ) : phase.kind === 'working' ? (
-      <Button title="글로 옮기는 중" tall loading disabled onPress={() => undefined} />
+      <Button title="글로 옮기는 중이에요" tall loading disabled onPress={() => undefined} />
     ) : (
       <Button title="다시 하기" tall onPress={() => setPhase(phase.back ?? { kind: 'ready' })} />
     );
@@ -172,7 +172,7 @@ function RecordBody({ onClose, onTranscript }: { onClose: () => void; onTranscri
           {phase.label}
         </Txt>
       )}
-      {phase.kind === 'working' && <StepLog steps={[{ label: `${phase.minutes}분 분량 글로 옮기는 중`, state: 'now' }]} />}
+      {phase.kind === 'working' && <StepLog steps={[{ label: `${phase.minutes}분 분량을 글로 옮기는 중이에요`, state: 'now' }]} />}
       {phase.kind === 'error' && (
         <Txt variant="body" color={tokens.danger} accessibilityRole="alert" style={styles.picked}>
           {FAIL[phase.code]}

@@ -8,7 +8,7 @@ import { RFQ_NO } from '@/lib/marketClient';
 
 export default function LabQuoteRoute() {
   const { no } = useLocalSearchParams<{ no: string }>();
-  if (!agentConfigured()) return <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
-  if (!RFQ_NO.test(no ?? '')) return <NotFound label="요청을 찾을 수 없어요" />;
+  if (!agentConfigured()) return <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
+  if (!RFQ_NO.test(no ?? '')) return <NotFound label="이 요청을 찾지 못했어요" />;
   return <DanchuQuoteChat no={no} />;
 }

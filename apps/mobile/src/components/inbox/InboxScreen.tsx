@@ -22,7 +22,7 @@ import type { InboxItem, InboxStatus } from '@/lib/inbox';
 export const STATUS_CHIP: Record<InboxStatus, { label: string; kind: ChipTone }> = {
   new: { label: '새 요청', kind: 'wait' },
   viewed: { label: '확인', kind: 'mute' },
-  waiting: { label: '승인 대기', kind: 'wait' },
+  waiting: { label: '허용 전', kind: 'wait' },
   drafting: { label: '작성 중', kind: 'mute' },
   sent: { label: '보냄', kind: 'mute' },
   replied: { label: '회신 도착', kind: 'wait' },
@@ -48,7 +48,7 @@ interface Props {
   inTab?: boolean;
 }
 
-export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '요청 없음', hrefOf, inTab }: Props) {
+export function InboxScreen({ role, title = '요청함', items, filters, load = 'ready', errorLabel, onRetry, emptyLabel = '아직 요청이 없어요', hrefOf, inTab }: Props) {
   const [active, setActive] = useState(0);
   // 거름 칸은 화면마다 정한 것만(의뢰자 3칸, 기관 4칸). 건수는 1 이상일 때만 숫자로 붙는다. 숫자는 고정폭.
   const tabs = useMemo(() => filters.map((f) => ({ ...f, count: f.match ? items.filter((i) => f.match!.includes(i.status)).length : items.length })), [filters, items]);
@@ -63,7 +63,7 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
         ) : (
         <View style={styles.nav}>
           {/* 받은 요청·요청함은 비서 메뉴에서 연다. 계정·화면 바꾸기도 비서 메뉴에 있다 */}
-          <IconButton label="비서로 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
+          <IconButton label="비서에게 돌아가기" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
             <CaretLeft size={u(22)} color={tokens.text} />
           </IconButton>
           <Press label="질문하기" onPress={() => router.push({ pathname: '/ask', params: { role } })} style={styles.ask}>
@@ -109,8 +109,8 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
           <View style={styles.state}>
             <StateView
               tone="error"
-              title={errorLabel ?? '목록을 불러오지 못했어요'}
-              reason="인터넷 연결을 확인하고 다시 시도해 주세요."
+              title={errorLabel ?? '목록을 못 불러왔어요'}
+              reason="인터넷 연결을 확인하고 다시 눌러 주세요"
               actions={onRetry ? <Button title="다시 시도" kind="soft" tall onPress={onRetry} /> : undefined}
             />
           </View>
@@ -164,7 +164,7 @@ export function InboxScreen({ role, title = '요청함', items, filters, load = 
 /** 최종 목록 모양의 뼈대 */
 function Skeleton() {
   return (
-    <View style={styles.list} accessibilityLabel="불러오는 중" accessibilityRole="progressbar">
+    <View style={styles.list} accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar">
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.item}>
           <View style={styles.ico} />

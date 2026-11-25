@@ -24,7 +24,7 @@ export default function FeedTab() {
   );
   return (
     <TabPage title="소식">
-      <AlertsList role={role} items={live ? items : []} error={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} />
+      <AlertsList role={role} items={live ? items : []} error={!live ? '아직 연결하는 중이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : null} onRetry={() => void reload()} />
     </TabPage>
   );
 }
