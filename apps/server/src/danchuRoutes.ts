@@ -4,6 +4,7 @@
 // 공개 규칙은 단추가 이미 적용해 보낸다(선정 전 의뢰자 신원 숨김, 비교표 열리기 전 기관명·금액 숨김). 여기서 더 붙이지 않는다.
 import { Hono, type Context, type Next } from "hono";
 import { z } from "zod";
+import { characterOf, isCharacterId } from "@danchuai/core";
 import type { Session } from "./auth";
 import { BEARER, CONSENT_VERSION, type DanchuIdentity, type WorkspaceRepo } from "./danchuAuth";
 import { RFQ_NO, type DanchuApi, type DanchuError } from "./danchu";
@@ -30,6 +31,7 @@ const STATUS: Record<DanchuError, 401 | 403 | 404 | 429 | 503> = {
 type Lookup = (authorization: string | undefined) => Promise<DanchuIdentity | DanchuError>;
 
 const ConsentBody = z.object({ version: z.literal(CONSENT_VERSION) }).strict();
+const CharacterBody = z.object({ character: z.string().max(32).refine(isCharacterId) }).strict();
 
 export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo; api: DanchuApi; purge?: PurgeRepo }) {
   const app = new Hono<{ Variables: { id: DanchuIdentity } }>();
@@ -42,7 +44,7 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
 
   app.get("/me", async (c) => {
     const { me, session } = c.get("id");
-    const consent = await deps.workspaces.consent(me.id);
+    const [consent, character] = await Promise.all([deps.workspaces.consent(me.id), deps.workspaces.character(me.id)]);
     return c.json({
       source: "danchu",
       userId: me.id,
@@ -51,7 +53,16 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
       danchuOrg: me.org,
       consent: consent ?? null,
       consentVersion: CONSENT_VERSION,
+      character: characterOf(character).id,
     });
+  });
+
+  // 비서 캐릭터 고르기(Muse 시안 2026-11-25). 계정별로 하나, 목록에 있는 값만
+  app.post("/character", async (c) => {
+    const parsed = CharacterBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success || !isCharacterId(parsed.data.character)) return c.json({ error: "bad_request" }, 400);
+    await deps.workspaces.setCharacter(c.get("id").me.id, parsed.data.character);
+    return c.json({ character: parsed.data.character });
   });
 
   app.post("/consent", async (c) => {

@@ -1,8 +1,8 @@
 // 시작: 단추 계정으로 로그인. 가입은 단추 웹에서 한다(연동 2단계, 에이전트 전용 가입·Google 로그인 없음).
 import { router } from 'expo-router';
-import { ChatTeardropDots } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { AgentAvatar } from '@/components/agent/AgentAvatar';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Txt } from '@/components/ui/Txt';
@@ -18,9 +18,7 @@ export default function Welcome() {
       padTop={u(40)}
       gap={0}
       top={
-        <View style={styles.mark}>
-          <ChatTeardropDots size={u(22)} weight="bold" color={tokens.onInk} />
-        </View>
+        <AgentAvatar size={72} character="danchu" />
       }
       footer={
         <>
@@ -56,7 +54,6 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  mark: { width: u(44), height: u(44), borderRadius: u(14), backgroundColor: tokens.ink, alignItems: 'center', justifyContent: 'center' },
   // 시안 A01 오른쪽 안: 로고는 위, 제목은 로고와 버튼 사이 가운데
   intro: { flex: 1, justifyContent: 'center', gap: space.sm },
   legal: { flexDirection: 'row', justifyContent: 'center', gap: space.md },
