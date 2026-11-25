@@ -93,6 +93,8 @@ export interface DanchuRequest {
   submitted: number;
   compareOpen: boolean;
   selected: boolean;
+  /** 선정 없이 마무리한 사유(외부 진행·보류·취소). 단추가 보내기 전에는 없다 */
+  outcome?: string | null;
 }
 
 export type DanchuCompare =

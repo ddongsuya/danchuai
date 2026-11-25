@@ -11,7 +11,11 @@ import { StyleSheet, View } from "react-native";
 
 import { ChatShell } from "@/components/chat/ChatShell";
 import { ContractCard } from "@/components/contract/ContractCard";
+import { ReceivedDraftCard } from "@/components/contract/ReceivedDraftCard";
 import { QnaCard } from "@/components/qna/QnaCard";
+import { QuoteDocSheet } from "@/components/request/QuoteDocSheet";
+import { AttachButton, CloseSheet, ReopenDialog } from "@/components/request/RequestActions";
+import { canAttach, canClose, canReopen, type ReceivedDraftView } from "@/lib/danchuRequester";
 import { RequesterDetailCard } from "@/components/detail/DetailCard";
 import type { ContractView } from "@/lib/danchuContract";
 import type { QnaView } from "@/lib/danchuQna";
@@ -85,7 +89,11 @@ export function DanchuRequest({ no }: { no: string }) {
 const headline = (r: DanchuRequestData) =>
   r.selected
     ? "기관을 선정했어요"
-    : r.compareOpen
+    : r.status === "closed" || r.status === "cancelled"
+      ? r.outcome === "보류"
+        ? "보류한 요청이에요"
+        : "마무리한 요청이에요"
+      : r.compareOpen
       ? "비교표가 열렸어요"
       : "회신을 받고 있어요";
 
@@ -97,6 +105,7 @@ export function DanchuRequestView({
   contractPreview,
   qnaPreview,
   detailPreview,
+  draftPreview,
 }: {
   data: { request: DanchuRequestData; compare: DanchuCompare };
   /** 선정이 끝났다(화면이 다시 읽는다) */
@@ -109,13 +118,23 @@ export function DanchuRequestView({
   qnaPreview?: QnaView;
   /** 미리보기 2차 상세 요청 값 */
   detailPreview?: RequesterDetailView;
+  /** 미리보기 받은 계약서(안) 값 */
+  draftPreview?: ReceivedDraftView;
 }) {
   const { request: r, compare } = data;
   const [selecting, setSelecting] = useState(initialSelecting);
+  const [closing, setClosing] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [doc, setDoc] = useState<{ quoteId: string | null; path: string | null } | null>(null);
   const open = () =>
     openWeb(`${DANCHU_URL}/app/r/${encodeURIComponent(r.no)}`);
-  // 상태에 맞는 주 동작 하나. 기다리기만 하면 되는 때에는 주 버튼을 두지 않는다.
-  const choose = compare.open && !r.selected && compare.columns.length > 0;
+  // 상태에 맞는 주 동작 하나. 기다리기만 하면 되는 때에는 주 버튼을 두지 않는다. 마무리한 요청은 선정하지 않는다.
+  const choose = compare.open && !r.selected && canClose(r) && compare.columns.length > 0;
+  const changed = () => {
+    setClosing(false);
+    setReopening(false);
+    onSelected?.();
+  };
   // 앱에서 바로 선정할 수 있는 칸(정식 견적서, 선정 승인에 넘길 id·판)이 하나라도 있으면 시트로, 없으면 단추에서
   const inApp =
     choose &&
@@ -181,11 +200,13 @@ export function DanchuRequestView({
 
       {/* 선정 뒤: 기관 계약 보고 확인, 보고 전이면 계약 결과 알리기 */}
       {r.selected && <ContractCard role="requester" no={r.no} initial={contractPreview} />}
+      {r.selected && <ReceivedDraftCard no={r.no} initial={draftPreview} />}
 
       {compare.open && (
         <CompareList
           columns={compare.columns}
           missing={Math.max(0, r.joined - compare.columns.length)}
+          onDoc={(c) => setDoc({ quoteId: c.quoteId ?? null, path: c.docPath ?? null })}
         />
       )}
 
@@ -202,6 +223,18 @@ export function DanchuRequestView({
           {r.joinBy && <Fact k="참여 결정 기한" v={md(r.joinBy)} line />}
         </View>
       )}
+
+      {/* 요청 관리: 첨부 추가, 선정 없이 마무리, 보류한 요청 다시 열기 */}
+      {(canAttach(r) || canClose(r) || canReopen(r)) && (
+        <View style={styles.manage}>
+          {canReopen(r) && <Button title="다시 열기" kind="soft" onPress={() => setReopening(true)} />}
+          {canAttach(r) && <AttachButton no={r.no} />}
+          {canClose(r) && <Button title="선정 없이 마무리" kind="text" onPress={() => setClosing(true)} />}
+        </View>
+      )}
+      <CloseSheet no={r.no} visible={closing} onClose={() => setClosing(false)} onDone={changed} />
+      <ReopenDialog no={r.no} visible={reopening} onClose={() => setReopening(false)} onDone={changed} />
+      <QuoteDocSheet no={r.no} quoteId={doc?.quoteId ?? null} webPath={doc?.path ?? null} onClose={() => setDoc(null)} />
 
       {inApp && compare.open && (
         <DanchuSelectSheet
@@ -223,9 +256,12 @@ export function DanchuRequestView({
 function CompareList({
   columns,
   missing,
+  onDoc,
 }: {
   columns: DanchuCompareColumn[];
   missing: number;
+  /** 기관 견적서를 앱 안에서 연다(견적 id가 없으면 단추 화면) */
+  onDoc: (c: DanchuCompareColumn) => void;
 }) {
   if (!columns.length) {
     return (
@@ -278,9 +314,9 @@ function CompareList({
               <Button
                 title="기관 견적서"
                 kind="text"
-                icon={<ArrowSquareOut size={u(16)} color={tokens.text} />}
+                icon={c.quoteId ? undefined : <ArrowSquareOut size={u(16)} color={tokens.text} />}
                 onPress={() =>
-                  void openWeb(`${DANCHU_URL}${c.docPath}`)
+                  c.quoteId ? onDoc(c) : void openWeb(`${DANCHU_URL}${c.docPath}`)
                 }
               />
             </View>
@@ -371,4 +407,5 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   bar: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.xs },
+  manage: { gap: u(2), borderTopWidth: 1, borderTopColor: tokens.border, paddingTop: space.sm },
 });

@@ -249,7 +249,7 @@ export function danchuActionRoutes(deps: { outbound: OutboundRepo; conversations
 }
 
 /** 기관·의뢰자 바깥으로 나가지 않는 동작(임시 저장, 첨부 주소, 고객관리 기록, 견적서 금액 넣기). 보낸 것 기록에서 뺀다 */
-const INTERNAL_ACTIONS = new Set<string>(["quote_draft", "quote_upload", "crm_activity", "quote_doc_set_amount"]);
+const INTERNAL_ACTIONS = new Set<string>(["quote_draft", "quote_upload", "crm_activity", "quote_doc_set_amount", "request_file_url"]);
 const SENT_LIMIT = 50;
 /** 안쪽 동작을 빼고도 50건이 차도록 더 읽는다 */
 const SENT_SCAN = 150;
