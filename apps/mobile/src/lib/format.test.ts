@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { callName, daysLeft, localDay, shortDate } from './format';
+import { callName, daysLeft, localDay, shortDate, subjName } from './format';
 
 describe('shortDate', () => {
   it('월.일(요일)로 줄인다', () => {
@@ -40,5 +40,13 @@ describe('callName', () => {
     expect(callName('펭')).toBe('펭이라고');
     expect(callName('캡캡')).toBe('캡캡이라고');
     expect(callName('단추')).toBe('단추라고');
+  });
+});
+
+describe('subjName', () => {
+  it('받침이 있으면 이, 없으면 가', () => {
+    expect(subjName('비비')).toBe('비비가');
+    expect(subjName('몽글')).toBe('몽글이');
+    expect(subjName('단추')).toBe('단추가');
   });
 });

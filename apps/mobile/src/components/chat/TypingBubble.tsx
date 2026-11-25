@@ -17,7 +17,7 @@ export function TypingBubble({ label }: { label?: string | null }) {
     return () => cancelAnimation(t);
   }, [t]);
   return (
-    <View style={styles.wrap} accessibilityLiveRegion="polite" accessibilityLabel={label ? `${label}, 답 준비 중` : '답 준비 중'}>
+    <View style={styles.wrap} accessibilityLiveRegion="polite" accessibilityLabel={label ? `${label}, 생각하는 중` : '생각하는 중'}>
       <View style={styles.bubble}>
         {[0, 1, 2].map((i) => (
           <Dot key={i} i={i} t={t} still={reduced} />

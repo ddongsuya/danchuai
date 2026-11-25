@@ -43,8 +43,8 @@ export function useRemote<T>(load: () => Promise<T>, enabled = true) {
 }
 
 export const REMOTE_ERROR: Record<'network' | 'not_found' | 'unauthorized' | 'other', string> = {
-  network: '연결이 끊겼어요',
-  not_found: '요청을 찾을 수 없어요',
-  unauthorized: '로그인이 필요해요',
-  other: '불러오지 못했어요',
+  network: '연결이 잠깐 끊겼어요',
+  not_found: '이 요청을 찾지 못했어요',
+  unauthorized: '다시 로그인해 주세요',
+  other: '못 불러왔어요. 다시 해 볼까요?',
 };

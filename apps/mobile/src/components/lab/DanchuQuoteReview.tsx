@@ -20,15 +20,17 @@ import { fonts, radius, space, tokens, u } from '@/constants/theme';
 import { AgentHttpError, approveDanchuAction, draftDanchuAction, readDanchu, runDanchu } from '@/lib/agentClient';
 import { DANCHU_URL, openWeb } from '@/lib/danchuLinks';
 import { docBlockedLabel, docLines, docQuoteBody, formatWonInput, parseWonInput, quoteSubmittedNow, sameAsSubmitted, type DanchuQuoteDraft, type DocLine, type QuoteSubmitPreview } from '@/lib/danchuQuote';
+import { subjName } from '@/lib/format';
+import { useAgentName } from '@/lib/session';
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
 
 /** 단추가 제출·금액 넣기를 막은 까닭(단추 quote_submit·quote_doc_set_amount 오류) */
 const REFUSED: Record<string, string> = {
-  changed: '견적서가 바뀌어 새로 불러왔어요',
+  changed: '그사이 견적서가 바뀌어서 새로 불러왔어요',
   amount_missing: '금액 없는 줄이 있어요',
   mismatched: '요청서와 시험 이름이 다른 줄이 있어요',
-  doc_missing: '견적서가 없어요',
+  doc_missing: '아직 견적서가 없어요',
 };
 /** 단추 웹 처리의 한국어 오류 문장은 그대로, 영문 코드는 보이지 않는다 */
 const refusedText = (code: string | null, fallback: string) => (code && REFUSED[code]) ?? (code && /[가-힣]/.test(code) ? code : fallback);
@@ -63,6 +65,7 @@ async function loadPreview(no: string): Promise<QuoteSubmitPreview> {
 }
 
 export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onSubmitted, initialPreview }: QuoteReviewProps) {
+  const agentName = useAgentName();
   const [doc, setDoc] = useState<Doc>(initialPreview ? { kind: 'ready', p: initialPreview } : { kind: 'loading' });
   const [tick, setTick] = useState(0);
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -89,7 +92,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
   const p = doc.kind === 'ready' ? doc.p : null;
   const lines = p ? docLines(quote, p) : [];
   const built = p ? docQuoteBody(quote, p, true) : null;
-  const blocked = built ? docBlockedLabel(built) : '견적서 불러오는 중';
+  const blocked = built ? docBlockedLabel(built) : '견적서를 불러오는 중이에요';
   const sending = run.kind === 'sending' || !!put?.busy;
   const submittedNow = !!p && quoteSubmittedNow(quote) && sameAsSubmitted(quote, p);
 
@@ -124,9 +127,9 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
         reload();
         return;
       }
-      setPut({ uid, busy: false, error: r.status === 'failed' ? refusedText(code, '견적서에 넣지 못했어요') : '결과 확인 필요' });
+      setPut({ uid, busy: false, error: r.status === 'failed' ? refusedText(code, '견적서에 넣지 못했어요. 한 번 더 해 볼까요?') : '결과를 확인해 주세요' });
     } catch {
-      setPut({ uid, busy: false, error: '연결이 끊겼어요' });
+      setPut({ uid, busy: false, error: '연결이 잠깐 끊겼어요' });
     }
   };
 
@@ -144,11 +147,11 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
         return;
       }
       const code = typeof r.result?.error === 'string' ? r.result.error : null;
-      setRun({ kind: 'error', message: r.status === 'failed' ? refusedText(code, '단추가 받지 않았어요') : '결과 확인 필요' });
+      setRun({ kind: 'error', message: r.status === 'failed' ? refusedText(code, '단추가 받지 않았어요. 확인하고 다시 보내 주세요') : '결과를 확인해 주세요' });
       // 견적서와 어긋나서 막혔으면 지금 견적서를 다시 읽는다
       if (code && code in REFUSED) reload();
     } catch {
-      setRun({ kind: 'error', message: '연결이 끊겼어요' });
+      setRun({ kind: 'error', message: '연결이 잠깐 끊겼어요' });
     }
   };
 
@@ -168,7 +171,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
             </Txt>
           </View>
           <Button
-            title={submitted ? '제출했어요' : (blocked ?? title)}
+            title={submitted ? '다 됐어요. 견적을 제출했어요. 비교표가 열리면 알려 드릴게요' : (blocked ?? title)}
             tall
             disabled={!built?.ok || sending || submittedNow || submitted}
             loading={run.kind === 'sending' && run.what === 'submit'}
@@ -186,12 +189,12 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
           {line}
         </Txt>
         <Txt variant="title" accessibilityRole="header">
-          {'견적을\n확인해 주세요'}
+          {`${subjName(agentName)} ${no}에\n견적을 제출하려고 해요`}
         </Txt>
       </View>
 
-      {doc.kind === 'loading' && <StepLog steps={[{ label: '단추 견적서 불러오는 중', state: 'now' }]} />}
-      {doc.kind === 'error' && <ErrorLine label="견적서를 불러오지 못했어요" onRetry={reload} />}
+      {doc.kind === 'loading' && <StepLog steps={[{ label: '단추 견적서를 불러오는 중이에요', state: 'now' }]} />}
+      {doc.kind === 'error' && <ErrorLine label="견적서를 못 불러왔어요. 다시 해 볼까요?" onRetry={reload} />}
 
       {p && (
         <View style={styles.card}>
@@ -236,7 +239,7 @@ export function DanchuQuoteReview({ no, line, quote, conversationId, onBack, onS
         <View style={styles.row} accessibilityLiveRegion="polite">
           <CheckCircle size={u(16)} weight="fill" color={tokens.accent} />
           <Txt variant="caption" color={tokens.accent} style={{ fontFamily: fonts.semibold, flex: 1 }}>
-            {run.what === 'submit' ? '단추에 제출했어요' : '단추에 임시 저장했어요'}
+            {run.what === 'submit' ? '단추에 제출했어요' : '임시 저장해 뒀어요'}
           </Txt>
         </View>
       )}
@@ -282,7 +285,7 @@ function Line({ l, first, typed, put, disabled, onType, onPut }: { l: DocLine; f
           {[live ? l.avail : null, l.weeks ? `${l.weeks}주` : null, l.reason || null].filter(Boolean).join(', ') || ' '}
         </Txt>
         {l.state === 'priced' && <Chip label="견적서 금액" />}
-        {l.state === 'manual' && <Chip label="금액 넣기 필요" kind="wait" />}
+        {l.state === 'manual' && <Chip label="금액을 넣어 주세요" kind="wait" />}
         {l.state === 'no_test' && <Chip label="견적서에 없음" kind="wait" />}
         {l.state === 'mismatched' && <Chip label="시험 이름 다름" kind="wait" />}
       </View>

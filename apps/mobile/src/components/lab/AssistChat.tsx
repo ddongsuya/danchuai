@@ -23,7 +23,7 @@ import { AgentHttpError, readDanchu, undoRun, type AssistBriefView, type QuoteHi
 import type { ActionCard, ChatErrorCode, ChatMessage, LookupCard as LookupItem } from '@/lib/chat';
 
 /** 빈 대화에서 바로 보낼 말 */
-const STARTERS = ['아침 브리핑', '이번 주 보고'] as const;
+const STARTERS = ['오늘 아침 브리핑 보여 줘', '이번 주 보고 만들어 줘'] as const;
 
 export function AssistChat() {
   const { state, send, retry, markUndone } = useAgentChat('cro', undefined, undefined, 'assist');
@@ -120,12 +120,12 @@ export function AssistView({ brief, messages, actions, lookups = [], lookupPrevi
     />
   );
   return (
-    <ChatShell title="비서" tabs nav={nav} bottom={<Composer disabled={!canSend} placeholder="비서에게 맡길 일" onSend={onSend} />}>
+    <ChatShell title="비서" tabs nav={nav} bottom={<Composer disabled={!canSend} placeholder="메시지" onSend={onSend} />}>
       {onTranscript && <RecordSheet visible={recordOpen} onClose={() => setRecordOpen(false)} onTranscript={onTranscript} />}
       {empty && (
         <View style={styles.hero}>
           <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
-            무엇을 맡길까요?
+            오늘은 무엇을 맡아 드릴까요?
           </Txt>
         </View>
       )}
@@ -165,8 +165,8 @@ const md = (ymd: string) => {
 
 /** 오늘 브리핑: 오늘 할 일(시간순, 기한 지난 것 먼저)과 손이 필요한 안건. 단추 오늘 화면과 같은 계산 */
 function BriefCard({ brief }: { brief: AssistBriefView | null | 'error' }) {
-  if (brief === null) return <StepLog steps={[{ label: '오늘 할 일 읽는 중', state: 'now' }]} />;
-  if (brief === 'error') return <ErrorLine label="오늘 할 일을 불러오지 못했어요" />;
+  if (brief === null) return <StepLog steps={[{ label: '오늘 할 일을 살펴보는 중이에요', state: 'now' }]} />;
+  if (brief === 'error') return <ErrorLine label="오늘 할 일을 못 불러왔어요. 조금 뒤에 다시 열어 주세요" />;
   const today = brief.today.filter((x) => !x.done).slice(0, 6);
   const need = brief.need.slice(0, 4);
   return (
@@ -204,7 +204,7 @@ function BriefCard({ brief }: { brief: AssistBriefView | null | 'error' }) {
         ))
       ) : (
         <Txt variant="chatSmall" color={tokens.muted}>
-          오늘 할 일 없음
+          오늘은 아직 할 일이 없어요. 새 요청이 오면 알려 드릴게요
         </Txt>
       )}
       {need.length > 0 && (
@@ -231,15 +231,15 @@ function BriefCard({ brief }: { brief: AssistBriefView | null | 'error' }) {
 }
 
 const OUTCOME = {
-  done: { label: '완료', Icon: CheckCircle, color: tokens.accent },
-  failed: { label: '거절됨', Icon: WarningCircle, color: tokens.danger },
-  unknown: { label: '결과 확인 필요', Icon: Question, color: tokens.muted },
-  skipped: { label: '실행 안 함', Icon: MinusCircle, color: tokens.muted },
+  done: { label: '다 했어요', Icon: CheckCircle, color: tokens.accent },
+  failed: { label: '거절했어요', Icon: WarningCircle, color: tokens.danger },
+  unknown: { label: '결과를 확인해 주세요', Icon: Question, color: tokens.muted },
+  skipped: { label: '하지 않았어요', Icon: MinusCircle, color: tokens.muted },
 } as const;
 
 /** 실행 카드: 비서가 단추에서 바로 한 일 한 줄과 되돌리기 */
 function RunCard({ card, busy, onUndo }: { card: ActionCard; busy: boolean; onUndo: (runId: string) => void }) {
-  const o = card.undone ? { label: '되돌림', Icon: ArrowCounterClockwise, color: tokens.muted } : OUTCOME[card.outcome];
+  const o = card.undone ? { label: '되돌렸어요', Icon: ArrowCounterClockwise, color: tokens.muted } : OUTCOME[card.outcome];
   return (
     <View style={styles.run} accessible={!card.undoable} accessibilityLabel={`${card.label}, ${o.label}`}>
       <o.Icon size={uc(18)} weight={card.outcome === 'done' && !card.undone ? 'fill' : 'regular'} color={o.color} />

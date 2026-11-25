@@ -7,6 +7,6 @@ import { agentConfigured } from '@/lib/agentClient';
 
 export default function ChatTab() {
   const { role, chatKey } = useShell();
-  if (role === 'cro') return agentConfigured() ? <AssistChat key={chatKey} /> : <NotFound label="서버 연결 전이에요" reason="잠시 뒤 다시 열어 주세요." />;
+  if (role === 'cro') return agentConfigured() ? <AssistChat key={chatKey} /> : <NotFound label="아직 연결하는 중이에요" reason="조금 뒤에 다시 열어 주세요" />;
   return <RequesterHome />;
 }

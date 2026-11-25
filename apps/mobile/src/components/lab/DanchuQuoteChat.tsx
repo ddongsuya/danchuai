@@ -30,7 +30,7 @@ export function DanchuQuoteChat({ no }: { no: string }) {
 
   return (
     <ChatShell title={no} bottom={<Composer disabled={busy || !state.conversationId} onSend={(t) => void send(t)} />}>
-      {state.status === 'starting' && <StepLog steps={[{ label: '단추에서 요청서 읽는 중', state: 'now' }]} />}
+      {state.status === 'starting' && <StepLog steps={[{ label: '단추에서 요청서를 읽는 중이에요', state: 'now' }]} />}
       {q && !state.messages.length && state.status === 'idle' && <AgentText>견적 초안에서 정할 것부터 짚어 볼까요?</AgentText>}
       {q && !state.messages.length && state.status === 'idle' && (
         <Button title="초안 점검" kind="soft" onPress={() => void send('견적 초안을 점검하고 정할 것을 알려 주세요.')} />
@@ -40,7 +40,7 @@ export function DanchuQuoteChat({ no }: { no: string }) {
 
       {state.status === 'streaming' && (
         <View>
-          <StepLog steps={[{ label: state.step ?? '답 준비 중', state: 'now' }]} />
+          <StepLog steps={[{ label: state.step ?? '생각하는 중', state: 'now' }]} />
           {state.streaming ? <AgentText>{state.streaming}</AgentText> : null}
         </View>
       )}
@@ -78,7 +78,7 @@ function QuoteStatus({ quote, onReview }: { quote: DanchuQuoteDraft; onReview: (
           견적 초안
         </Txt>
         <Txt variant="caption" color={submitted ? tokens.accent : tokens.muted} style={{ fontFamily: fonts.semibold }}>
-          {submitted ? (quoteSubmittedNow(quote) ? '제출함' : '제출 뒤 고침') : '제출 전'}
+          {submitted ? (quoteSubmittedNow(quote) ? '제출했어요' : '제출 뒤에 고쳤어요') : '제출 전'}
         </Txt>
       </View>
       <Txt variant="small" color={tokens.muted} tabular>

@@ -37,7 +37,7 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
         <Txt variant="heading" style={{ flex: 1 }} accessibilityRole="header">
           {title}
         </Txt>
-        <Chip label="승인 대기" kind="wait" icon={(c) => <HourglassMedium size={u(13)} weight="bold" color={c} />} />
+        <Chip label="허용 전" kind="wait" icon={(c) => <HourglassMedium size={u(13)} weight="bold" color={c} />} />
       </View>
       <View style={styles.to} accessibilityLabel={`받는 곳 ${recipients.map((r) => r.name).join(', ')}`}>
         {recipients.map((r) => (
@@ -64,13 +64,16 @@ export function ApprovalCard({ title, recipients, body, attachment, hideRequeste
       </View>
       <View style={styles.meta}>
         <Meta icon={<Paperclip size={u(16)} color={tokens.muted} />} label={attachment} />
-        {hideRequester && <Meta icon={<EyeSlash size={u(16)} color={tokens.muted} />} label="의뢰자 정보 선정 후 공개" />}
-        {guardPassed && <Meta icon={<ShieldCheck size={u(16)} weight="bold" color={tokens.accent} />} label="본문 점검 통과" accent />}
+        {hideRequester && <Meta icon={<EyeSlash size={u(16)} color={tokens.muted} />} label="의뢰자 정보는 선정 뒤에 보여요" />}
+        {guardPassed && <Meta icon={<ShieldCheck size={u(16)} weight="bold" color={tokens.accent} />} label="본문 점검을 마쳤어요" accent />}
       </View>
+      <Txt variant="caption" color={tokens.muted} style={styles.once}>
+        허용하면 이 내용 그대로 한 번 보내요
+      </Txt>
       <View style={styles.act}>
         <Button title="고치기" kind="soft" tall flex={1} onPress={onEdit} />
         <Button
-          title="승인하고 보내기"
+          title="허용"
           tall
           flex={1.7}
           disabled={!guardPassed}
@@ -94,6 +97,7 @@ function Meta({ icon, label, accent }: { icon: ReactNode; label: string; accent?
 }
 
 const styles = StyleSheet.create({
+  once: { marginTop: space.md },
   card: {
     marginHorizontal: space.sm,
     backgroundColor: tokens.surface,

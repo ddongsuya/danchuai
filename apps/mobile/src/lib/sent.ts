@@ -34,17 +34,17 @@ export const SENT_LABEL: Record<string, string> = {
 };
 
 export const STATUS_LABEL: Record<SentStatus, string> = {
-  sent: '보냄',
-  failed: '단추가 받지 않음',
-  unknown: '결과 확인 필요',
-  rejected: '보내지 않음',
+  sent: '보냈어요',
+  failed: '단추가 받지 않았어요',
+  unknown: '결과를 확인해 주세요',
+  rejected: '보내지 않았어요',
 };
 
 export const sentLabel = (action: string) => SENT_LABEL[action] ?? '단추 동작';
 
 /** 둘째 줄: "11.24 10:31, 요청 DC-2026-0010, 내가 승인" */
 export function sentMeta(it: SentItem, when: (iso: string) => string): string {
-  return [when(it.at), it.rfqNo ? `요청 ${it.rfqNo}` : null, it.mine ? '내가 승인' : '다른 담당자 승인'].filter(Boolean).join(', ');
+  return [when(it.at), it.rfqNo ? `요청 ${it.rfqNo}` : null, it.mine ? '내가 허용했어요' : '다른 담당자가 허용했어요'].filter(Boolean).join(', ');
 }
 
 /** 줄을 누르면 갈 곳(요청 번호가 없으면 null) */

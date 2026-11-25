@@ -41,7 +41,7 @@ export function RequestProgress({ requestId }: { requestId: string }) {
     return (
       <ChatShell title="요청" bottom={null}>
         {state.kind === 'loading' ? (
-          <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
+          <View accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar" style={{ gap: space.md }}>
             <View style={[styles.bone, { width: '70%' }]} />
             <View style={[styles.card, { height: u(180) }]} />
             <View style={[styles.card, { height: u(120) }]} />
@@ -85,8 +85,8 @@ export function RequestProgress({ requestId }: { requestId: string }) {
       ) : (
         <AgentText>
           {replied.length
-            ? `${d.recipients.length}곳 중 ${replied.length}곳이 회신했어요. 도착 순으로 정리했어요.`
-            : `${d.recipients.length}곳에 보냈어요. 회신을 기다리는 중이에요.`}
+            ? `${d.recipients.length}곳 중 ${replied.length}곳이 회신했어요. 도착 순으로 정리해 뒀어요`
+            : `${d.recipients.length}곳에 보냈어요. 회신이 오면 바로 알려 드릴게요`}
         </AgentText>
       )}
 
@@ -220,7 +220,7 @@ function ReplyBody({ r }: { r: RequesterRecipient }) {
 const SELECT_ERROR: Record<string, string> = {
   not_open: '이미 선정했거나 닫힌 요청이에요',
   not_replied: '회신한 기관만 선정할 수 있어요',
-  not_found: '요청을 찾을 수 없어요',
+  not_found: '이 요청을 찾지 못했어요',
 };
 
 function SelectSheet({
@@ -251,7 +251,7 @@ function SelectSheet({
       onSelected();
     } catch (e) {
       const code = e instanceof AgentHttpError ? e.status : 0;
-      setError(code === 0 ? '연결이 끊겼어요' : code === 404 ? SELECT_ERROR.not_found! : code === 409 ? SELECT_ERROR.not_open! : '선정하지 못했어요');
+      setError(code === 0 ? '연결이 잠깐 끊겼어요' : code === 404 ? SELECT_ERROR.not_found! : code === 409 ? SELECT_ERROR.not_open! : '선정하지 못했어요. 다시 해 볼까요?');
     } finally {
       setBusy(false);
     }
@@ -317,7 +317,7 @@ function SelectSheet({
             <View style={styles.acts}>
               <Button title="취소" kind="soft" tall flex={1} onPress={onClose} />
               <Button
-                title="승인하고 선정"
+                title="허용하고 선정"
                 tall
                 flex={1.7}
                 disabled={!chosen}

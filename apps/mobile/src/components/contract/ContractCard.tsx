@@ -120,11 +120,11 @@ export function ContractCard({ role, no, initial }: { role: AgentRole; no: strin
         {v.can.tellResult && <Button title="계약 결과 알리기" kind="soft" onPress={() => setOpen('result')} />}
       </View>
 
-      {role === 'cro' && <ReportSheet no={no} v={v} visible={open === 'report'} onClose={() => setOpen(null)} onDone={() => finish(v.can.correct ? '정정했어요. 의뢰자가 다시 확인해요' : '보고했어요. 의뢰자가 확인해요')} />}
+      {role === 'cro' && <ReportSheet no={no} v={v} visible={open === 'report'} onClose={() => setOpen(null)} onDone={() => finish(v.can.correct ? '다 됐어요. 보고를 고쳤어요. 의뢰자가 다시 확인하면 알려 드릴게요' : '다 됐어요. 계약을 보고했어요. 의뢰자가 확인하면 알려 드릴게요')} />}
       {role === 'requester' && (
         <>
           <ConfirmSheet no={no} v={v} mode={open === 'dispute' ? 'dispute' : 'confirm'} visible={open === 'confirm' || open === 'dispute'} onClose={() => setOpen(null)} onDone={(m) => finish(m)} />
-          <ResultSheet no={no} visible={open === 'result'} onClose={() => setOpen(null)} onDone={() => finish('알렸어요')} />
+          <ResultSheet no={no} visible={open === 'result'} onClose={() => setOpen(null)} onDone={() => finish('다 됐어요. 단추에 알렸어요')} />
         </>
       )}
     </View>
@@ -187,7 +187,7 @@ function ReportSheet({ no, v, visible, onClose, onDone }: { no: string; v: Contr
         setErr(null);
       }}
     >
-      <SheetBody title={v.can.correct ? '보고를 고칠까요?' : '계약을 체결했나요?'} onClose={onClose} primary={<Button title={v.can.correct ? '정정하기' : '보고하기'} tall loading={busy} onPress={() => void go()} />}>
+      <SheetBody title={v.can.correct ? '보고를 고칠까요?' : '계약은 체결했어요?'} onClose={onClose} primary={<Button title={v.can.correct ? '정정하기' : '보고하기'} tall loading={busy} onPress={() => void go()} />}>
         <ScrollView style={{ maxHeight: u(440) }} contentContainerStyle={{ gap: space.lg }} keyboardShouldPersistTaps="handled">
           <Field label="체결일" value={date} onChangeText={setDate} placeholder="2026-11-21" keyboardType="numbers-and-punctuation" maxLength={10} />
           <Field
@@ -232,7 +232,7 @@ function ConfirmSheet({ no, v, mode, visible, onClose, onDone }: { no: string; v
     const e = await send('requester', 'contract_confirm', b.body, no);
     setBusy(false);
     if (e) return setErr(e);
-    onDone(mode === 'confirm' ? '확인했어요. 계약이 확정됐어요' : '알렸어요. 단추가 기관과 확인해요');
+    onDone(mode === 'confirm' ? '다 됐어요. 계약이 확정됐어요' : '다 됐어요. 단추에 알렸어요. 단추가 기관과 확인하고 알려 드릴게요');
   };
   return (
     <Sheet
@@ -244,7 +244,7 @@ function ConfirmSheet({ no, v, mode, visible, onClose, onDone }: { no: string; v
       }}
     >
       <SheetBody
-        title={mode === 'confirm' ? '계약 내용이 맞나요?' : '어떤 점이 달라요?'}
+        title={mode === 'confirm' ? '계약 내용이 맞아요?' : '어떤 점이 달라요?'}
         onClose={onClose}
         primary={<Button title={mode === 'confirm' ? '맞아요, 확정하기' : '단추에 알리기'} tall loading={busy} onPress={() => void go()} />}
       >
@@ -270,7 +270,7 @@ function ResultSheet({ no, visible, onClose, onDone }: { no: string; visible: bo
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const go = async () => {
-    if (!status) return setErr('결과를 골라 주세요');
+    if (!status) return setErr('하나만 골라 주세요');
     const b = resultBody(status, amount, date, '');
     if (!b.ok) return setErr(b.error);
     setBusy(true);

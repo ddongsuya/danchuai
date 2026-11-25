@@ -37,7 +37,7 @@ export function LabRequest({ requestId }: { requestId: string }) {
     return (
       <ChatShell title="받은 요청" bottom={null}>
         {state.kind === 'loading' ? (
-          <View accessibilityLabel="불러오는 중" accessibilityRole="progressbar" style={{ gap: space.md }}>
+          <View accessibilityLabel="불러오는 중이에요" accessibilityRole="progressbar" style={{ gap: space.md }}>
             <View style={[styles.card, { height: u(120) }]} />
             <View style={[styles.bone, { width: '60%' }]} />
           </View>
@@ -121,9 +121,9 @@ function Result({ d }: { d: LabDetail }) {
           </Txt>
         </View>
       ) : d.status === 'declined' ? (
-        <AgentText>회신하지 않은 요청이에요.</AgentText>
+        <AgentText>아직 회신하지 않은 요청이에요</AgentText>
       ) : (
-        <AgentText>회신을 보냈어요. 선정 결과를 기다리는 중이에요.</AgentText>
+        <AgentText>회신을 보냈어요. 선정 결과가 나오면 알려 드릴게요</AgentText>
       )}
 
       {q && (

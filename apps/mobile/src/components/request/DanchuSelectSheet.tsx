@@ -68,10 +68,10 @@ export function DanchuSelectSheet({ no, visible, columns, onClose, onDone }: Pro
       setStep({
         kind: 'error',
         col,
-        message: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요') : '결과 확인 필요',
+        message: r.status === 'failed' ? (reason ?? '단추가 받지 않았어요. 확인하고 다시 보내 주세요') : '결과를 확인해 주세요',
       });
     } catch {
-      setStep({ kind: 'error', col, message: '연결이 끊겼어요' });
+      setStep({ kind: 'error', col, message: '연결이 잠깐 끊겼어요' });
     }
   };
 

@@ -117,7 +117,7 @@ export function RequesterDetailCard({ no, initial }: { no: string; initial?: Req
           onClose={() => setOpen(false)}
           onDone={() => {
             setOpen(false);
-            setDone('2차 상세 요청을 보냈어요');
+            setDone('다 됐어요. 2차 상세 요청을 보냈어요. 회신이 오면 알려 드릴게요');
             haptic.success();
             load();
           }}
@@ -288,7 +288,7 @@ export function CroDetailCard({ no, initial }: { no: string; initial?: CroDetail
         <View style={{ gap: u(2) }}>
           <Button title="견적서 고쳐서 2차 견적 보내기" onPress={() => setMode('revise')} />
           <Button title="1차 그대로 진행" kind="text" onPress={() => setMode('keep')} />
-          <Button title="이번에는 2차 회신 안 함" kind="text" onPress={() => setMode('decline')} />
+          <Button title="이번에는 2차 회신을 하지 않을게요" kind="text" onPress={() => setMode('decline')} />
         </View>
       )}
       <ReplySheet
@@ -357,9 +357,9 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
     setErr(null);
     const r = await sendApprovedResult('cro', 'detail_reply', built.body, no);
     setBusy(false);
-    if (r.ok) return onDone(m === 'revise' ? '2차 견적을 보냈어요' : '답했어요');
+    if (r.ok) return onDone(m === 'revise' ? '다 됐어요. 2차 견적을 보냈어요. 선정 결과가 나오면 알려 드릴게요' : '다 됐어요. 답을 보냈어요');
     if (r.code === 'changed') {
-      setErr('견적서가 바뀌어 새 금액을 불러왔어요. 다시 확인해 주세요');
+      setErr('그사이 견적서가 바뀌어서 새 금액을 불러왔어요. 한 번만 다시 봐 주세요');
       reload();
       return;
     }
@@ -388,11 +388,11 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
               <View style={{ gap: u(4) }}>
                 {doc.kind === 'loading' && (
                   <Txt variant="small" color={tokens.muted}>
-                    견적서 불러오는 중
+                    견적서를 불러오는 중이에요
                   </Txt>
                 )}
-                {doc.kind === 'missing' && <Err text="견적서가 없어요" />}
-                {doc.kind === 'error' && <Err text="견적서를 불러오지 못했어요" />}
+                {doc.kind === 'missing' && <Err text="아직 견적서가 없어요" />}
+                {doc.kind === 'error' && <Err text="견적서를 못 불러왔어요. 다시 해 볼까요?" />}
                 {check && (
                   <>
                     {check.lines.map((l) => (
@@ -433,7 +433,7 @@ function ReplySheet({ no, v, mode, onClose, onDone }: { no: string; v: CroDetail
 
 /** 단추가 2차 견적을 막은 까닭(단추 detail_reply revise 오류) */
 const REVISE_REFUSED: Record<string, string> = {
-  doc_missing: '견적서가 없어요',
+  doc_missing: '아직 견적서가 없어요',
   amount_missing: '금액 없는 줄이 있어요',
   mismatched: '요청서와 시험 이름이 다른 줄이 있어요',
 };

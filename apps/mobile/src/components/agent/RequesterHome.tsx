@@ -1,4 +1,4 @@
-// 의뢰자 대화 탭(Muse 시안 2026-11-25, 기관 비서와 같은 틀). 열자마자 "어떤 시험이 필요해요?"로 대화를 시작한다.
+// 의뢰자 대화 탭(Muse 시안 2026-11-25, 기관 비서와 같은 틀). 열자마자 "어떤 시험 견적을 받아 드릴까요?"로 대화를 시작한다.
 // 위 막대에 비서 캐릭터·이름·상태, 왼쪽 서랍에 탭·따로 하는 대화. 첫 글을 보내면 새 요청 대화가 그 글로 열린다(대화는 첫 글을 보낼 때 만든다).
 // 아래에 최근 요청 세 건(서버 목록 순서 그대로)을 둔다.
 import { router, type Href } from 'expo-router';
@@ -44,7 +44,7 @@ export function RequesterHome() {
   const live = agentConfigured();
   const { state, reload } = useRemote(fetchRequests, live && (status === 'ready' || status === 'disabled'));
   const items = useMemo(() => (state.kind === 'ready' ? state.data.map((r) => requesterItem(r)) : []), [state]);
-  const recent: RecentState = !live ? { kind: 'error', label: '서버 연결 전이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
+  const recent: RecentState = !live ? { kind: 'error', label: '아직 연결하는 중이에요' } : state.kind === 'ready' ? { kind: 'ready', items } : state.kind === 'error' ? { kind: 'error', label: REMOTE_ERROR[state.code] } : { kind: 'loading' };
   return (
     <RequesterHomeView
       recent={recent}
@@ -72,10 +72,10 @@ export interface RequesterHomeViewProps {
 /** 화면 모양만(미리보기에서도 쓴다). 위 막대는 비서(서랍·캐릭터·상태), 아래는 입력창과 탭 막대 */
 export function RequesterHomeView({ recent, onRetry, onStart, onAsk, onOpen, onAll }: RequesterHomeViewProps) {
   return (
-    <ChatShell title="비서" tabs nav={<AgentHeader />} bottom={<Composer placeholder="필요한 시험" onSend={(t) => t && onStart(t)} />}>
+    <ChatShell title="비서" tabs nav={<AgentHeader />} bottom={<Composer placeholder="메시지" onSend={(t) => t && onStart(t)} />}>
       <View style={styles.hero}>
         <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
-          어떤 시험이 필요해요?
+          어떤 시험 견적을 받아 드릴까요?
         </Txt>
       </View>
       <View style={styles.starters}>
@@ -132,7 +132,7 @@ function RecentCard({ recent, onRetry, onOpen, onAll }: { recent: RecentState; o
             );
           })
         : [0, 1].map((i) => (
-            <View key={i} style={[styles.row, i > 0 && styles.line]} accessibilityLabel={i === 0 ? '불러오는 중' : undefined} accessibilityRole={i === 0 ? 'progressbar' : undefined}>
+            <View key={i} style={[styles.row, i > 0 && styles.line]} accessibilityLabel={i === 0 ? '불러오는 중이에요' : undefined} accessibilityRole={i === 0 ? 'progressbar' : undefined}>
               <View style={{ flex: 1, gap: uc(8) }}>
                 <View style={[styles.bone, { width: '58%' }]} />
                 <View style={[styles.bone, { width: uc(84) }]} />

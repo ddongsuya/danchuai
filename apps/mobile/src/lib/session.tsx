@@ -4,7 +4,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { DEFAULT_CHARACTER, isCharacterId, type AgentCharacterId } from '@danchuai/core';
+import { DEFAULT_CHARACTER, characterOf, isCharacterId, type AgentCharacterId } from '@danchuai/core';
 
 import { AccountError, fetchMe, saveCharacter, type AccountOrg } from './accountClient';
 import { authStorage } from './storage';
@@ -54,6 +54,9 @@ const Ctx = createContext<AuthState>({
 });
 
 export const useAuth = () => useContext(Ctx);
+
+/** 고른 비서 캐릭터의 이름 */
+export const useAgentName = () => characterOf(useContext(Ctx).character).name;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

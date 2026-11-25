@@ -12,7 +12,7 @@ import { fetchDanchuLabInbox, fetchRequests } from '@/lib/marketClient';
 const REQ_FILTERS = [
   { label: '전체', match: null },
   { label: '회신 도착', match: ['replied' as const] },
-  { label: '승인 대기', match: ['waiting' as const] },
+  { label: '허용 전', match: ['waiting' as const] },
 ];
 const LAB_FILTERS = [
   { label: '전체', match: null },
@@ -36,9 +36,9 @@ export default function TodoTab() {
       title="할 일"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
-      errorLabel={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
+      errorLabel={!live ? '아직 연결하는 중이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
       onRetry={() => void reload()}
-      emptyLabel={role === 'cro' ? '받은 요청 없음' : '요청 없음'}
+      emptyLabel={role === 'cro' ? '아직 받은 요청이 없어요' : '아직 요청이 없어요'}
       filters={role === 'cro' ? LAB_FILTERS : REQ_FILTERS}
       hrefOf={role === 'cro' ? (id) => ({ pathname: '/lab/[id]', params: { id } }) : requesterHref}
     />

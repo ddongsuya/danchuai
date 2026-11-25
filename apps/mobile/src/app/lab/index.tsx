@@ -29,9 +29,9 @@ export default function LabInbox() {
       title="받은 요청"
       items={items}
       load={!live ? 'error' : state.kind === 'ready' ? 'ready' : state.kind}
-      errorLabel={!live ? '서버 연결 전이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
+      errorLabel={!live ? '아직 연결하는 중이에요' : state.kind === 'error' ? REMOTE_ERROR[state.code] : undefined}
       onRetry={() => void reload()}
-      emptyLabel="받은 요청 없음"
+      emptyLabel="아직 받은 요청이 없어요"
       filters={FILTERS}
       hrefOf={(id) => ({ pathname: '/lab/[id]', params: { id } })}
     />
