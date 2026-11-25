@@ -3,33 +3,47 @@
 // 처음 열면 단추 브리핑(오늘 할 일·손이 필요한 안건)을 보여 준다. 숫자·금액은 단추가 계산한 화면에서 본다.
 // 기관의 대화 탭이다(Muse 시안 2026-11-25): 위 가운데 비서 캐릭터·이름·상태, 왼쪽 서랍(탭·따로 하는 대화·설정),
 // 답을 준비하는 동안 말풍선에 점 셋이 튀고 위 상태는 "일하는 중".
-import { ArrowCounterClockwise, CheckCircle, Microphone, MinusCircle, Question, WarningCircle } from 'phosphor-react-native';
+import { ArrowCounterClockwise, CheckCircle, MinusCircle, Question, WarningCircle } from 'phosphor-react-native';
+import { router, type Href } from 'expo-router';
 import { Fragment, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ChatShell } from '@/components/chat/ChatShell';
+import { ConfirmCard } from '@/components/chat/ConfirmCard';
 import { Composer } from '@/components/chat/Composer';
-import { AgentText, StepLog, UserMessage } from '@/components/chat/Messages';
+import { AgentText, StepLog, TaskCard, TimeLine, UserMessage } from '@/components/chat/Messages';
 import { TypingBubble } from '@/components/chat/TypingBubble';
 import { LookupCard } from '@/components/agent/LookupCard';
 import { RecordSheet } from '@/components/agent/RecordSheet';
-import { AgentHeader, CircleButton } from '@/components/shell/AgentHeader';
+import { AgentHeader } from '@/components/shell/AgentHeader';
+import { InviteButton } from '@/components/shell/InviteButton';
+import { useShell } from '@/components/shell/ShellContext';
 import { ERROR_LABEL, ErrorLine, RETRYABLE } from '@/components/agent/LiveChat';
 import { Press } from '@/components/ui/Press';
 import { Txt } from '@/components/ui/Txt';
-import { fonts, radius, tokens, uc } from '@/constants/theme';
+import { fonts, tokens, uc } from '@/constants/theme';
 import { useAgentChat } from '@/hooks/useAgentChat';
-import { AgentHttpError, readDanchu, undoRun, type AssistBriefView, type QuoteHitView } from '@/lib/agentClient';
+import { AgentHttpError, readDanchu, runDanchu, undoRun, type AssistBriefView, type QuoteHitView } from '@/lib/agentClient';
+import { hasBatchim, subjName } from '@/lib/format';
+import { useAgentName } from '@/lib/session';
 import type { ActionCard, ChatErrorCode, ChatMessage, LookupCard as LookupItem } from '@/lib/chat';
 
-/** 빈 대화에서 바로 보낼 말 */
-const STARTERS = ['오늘 아침 브리핑 보여 줘', '이번 주 보고 만들어 줘'] as const;
+/** 브리핑 카드 단추로 보낼 말(나머지 제안은 맡길 일 탭) */
+const STARTERS = ['오늘 아침 브리핑 보여 줘'] as const;
 
 export function AssistChat() {
-  const { state, send, retry, markUndone } = useAgentChat('cro', undefined, undefined, 'assist');
+  const { state, send, retry, markUndone, patchAction } = useAgentChat('cro', undefined, undefined, 'assist');
+  const [allowing, setAllowing] = useState<string | null>(null);
   const [brief, setBrief] = useState<AssistBriefView | null | 'error'>(null);
   const [undoing, setUndoing] = useState<string | null>(null);
   const [undoError, setUndoError] = useState<ChatErrorCode | null>(null);
+  // 맡길 일 탭에서 넘긴 일: 보낼 말은 대화가 준비되면 한 번 보내고, 녹음은 녹음 시트를 연다
+  const { pending, handoff } = useShell();
+  useEffect(() => {
+    if (pending?.kind !== 'send' || !state.conversationId || state.status !== 'idle') return;
+    handoff(null);
+    void send(pending.text);
+  }, [pending, handoff, send, state.conversationId, state.status]);
 
   useEffect(() => {
     let live = true;
@@ -54,6 +68,20 @@ export function AssistChat() {
     }
   };
 
+  // 권한 "매번 묻기": 사람이 허용한 그 동작·본문으로 한 번만 부른다(서버가 실행 기록을 남긴다)
+  const allow = async (card: ActionCard) => {
+    if (!card.ask) return;
+    setAllowing(card.key);
+    try {
+      const r = await runDanchu(card.ask.action, card.ask.body);
+      patchAction(card.key, { outcome: r.run.outcome, runId: r.run.id, undoable: r.run.undoable, ask: null, message: null });
+    } catch {
+      patchAction(card.key, { outcome: 'unknown', ask: null, message: '결과를 확인해 주세요' });
+    } finally {
+      setAllowing(null);
+    }
+  };
+
   const busy = state.status !== 'idle';
   return (
     <AssistView
@@ -70,6 +98,11 @@ export function AssistChat() {
       onSend={(t) => void send(t)}
       onTranscript={(t, minutes) => void send(`회의 녹음 정리해 줘 (${minutes}분)`, t)}
       onUndo={(id) => void undo(id)}
+      allowing={allowing}
+      onAllow={(c) => void allow(c)}
+      onReject={(c) => patchAction(c.key, { outcome: 'skipped', ask: null, message: '거절했어요' })}
+      recordRequested={pending?.kind === 'record'}
+      onRecordClosed={() => handoff(null)}
     />
   );
 }
@@ -94,11 +127,24 @@ export interface AssistViewProps {
   /** 미리보기에서 녹음 시트를 연 채로 보여 줄 때만 */
   initialRecordOpen?: boolean;
   onUndo: (runId: string) => void;
+  /** "매번 묻기"로 멈춘 카드 허용·거절 */
+  allowing?: string | null;
+  onAllow?: (card: ActionCard) => void;
+  onReject?: (card: ActionCard) => void;
+  /** 맡길 일 탭에서 녹음을 맡겼다(시트를 연다) */
+  recordRequested?: boolean;
+  onRecordClosed?: () => void;
 }
 
 /** 화면 모양만(미리보기에서도 쓴다) */
-export function AssistView({ brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo }: AssistViewProps) {
+export function AssistView({ brief, messages, actions, lookups = [], lookupPreview, streaming, starting, canSend, error, onRetry, undoing, onSend, onTranscript, initialRecordOpen = false, onUndo, allowing, onAllow, onReject, recordRequested, onRecordClosed }: AssistViewProps) {
+  const agentName = useAgentName();
   const [recordOpen, setRecordOpen] = useState(initialRecordOpen);
+  if (recordRequested && onTranscript && !recordOpen) setRecordOpen(true);
+  const closeRecord = () => {
+    onRecordClosed?.();
+    setRecordOpen(false);
+  };
   const empty = !messages.length && !streaming;
   const cardsAt = (i: number) => actions.filter((a) => a.at === i);
   const findsAt = (i: number) => lookups.filter((a) => a.at === i);
@@ -106,51 +152,31 @@ export function AssistView({ brief, messages, actions, lookups = [], lookupPrevi
   const tail = actions.filter((a) => a.at >= messages.length);
   const findTail = lookups.filter((a) => a.at >= messages.length);
   const thinking = !!streaming && !streaming.text;
-  // 위 막대: 서랍, 가운데 비서 캐릭터·이름·상태(답을 준비하는 동안 "일하는 중"), 오른쪽 회의 녹음
-  const nav = (
-    <AgentHeader
-      working={!!streaming || !!starting}
-      right={
-        onTranscript ? (
-          <CircleButton label="회의 녹음" disabled={!canSend} onPress={() => setRecordOpen(true)}>
-            <Microphone size={20} color={canSend ? tokens.text : tokens.faint} />
-          </CircleButton>
-        ) : undefined
-      }
-    />
-  );
+  // 위 막대: 서랍, 가운데 비서 캐릭터·이름·상태(답을 준비하는 동안 "일하는 중"), 오른쪽 초대
+  const nav = <AgentHeader working={!!streaming || !!starting} right={<InviteButton />} />;
   return (
-    <ChatShell title="비서" tabs nav={nav} bottom={<Composer disabled={!canSend} placeholder="메시지" onSend={onSend} />}>
-      {onTranscript && <RecordSheet visible={recordOpen} onClose={() => setRecordOpen(false)} onTranscript={onTranscript} />}
-      {empty && (
-        <View style={styles.hero}>
-          <Txt variant="chatTitle" style={styles.heroTitle} accessibilityRole="header">
-            오늘은 무엇을 맡아 드릴까요?
-          </Txt>
-        </View>
-      )}
-      {empty && canSend && (
-        <View style={styles.starters}>
-          {STARTERS.map((t) => (
-            <Press key={t} label={t} onPress={() => onSend(t)} style={styles.chip}>
-              <Txt variant="chatLabel">{t}</Txt>
-            </Press>
-          ))}
-        </View>
-      )}
-      {empty && <BriefCard brief={brief} />}
-
+    <ChatShell
+      title="비서"
+      tabs
+      nav={nav}
+      bottom={<Composer disabled={!canSend} placeholder="메시지" onSend={onSend} onPlus={() => router.navigate('/ideas' as Href)} onMic={onTranscript ? () => setRecordOpen(true) : undefined} />}
+    >
+      {onTranscript && <RecordSheet visible={recordOpen} onClose={closeRecord} onTranscript={onTranscript} />}
+      {/* 오늘 대화는 늘 브리핑으로 시작한다(시안 m02: 비서 말 → 카드 → 시각 → 대화) */}
+      <AgentText>{brief && brief !== 'error' ? '오늘 할 일을 한 장으로 모아 봤어요.' : '오늘은 무엇을 맡아 드릴까요?'}</AgentText>
+      <BriefCard brief={brief} onMore={canSend && empty ? () => onSend(STARTERS[0]) : undefined} />
+      {!empty && brief && brief !== 'error' ? <TimeLine>{md(brief.date)}</TimeLine> : null}
       {messages.map((m, i) => (
         <Fragment key={m.id}>
           {m.role === 'user' ? <UserMessage text={m.text} /> : <AgentText>{m.text}</AgentText>}
-          {m.role === 'agent' && cardsAt(i).map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} />)}
+          {m.role === 'agent' && cardsAt(i).map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} agentName={agentName} allowing={allowing === a.key} onAllow={onAllow} onReject={onReject} />)}
           {m.role === 'agent' && findsAt(i).map((a) => <LookupCard key={a.key} card={a} initial={lookupPreview} />)}
         </Fragment>
       ))}
 
       {thinking && <TypingBubble label={streaming!.step} />}
       {streaming?.text ? <AgentText>{streaming.text}</AgentText> : null}
-      {!streaming && tail.map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} />)}
+      {!streaming && tail.map((a) => <RunCard key={a.key} card={a} busy={undoing === a.runId} onUndo={onUndo} agentName={agentName} allowing={allowing === a.key} onAllow={onAllow} onReject={onReject} />)}
       {!streaming && findTail.map((a) => <LookupCard key={a.key} card={a} initial={lookupPreview} />)}
 
       {error && <ErrorLine label={ERROR_LABEL[error]} onRetry={onRetry} />}
@@ -163,70 +189,41 @@ const md = (ymd: string) => {
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 ${'일월화수목금토'[d.getUTCDay()]}요일`;
 };
 
-/** 오늘 브리핑: 오늘 할 일(시간순, 기한 지난 것 먼저)과 손이 필요한 안건. 단추 오늘 화면과 같은 계산 */
-function BriefCard({ brief }: { brief: AssistBriefView | null | 'error' }) {
+/** 오늘 브리핑(.task 모양): 오늘 할 일(시간순, 기한 지난 것 먼저)과 손이 필요한 안건. 단추 오늘 화면과 같은 계산 */
+function BriefCard({ brief, onMore }: { brief: AssistBriefView | null | 'error'; onMore?: () => void }) {
   if (brief === null) return <StepLog steps={[{ label: '오늘 할 일을 살펴보는 중이에요', state: 'now' }]} />;
   if (brief === 'error') return <ErrorLine label="오늘 할 일을 못 불러왔어요. 조금 뒤에 다시 열어 주세요" />;
-  const today = brief.today.filter((x) => !x.done).slice(0, 6);
-  const need = brief.need.slice(0, 4);
+  const today = brief.today.filter((x) => !x.done).slice(0, 4);
+  const need = brief.need.slice(0, 3);
+  const body = today.length || need.length ? undefined : '오늘은 아직 할 일이 없어요. 새 요청이 오면 알려 드릴게요.';
   return (
-    <View style={styles.card}>
-      <View style={styles.head}>
-        <Txt variant="chatLabel" style={{ fontFamily: fonts.bold, flex: 1 }} accessibilityRole="header">
-          오늘
-        </Txt>
-        <Txt variant="chatCaption" color={tokens.muted}>
-          {md(brief.date)}
-        </Txt>
-      </View>
-      {today.length ? (
-        today.map((x, i) => (
-          <View key={`t${i}`} style={[styles.row, i > 0 && styles.line]}>
-            <Txt variant="chatCaption" color={tokens.muted} tabular style={styles.time}>
-              {x.time ?? '종일'}
-            </Txt>
-            <View style={{ flex: 1, gap: uc(2) }}>
-              <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={2}>
-                {x.title}
-              </Txt>
-              {!!x.sub && (
-                <Txt variant="chatCaption" color={tokens.muted} numberOfLines={2}>
-                  {x.sub}
-                </Txt>
-              )}
-            </View>
-            {x.overdue && (
-              <Txt variant="chatCaption" color={tokens.danger} style={{ fontFamily: fonts.semibold }}>
-                기한 지남
-              </Txt>
-            )}
-          </View>
-        ))
-      ) : (
-        <Txt variant="chatSmall" color={tokens.muted}>
-          오늘은 아직 할 일이 없어요. 새 요청이 오면 알려 드릴게요
-        </Txt>
-      )}
-      {need.length > 0 && (
-        <>
-          <Txt variant="chatCaption" color={tokens.muted} style={styles.sub}>
-            손이 필요한 안건
+    <TaskCard icon="clock" title="오늘 브리핑" sub={md(brief.date)} body={body} action={onMore ? '브리핑 자세히 보기' : undefined} onAction={onMore}>
+      {today.map((x, i) => (
+        <View key={`t${i}`} style={styles.row}>
+          <Txt style={styles.time} color={tokens.muted} tabular>
+            {x.time ?? '종일'}
           </Txt>
-          {need.map((x, i) => (
-            <View key={x.dealId} style={[styles.row, i > 0 && styles.line]}>
-              <View style={{ flex: 1, gap: uc(2) }}>
-                <Txt variant="chatSmall" style={{ fontFamily: fonts.semibold }} numberOfLines={1}>
-                  {x.title}
-                </Txt>
-                <Txt variant="chatCaption" color={tokens.muted} numberOfLines={1}>
-                  {[x.company, x.reason].filter(Boolean).join(', ')}
-                </Txt>
-              </View>
-            </View>
-          ))}
-        </>
-      )}
-    </View>
+          <Txt style={styles.rowText} numberOfLines={1}>
+            {x.title}
+          </Txt>
+          {x.overdue && (
+            <Txt style={styles.flag} color={tokens.danger}>
+              기한 지남
+            </Txt>
+          )}
+        </View>
+      ))}
+      {need.map((x) => (
+        <View key={x.dealId} style={styles.row}>
+          <Txt style={styles.time} color={tokens.primary}>
+            확인
+          </Txt>
+          <Txt style={styles.rowText} numberOfLines={1}>
+            {[x.title, x.reason].filter(Boolean).join(', ')}
+          </Txt>
+        </View>
+      ))}
+    </TaskCard>
   );
 }
 
@@ -235,10 +232,46 @@ const OUTCOME = {
   failed: { label: '거절했어요', Icon: WarningCircle, color: tokens.danger },
   unknown: { label: '결과를 확인해 주세요', Icon: Question, color: tokens.muted },
   skipped: { label: '하지 않았어요', Icon: MinusCircle, color: tokens.muted },
+  pending: { label: '허용을 기다려요', Icon: Question, color: tokens.primary },
 } as const;
 
+/** 확인 카드에 보일 칸(단추 동작 본문의 사람이 읽는 값만). 아이디·기술 값은 보이지 않는다 */
+const ASK_FIELD: Record<string, string> = { title: '제목', name: '이름', due: '기한', dueAt: '기한', date: '날짜', start: '시작', startAt: '시작', end: '끝', endAt: '끝', stage: '단계', summary: '내용', note: '메모', body: '내용', kind: '종류', company: '회사' };
+const askRows = (body: Record<string, unknown>): [string, string][] =>
+  Object.entries(body)
+    .filter(([k, v]) => ASK_FIELD[k] && (typeof v === 'string' || typeof v === 'number') && String(v).trim())
+    .slice(0, 5)
+    .map(([k, v]) => [ASK_FIELD[k], String(v).slice(0, 200)]);
+
 /** 실행 카드: 비서가 단추에서 바로 한 일 한 줄과 되돌리기 */
-function RunCard({ card, busy, onUndo }: { card: ActionCard; busy: boolean; onUndo: (runId: string) => void }) {
+function RunCard({ card, busy, onUndo, agentName, allowing, onAllow, onReject }: { card: ActionCard; busy: boolean; onUndo: (runId: string) => void; agentName: string; allowing?: boolean; onAllow?: (c: ActionCard) => void; onReject?: (c: ActionCard) => void }) {
+  if (card.outcome === 'pending' && card.ask && onAllow && onReject) {
+    const rows = askRows(card.ask.body);
+    return (
+      <ConfirmCard
+        title={`${subjName(agentName)} 단추에 ${card.label}${hasBatchim(card.label) ? '을' : '를'} 하려고 해요`}
+        note="권한이 매번 묻기라서 기록하기 전에 여쭤봐요."
+        preview={
+          rows.length ? (
+            <View style={styles.askRows}>
+              {rows.map(([k, v]) => (
+                <View key={k} style={styles.askRow}>
+                  <Txt style={styles.askK} color={tokens.muted}>
+                    {k}
+                  </Txt>
+                  <Txt style={styles.askV}>{v}</Txt>
+                </View>
+              ))}
+            </View>
+          ) : undefined
+        }
+        onReject={() => onReject(card)}
+        onAllow={() => onAllow(card)}
+        busy={allowing}
+        foot="허용하면 단추에 한 번 기록해요. 7일 안에 되돌릴 수 있어요."
+      />
+    );
+  }
   const o = card.undone ? { label: '되돌렸어요', Icon: ArrowCounterClockwise, color: tokens.muted } : OUTCOME[card.outcome];
   return (
     <View style={styles.run} accessible={!card.undoable} accessibilityLabel={`${card.label}, ${o.label}`}>
@@ -263,17 +296,15 @@ function RunCard({ card, busy, onUndo }: { card: ActionCard; busy: boolean; onUn
 }
 
 const styles = StyleSheet.create({
-  hero: { alignItems: 'center', paddingTop: uc(28), paddingBottom: uc(4) },
-  heroTitle: { textAlign: 'center' },
-  card: { backgroundColor: tokens.surface, borderRadius: uc(18), borderWidth: 1, borderColor: tokens.border, paddingHorizontal: uc(14), paddingVertical: uc(10), gap: uc(2) },
-  head: { flexDirection: 'row', alignItems: 'center', paddingBottom: uc(6) },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: uc(10), paddingVertical: uc(10) },
-  line: { borderTopWidth: 1, borderTopColor: tokens.border },
-  time: { width: uc(40), paddingTop: uc(2) },
-  sub: { marginTop: uc(8), fontFamily: fonts.semibold },
-  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: uc(8), justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  time: { width: 36, fontFamily: fonts.medium, fontSize: 12.5, lineHeight: 20 },
+  rowText: { flex: 1, fontFamily: fonts.regular, fontSize: 14, lineHeight: 21 },
+  flag: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 18 },
   undo: { minHeight: uc(36), paddingHorizontal: uc(10), justifyContent: 'center' },
-  chip: { height: uc(34), paddingHorizontal: uc(14), borderRadius: radius.pill, backgroundColor: tokens.sunken, alignItems: 'center', justifyContent: 'center' },
+  askRows: { padding: 14, gap: 8 },
+  askRow: { flexDirection: 'row', gap: 12 },
+  askK: { width: 44, fontFamily: fonts.regular, fontSize: 13, lineHeight: 20 },
+  askV: { flex: 1, fontFamily: fonts.regular, fontSize: 14, lineHeight: 20 },
   run: {
     flexDirection: 'row',
     alignItems: 'center',

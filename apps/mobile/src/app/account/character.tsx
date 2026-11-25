@@ -1,15 +1,13 @@
-// 설정 › 비서 캐릭터(Muse 시안 2026-11-25 m14). 큰 미리보기, 10종 격자, 이름, "이 캐릭터로 바꾸기".
+// 설정 › 비서 캐릭터(시안 원본 m14). 큰 미리보기, 10종 격자, 이름, "이 캐릭터로 바꾸기".
 // 이름은 캐릭터 이름을 따른다. 고른 값은 계정별로 서버에 저장한다(시연 모드는 기기에).
 import { AGENT_CHARACTERS, characterOf, type AgentCharacterId } from '@danchuai/core';
 import { router } from 'expo-router';
-import { CaretLeft, Check } from 'phosphor-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { AgentAvatar } from '@/components/agent/AgentAvatar';
-import { CircleButton } from '@/components/shell/AgentHeader';
-import { Button } from '@/components/ui/Button';
+import { MIcon } from '@/components/ui/MIcon';
+import { FullPage } from '@/components/ui/Muse';
 import { Press } from '@/components/ui/Press';
 import { useToast } from '@/components/ui/Toast';
 import { Txt } from '@/components/ui/Txt';
@@ -39,79 +37,79 @@ export default function CharacterRoute() {
   return <CharacterView current={character} busy={busy} error={error} onSave={(id) => void save(id)} />;
 }
 
-/** 화면 모양만(미리보기에서도 쓴다) */
+/** 화면 모양만(미리보기에서도 쓴다). 시안 원본 m14: 덮는 흰 판, 큰 미리보기 150, 다섯 칸 격자, 이름 줄, 아래 "이 캐릭터로 바꾸기" */
 export function CharacterView({ current, initial, busy, error, onSave }: { current: AgentCharacterId; initial?: AgentCharacterId; busy?: boolean; error?: string | null; onSave: (id: AgentCharacterId) => void }) {
   const [picked, setPicked] = useState<AgentCharacterId>(initial ?? current);
   const c = characterOf(picked);
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <View style={styles.nav}>
-        <CircleButton label="뒤로" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-          <CaretLeft size={20} color={tokens.text} />
-        </CircleButton>
-        <Txt variant="museHead" style={styles.navTitle} accessibilityRole="header">
-          비서 캐릭터
+    <FullPage
+      title="비서 캐릭터"
+      bg="#ffffff"
+      onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+      foot={
+        <View style={{ gap: 8 }}>
+          {error ? (
+            <Txt variant="mSmall" color={tokens.danger} style={styles.error} accessibilityLiveRegion="polite">
+              {error}
+            </Txt>
+          ) : null}
+          <Press label={picked === current ? '지금 쓰는 캐릭터예요' : '이 캐릭터로 바꾸기'} disabled={picked === current || busy} onPress={() => onSave(picked)} style={[styles.save, picked === current && styles.saveOff]}>
+            <Txt style={styles.saveText} color={picked === current ? tokens.muted : tokens.onPrimary}>
+              {busy ? '바꾸는 중이에요' : picked === current ? '지금 쓰는 캐릭터예요' : '이 캐릭터로 바꾸기'}
+            </Txt>
+          </Press>
+        </View>
+      }
+    >
+      <View style={styles.hero}>
+        <AgentAvatar size={150} character={picked} />
+        <Txt style={styles.heroName}>{c.name}</Txt>
+        <Txt style={styles.heroSub} color={tokens.muted}>
+          비서 이름도 함께 바뀌어요
         </Txt>
-        <View style={{ width: 44 }} />
       </View>
-      <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.hero}>
-          <AgentAvatar size={132} character={picked} />
-          <Txt variant="museTitle">{c.name}</Txt>
-          <Txt variant="museSmall" color={tokens.muted}>
-            비서 이름도 함께 바뀌어요
-          </Txt>
-        </View>
-        <View style={styles.grid} accessibilityRole="radiogroup">
-          {AGENT_CHARACTERS.map((x) => {
-            const on = x.id === picked;
-            return (
-              <Press key={x.id} label={`${x.name}, ${x.alt}`} accessibilityRole="radio" accessibilityState={{ selected: on, checked: on }} onPress={() => setPicked(x.id)} style={[styles.tile, on && styles.tileOn]}>
-                <AgentAvatar size={44} character={x.id} />
-                <Txt variant="museSmall" style={{ fontFamily: on ? fonts.bold : fonts.medium }} numberOfLines={1}>
-                  {x.name}
-                </Txt>
-                {on && (
-                  <View style={styles.check}>
-                    <Check size={11} weight="bold" color={tokens.onPrimary} />
-                  </View>
-                )}
-              </Press>
-            );
-          })}
-        </View>
-        <View style={styles.nameRow} accessible accessibilityLabel={`이름 ${c.name}`}>
-          <Txt variant="museBody" color={tokens.muted} style={{ flex: 1 }}>
-            이름
-          </Txt>
-          <Txt variant="museBody" style={{ fontFamily: fonts.semibold }}>
-            {c.name}
-          </Txt>
-        </View>
-      </ScrollView>
-      <View style={styles.foot}>
-        {error ? (
-          <Txt variant="museSmall" color={tokens.danger} style={styles.error} accessibilityLiveRegion="polite">
-            {error}
-          </Txt>
-        ) : null}
-        <Button title={picked === current ? '지금 쓰는 캐릭터예요' : '이 캐릭터로 바꾸기'} tall disabled={picked === current} loading={busy} onPress={() => onSave(picked)} />
+      <View style={styles.grid} accessibilityRole="radiogroup">
+        {AGENT_CHARACTERS.map((x) => {
+          const on = x.id === picked;
+          return (
+            <Press key={x.id} label={`${x.name}, ${x.alt}`} accessibilityRole="radio" accessibilityState={{ selected: on, checked: on }} onPress={() => setPicked(x.id)} style={[styles.tile, on && styles.tileOn]}>
+              {on && (
+                <View style={styles.check}>
+                  <MIcon name="check" size={12} width={2.6} color={tokens.onPrimary} />
+                </View>
+              )}
+              <AgentAvatar size={52} character={x.id} />
+              <Txt style={[styles.tileName, { fontFamily: on ? fonts.bold : fonts.medium }]} numberOfLines={1}>
+                {x.name}
+              </Txt>
+            </Press>
+          );
+        })}
       </View>
-    </SafeAreaView>
+      <View style={styles.nameRow} accessible accessibilityLabel={`이름 ${c.name}`}>
+        <Txt style={styles.nameLabel}>이름</Txt>
+        <Txt style={styles.nameValue}>{c.name}</Txt>
+        <MIcon name="pencil" size={16} color={tokens.muted} />
+      </View>
+    </FullPage>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: tokens.bg },
-  nav: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingTop: 8, paddingBottom: 6 },
-  navTitle: { flex: 1, textAlign: 'center' },
-  body: { paddingHorizontal: 16, paddingBottom: 24 },
-  hero: { alignItems: 'center', gap: 4, paddingTop: 20, paddingBottom: 24 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8, justifyContent: 'space-between' },
-  tile: { width: '18.6%', aspectRatio: 0.82, borderRadius: 16, backgroundColor: tokens.group, alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 2, borderColor: 'transparent' },
-  tileOn: { borderColor: tokens.primary, backgroundColor: tokens.surface },
-  check: { position: 'absolute', top: -5, right: -5, width: 20, height: 20, borderRadius: 10, backgroundColor: tokens.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: tokens.surface },
-  nameRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, minHeight: 52, paddingHorizontal: 16, borderRadius: 14, backgroundColor: tokens.group },
-  foot: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 8 },
+  hero: { alignItems: 'center', marginTop: 10 },
+  heroName: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 28, marginTop: -6, color: tokens.text },
+  heroSub: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 19.5 },
+  // 다섯 칸, 사이 8
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 20 },
+  tile: { width: '18.2%', flexGrow: 1, borderRadius: 18, backgroundColor: tokens.group, paddingTop: 8, paddingHorizontal: 4, paddingBottom: 6, alignItems: 'center', gap: 2 },
+  tileOn: { backgroundColor: tokens.pickBg, borderWidth: 2.5, borderColor: tokens.primary, paddingTop: 5.5, paddingHorizontal: 1.5, paddingBottom: 3.5 },
+  tileName: { fontSize: 12.5, lineHeight: 18, color: tokens.text },
+  check: { position: 'absolute', top: 6, right: 6, zIndex: 1, width: 20, height: 20, borderRadius: 10, backgroundColor: tokens.primary, alignItems: 'center', justifyContent: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, backgroundColor: tokens.group, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
+  nameLabel: { flex: 1, fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: tokens.text },
+  nameValue: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22, color: tokens.text },
+  save: { height: 48, borderRadius: 24, backgroundColor: tokens.primary, alignItems: 'center', justifyContent: 'center' },
+  saveOff: { backgroundColor: tokens.selected },
+  saveText: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   error: { textAlign: 'center' },
 });

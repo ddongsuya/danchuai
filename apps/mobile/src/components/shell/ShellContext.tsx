@@ -21,9 +21,18 @@ export interface ShellState {
   /** 읽지 않은 소식 수(아래 탭 점) */
   unread: number;
   openDrawer: () => void;
+  /** 비서 프로필(위 막대 캐릭터를 누르면) */
+  openAgent: () => void;
+  /** 설정 시트 */
+  openSettings: () => void;
   /** 대화 탭을 새 대화로 */
   chatKey: number;
+  /** 다른 탭(맡길 일)에서 대화 탭으로 넘긴 일. 대화 탭이 한 번 받아 쓰고 비운다 */
+  pending: ChatHandoff | null;
+  handoff: (h: ChatHandoff | null) => void;
 }
+
+export type ChatHandoff = { kind: 'send'; text: string } | { kind: 'record' };
 
 const Ctx = createContext<ShellState>({
   role: 'requester',
@@ -34,7 +43,11 @@ const Ctx = createContext<ShellState>({
   onCheck: () => undefined,
   unread: 0,
   openDrawer: () => undefined,
+  openAgent: () => undefined,
+  openSettings: () => undefined,
   chatKey: 0,
+  pending: null,
+  handoff: () => undefined,
 });
 
 export const useShell = () => useContext(Ctx);

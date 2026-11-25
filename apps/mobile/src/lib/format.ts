@@ -57,7 +57,7 @@ export function localDay(iso: string): string {
 }
 
 /** 부를 때 붙는 말: "비비라고", "몽글이라고"(받침이 있으면 "이라고") */
-const hasBatchim = (name: string) => {
+export const hasBatchim = (name: string) => {
   const code = name.charCodeAt(name.length - 1) - 0xac00;
   return code >= 0 && code <= 11171 && code % 28 !== 0;
 };

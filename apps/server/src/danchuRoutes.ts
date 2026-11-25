@@ -32,6 +32,7 @@ type Lookup = (authorization: string | undefined) => Promise<DanchuIdentity | Da
 
 const ConsentBody = z.object({ version: z.literal(CONSENT_VERSION) }).strict();
 const CharacterBody = z.object({ character: z.string().max(32).refine(isCharacterId) }).strict();
+const PrefsBody = z.object({ recordMode: z.enum(["auto", "ask"]).optional(), winGoal: z.number().int().min(1).max(999).nullable().optional() }).strict();
 
 export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: WorkspaceRepo; api: DanchuApi; purge?: PurgeRepo }) {
   const app = new Hono<{ Variables: { id: DanchuIdentity } }>();
@@ -44,7 +45,7 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
 
   app.get("/me", async (c) => {
     const { me, session } = c.get("id");
-    const [consent, character] = await Promise.all([deps.workspaces.consent(me.id), deps.workspaces.character(me.id)]);
+    const [consent, character, prefs] = await Promise.all([deps.workspaces.consent(me.id), deps.workspaces.character(me.id), deps.workspaces.prefs(me.id)]);
     return c.json({
       source: "danchu",
       userId: me.id,
@@ -54,7 +55,17 @@ export function danchuAccountRoutes(deps: { lookup: Lookup; workspaces: Workspac
       consent: consent ?? null,
       consentVersion: CONSENT_VERSION,
       character: characterOf(character).id,
+      prefs,
     });
+  });
+
+  // 권한·목표(Muse 시안 2026-11-25). 밖으로 보내는 일은 고를 수 없어 받지 않는다
+  app.post("/prefs", async (c) => {
+    const parsed = PrefsBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success || !Object.keys(parsed.data).length) return c.json({ error: "bad_request" }, 400);
+    const id = c.get("id").me.id;
+    await deps.workspaces.setPrefs(id, parsed.data);
+    return c.json({ prefs: await deps.workspaces.prefs(id) });
   });
 
   // 비서 캐릭터 고르기(Muse 시안 2026-11-25). 계정별로 하나, 목록에 있는 값만

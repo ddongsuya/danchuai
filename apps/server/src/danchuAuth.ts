@@ -20,7 +20,19 @@ export interface WorkspaceRepo {
   /** 고른 비서 캐릭터(없으면 null, 앱이 기본 "단추"를 쓴다) */
   character(userId: string): Promise<string | null>;
   setCharacter(userId: string, id: AgentCharacterId): Promise<void>;
+  /** 권한·목표(Muse 시안 2026-11-25). 저장한 적 없으면 기본값 */
+  prefs(userId: string): Promise<AgentPrefs>;
+  setPrefs(userId: string, patch: Partial<AgentPrefs>): Promise<void>;
 }
+
+/** 단추에 기록하는 일: 바로 하고 알리기(auto) 또는 매번 묻기(ask). 밖으로 보내는 일은 늘 묻는다(고를 수 없다) */
+export type RecordMode = "auto" | "ask";
+export interface AgentPrefs {
+  recordMode: RecordMode;
+  /** 이번 달 수주 목표 건수(기관). 없으면 null */
+  winGoal: number | null;
+}
+export const DEFAULT_PREFS: AgentPrefs = { recordMode: "auto", winGoal: null };
 
 export interface DanchuIdentity {
   session: Session;
@@ -108,6 +120,24 @@ export class PgWorkspaceRepo implements WorkspaceRepo {
       [userId, id],
     );
   }
+  async prefs(userId: string): Promise<AgentPrefs> {
+    try {
+      const { rows } = await this.pool.query<{ record_mode: string; win_goal: number | null }>(`select record_mode, win_goal from agent_prefs where danchu_user_id = $1`, [userId]);
+      const r = rows[0];
+      return r ? { recordMode: r.record_mode === "ask" ? "ask" : "auto", winGoal: r.win_goal ?? null } : DEFAULT_PREFS;
+    } catch {
+      // 0014 적용 전에는 기본값(바로 하고 알리기, 목표 없음)
+      return DEFAULT_PREFS;
+    }
+  }
+  async setPrefs(userId: string, patch: Partial<AgentPrefs>) {
+    const cur = await this.prefs(userId);
+    const next = { ...cur, ...patch };
+    await this.pool.query(
+      `insert into agent_prefs (danchu_user_id, record_mode, win_goal) values ($1, $2, $3) on conflict (danchu_user_id) do update set record_mode = excluded.record_mode, win_goal = excluded.win_goal, updated_at = now()`,
+      [userId, next.recordMode, next.winGoal],
+    );
+  }
 }
 
 export class MemoryWorkspaceRepo implements WorkspaceRepo {
@@ -137,5 +167,12 @@ export class MemoryWorkspaceRepo implements WorkspaceRepo {
   }
   async setCharacter(userId: string, id: AgentCharacterId) {
     this.characters.set(userId, id);
+  }
+  private prefsMap = new Map<string, AgentPrefs>();
+  async prefs(userId: string) {
+    return this.prefsMap.get(userId) ?? DEFAULT_PREFS;
+  }
+  async setPrefs(userId: string, patch: Partial<AgentPrefs>) {
+    this.prefsMap.set(userId, { ...(await this.prefs(userId)), ...patch });
   }
 }

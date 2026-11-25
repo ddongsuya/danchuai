@@ -291,6 +291,22 @@ describe("기관 비서 대화", () => {
     expect(view.messages.at(-1).text).toBe("가람바이오 후속 연락을 11월 25일 할 일로 잡고, 안건은 협의로 옮길게요.");
   });
 
+  it("권한이 매번 묻기면 바로 실행하지 않고 확인 카드(동작·입력)로 보낸다. 허용하면 /run 으로 한 번", async () => {
+    const provider = new FakeProvider([{ text: "후속 연락을 할 일로 잡아 둘게요.", toolCalls: [{ id: "1", name: "task_create", input: { title: "가람바이오 후속 연락", deal_id: "D1" } }] }]);
+    const { call, consent, ran } = setup(provider);
+    await consent(T_CRO);
+    expect((await call("POST", "/account/prefs", T_CRO, { recordMode: "ask" })).status).toBe(200);
+    const conv = await json(await call("POST", "/v1/agent/conversations", T_CRO, { mode: "assist" }));
+    const sse = await (await call("POST", `/v1/agent/conversations/${conv.id}/turn`, T_CRO, { text: "가람 후속 연락 잡아 줘" })).text();
+    expect(ran).toEqual([]);
+    expect(sse).toContain('"outcome":"pending"');
+    expect(sse).toContain('"action":"task_create"');
+    expect(sse).toContain('"deal_id":"d-1"');
+    const r = await call("POST", "/v1/danchu/run", T_CRO, { action: "task_create", body: { title: "가람바이오 후속 연락", deal_id: "d-1" } });
+    expect(r.status).toBe(200);
+    expect(ran).toHaveLength(1);
+  });
+
   it("찾기 도구: 단추를 서버에서 읽지 않고 찾기 카드(입력만)로 보낸다. 모델 맥락에도 결과가 없다", async () => {
     const provider = new FakeProvider([{ text: "28일 랫드 견적을 찾아볼게요.", toolCalls: [{ id: "1", name: "quote_history", input: { q: "28일 랫드" } }, { id: "2", name: "quote_history", input: { nope: 1 } }] }]);
     const { call, consent, ran } = setup(provider);

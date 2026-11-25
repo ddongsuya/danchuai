@@ -26,7 +26,7 @@ import { applyAssistCalls, prepareAssist, type AssistDeps } from "../danchuAssis
 import { BEARER } from "../danchuAuth";
 import { ASK_SYSTEM, CRO_ASSIST_SYSTEM, CRO_DANCHU_SYSTEM, SYSTEM } from "./prompts";
 import { toolsFor } from "./tools";
-import type { UsageMeter } from "../usage";
+import { nextMonthStart, type UsageMeter } from "../usage";
 import type { Conversation, ConversationRepo, DanchuLookupError, RequestDirectory, StoredMessage } from "./store";
 
 /** 단추 요청 번호 */
@@ -219,6 +219,12 @@ export function agentRoutes(deps: AgentDeps) {
     };
     await deps.conversations.create(conv);
     return c.json(view(conv), 201);
+  });
+
+  // 이번 달 사용량(설정 시트). 조직 한 달 상한 대비 비율과 다시 0이 되는 날만 준다(금액은 주지 않는다)
+  app.get("/usage", async (c) => {
+    const share = deps.usage ? await deps.usage.monthShare(c.get("session")) : null;
+    return c.json({ percent: share, resetsOn: nextMonthStart(new Date()) });
   });
 
   // 지난 질문(이 사용자가 연 질문 대화, 최근 순)

@@ -3,7 +3,7 @@
 // 예시 값은 진단 문서 시안과 같다(사용자 선택 2026-11-17 "시안대로": DC-2026-0142, 가·나·다·라 기관, 후보물질 A). 실제 회사·사람·연락처는 넣지 않는다.
 import { applyQuotePatch, characterOf, type AgentCharacterId, quoteDraftFromBrief, SHEET_LABELS, type RequestSheet, type SheetField } from '@danchuai/core';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
-import { CaretRight, ChatCircleText, ClockCounterClockwise, Lightbulb, PaperPlaneTilt, SquaresFour, UserCircle, X } from 'phosphor-react-native';
+import { CaretRight, X } from 'phosphor-react-native';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,14 +23,23 @@ import { QuestionCard } from '@/components/chat/QuestionCard';
 import { InboxScreen } from '@/components/inbox/InboxScreen';
 import { AssistView } from '@/components/lab/AssistChat';
 import { RequesterHomeView } from '@/components/agent/RequesterHome';
-import { Drawer, type DrawerItem } from '@/components/shell/Drawer';
-import { EmptyTab } from '@/components/shell/EmptyTab';
+import { DrawerFrame, type DrawerItem } from '@/components/shell/Drawer';
+import { SettingsBody } from '@/components/shell/SettingsSheet';
+import { FullSheet } from '@/components/ui/Muse';
+import { FeedView } from '@/app/(tabs)/feed';
+import { IdeasView } from '@/app/(tabs)/ideas';
+import { TodoView } from '@/app/(tabs)/todo';
+import { LibraryView } from '@/app/(tabs)/library';
+import { AgentProfileView } from '@/app/agent';
+import { PermissionsView } from '@/app/account/permissions';
+import { labIdeas, requesterIdeas } from '@/lib/ideas';
+import { libraryRows } from '@/lib/library';
+import { labWatch, requesterWatch } from '@/lib/todo';
 import { ShellProvider, type TabKey } from '@/components/shell/ShellContext';
 import { TabBarView } from '@/components/shell/TabBar';
-import { TabPage } from '@/components/shell/TabPage';
 import { RunsView } from '@/app/lab/runs';
 import { SentView } from '@/app/sent';
-import { AlertsList, AlertsView } from '@/app/alerts';
+import { AlertsView } from '@/app/alerts';
 import { DanchuLabView } from '@/components/lab/DanchuLab';
 import { DanchuQuoteReview } from '@/components/lab/DanchuQuoteReview';
 import { DanchuApprovalCard } from '@/components/request/DanchuApprovalCard';
@@ -419,6 +428,33 @@ const ALERTS_REQ = [
   { id: 'm2', kind: '계약', title: '기관이 계약 체결을 보고했어요', body: '확인 기한 11.30', href: '/app/r/DC-2026-0118', read: true, at: ago(60 * 30) },
 ];
 
+// 시안 원본 대조용(m02·m04·m05·m07·m08·m10·m15). 문장은 시안 원본 그대로, 회사명은 가상의 예시(다 바이오텍)만
+const M02_MESSAGES = [
+  { id: 'u1', role: 'user' as const, text: '0142 회신 기한 언제야?' },
+  { id: 'a1', role: 'agent' as const, text: '11월 27일(목)까지예요. 견적서에 금액 1줄이 비어 있는데, 지금 채워 둘까요?' },
+];
+const M15_MESSAGES = [
+  { id: 'u1', role: 'user' as const, text: '0147 참여할지 정리해 줘' },
+  { id: 'a1', role: 'agent' as const, text: '복귀돌연변이시험 5개 균주, GLP예요. 시험 목록에 같은 조합이 있어요. 참여 의사를 보낼까요?' },
+];
+const ALERTS_M04 = [
+  { id: 'p1', kind: '접수', title: 'DC-2026-0151 새 요청이 왔어요', body: '복귀돌연변이시험(OECD 471), 5개 균주, GLP. 참여 기한은 11월 28일이에요.', href: '/cro/quotes/DC-2026-0151', read: false, at: ago(12) },
+  { id: 'p2', kind: '견적', title: '견적 유효기간이 3일 남았어요', body: 'DC-2026-0139 유전독성 3종 견적이 11월 28일에 끝나요. 아직 회신이 없어요.', href: '/cro/quotes/DC-2026-0139', read: false, at: ago(60) },
+  { id: 'p3', kind: '선정', title: 'DC-2026-0131 선정됐어요', body: '비글견 4주 반복투여독성. 계약서(안)을 보내면 의뢰자 회사명이 열려요.', href: null, read: true, at: ago(60 * 3) },
+];
+const labRow = (no: string, group: DanchuLabItem['group'], next: string, stage: string, due: string | null): DanchuLabItem => ({ ...LAB_SENT, no, group, next, stage, due });
+const LAB_LIST: DanchuLabItem[] = [
+  labRow('DC-2026-0142', 'work', '회신 기한', '견적 작성 중', '2026-11-27'),
+  labRow('DC-2026-0139', 'todo', '견적 유효기간', '회신 기다리는 중', '2026-11-28'),
+  labRow('DC-2026-0131', 'won', '계약 체결 보고', '선정', '2026-12-03'),
+];
+const ASSIST_RUNS_M = [
+  { id: 'm1', action: 'quote_doc', label: '견적서 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: ago(40) },
+  { id: 'm2', action: 'task_create', label: '할 일 만들기', outcome: 'done' as const, undoable: true, undone: false, createdAt: ago(60 * 4) },
+  { id: 'm3', action: 'crm_activity', label: '미팅 기록 넣기', outcome: 'done' as const, undoable: true, undone: false, createdAt: ago(60 * 4 + 2) },
+  { id: 'm4', action: 'event_create', label: '일정 만들기', outcome: 'failed' as const, undoable: false, undone: false, createdAt: ago(60 * 5 + 30) },
+];
+
 const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], drawer = false) => (
   <InTabs role="requester" tab="index" drawer={drawer}>
     <RequesterHomeView recent={recent} onRetry={noop} onStart={() => router.push(toView('chat'))} onAsk={noop} onOpen={() => router.push(toView('compare'))} onAll={() => router.push(toView('tab-todo-req'))} />
@@ -427,6 +463,22 @@ const reqHome = (recent: Parameters<typeof RequesterHomeView>[0]['recent'], draw
 
 type View_ = { key: string; label: string; group: string };
 const VIEWS: View_[] = [
+  { key: 'm02', label: 'm02 대화(기관), 브리핑 카드', group: '시안 원본 대조' },
+  { key: 'm03', label: 'm03 확인 카드(견적 제출)', group: '시안 원본 대조' },
+  { key: 'm04', label: 'm04 소식(기관)', group: '시안 원본 대조' },
+  { key: 'm05', label: 'm05 맡길 일', group: '시안 원본 대조' },
+  { key: 'm06', label: 'm06 맡길 일 시트', group: '시안 원본 대조' },
+  { key: 'm07', label: 'm07 할 일(지켜보는 중·목표)', group: '시안 원본 대조' },
+  { key: 'm08', label: 'm08 자료(결과물)', group: '시안 원본 대조' },
+  { key: 'm09', label: 'm09 서랍', group: '시안 원본 대조' },
+  { key: 'm10', label: 'm10 비서 활동', group: '시안 원본 대조' },
+  { key: 'm11', label: 'm11 비서 확인', group: '시안 원본 대조' },
+  { key: 'm12', label: 'm12 설정 시트', group: '시안 원본 대조' },
+  { key: 'm13', label: 'm13 권한', group: '시안 원본 대조' },
+  { key: 'm14', label: 'm14 비서 캐릭터(비비 고름)', group: '시안 원본 대조' },
+  { key: 'm15', label: 'm15 비비로 바꾼 뒤 대화', group: '시안 원본 대조' },
+  { key: 'm03-req', label: '확인 카드(의뢰자 요청 보내기)', group: '시안 원본 대조' },
+  { key: 'lab-assist-ask', label: '비서, 매번 묻기 확인 카드', group: '시안 원본 대조' },
   { key: 'req-home', label: '의뢰자 첫 화면, 최근 요청', group: '첫 화면' },
   { key: 'req-home-new', label: '의뢰자 첫 화면, 요청 없음', group: '첫 화면' },
   { key: 'req-home-loading', label: '의뢰자 첫 화면, 불러오는 중', group: '첫 화면' },
@@ -437,8 +489,8 @@ const VIEWS: View_[] = [
   { key: 'tab-feed-lab', label: '소식 탭(기관)', group: '탭' },
   { key: 'tab-todo-req', label: '할 일 탭(의뢰자 요청함)', group: '탭' },
   { key: 'tab-todo-lab', label: '할 일 탭(기관 받은 요청)', group: '탭' },
-  { key: 'tab-ideas', label: '맡길 일 탭, 아직 없음', group: '탭' },
-  { key: 'tab-library', label: '자료 탭, 아직 없음', group: '탭' },
+  { key: 'tab-ideas-req', label: '맡길 일 탭(의뢰자)', group: '탭' },
+  { key: 'tab-library-req', label: '자료 탭(의뢰자)', group: '탭' },
   { key: 'inbox', label: '요청함(의뢰자)', group: '요청함' },
   { key: 'inbox-lab', label: '요청함(기관)', group: '요청함' },
   { key: 'inbox-empty', label: '요청함, 요청 없음', group: '요청함' },
@@ -501,36 +553,49 @@ const noop = () => undefined;
 
 /** 탭 화면 미리보기 틀: 위 막대 상태, 아래 탭 막대, 서랍(예시 값) */
 const TAB_VIEW: Record<'requester' | 'cro', Record<TabKey, string>> = {
-  requester: { index: 'req-home', feed: 'tab-feed-req', ideas: 'tab-ideas', todo: 'tab-todo-req', library: 'tab-library' },
-  cro: { index: 'lab-assist', feed: 'tab-feed-lab', ideas: 'tab-ideas', todo: 'tab-todo-lab', library: 'tab-library' },
+  requester: { index: 'req-home', feed: 'tab-feed-req', ideas: 'tab-ideas-req', todo: 'tab-todo-req', library: 'tab-library-req' },
+  cro: { index: 'm02', feed: 'm04', ideas: 'm05', todo: 'm07', library: 'm08' },
 };
-function InTabs({ role, tab, check = 0, drawer = false, character = 'danchu', children }: { role: 'requester' | 'cro'; tab: TabKey; check?: number; drawer?: boolean; character?: AgentCharacterId; children: React.ReactNode }) {
+function InTabs({ role, tab, check = 0, drawer = false, settings = false, character = 'danchu', children }: { role: 'requester' | 'cro'; tab: TabKey; check?: number; drawer?: boolean; settings?: boolean; character?: AgentCharacterId; children: React.ReactNode }) {
   const [open, setOpen] = useState(drawer);
-  const shell = { role, character, agentName: characterOf(character).name, live: true, check, onCheck: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')), unread: 2, openDrawer: () => setOpen(true), chatKey: 0 };
-  const ic = (I: typeof PaperPlaneTilt) => <I size={20} color={tokens.text} />;
+  const [sheet, setSheet] = useState(settings);
+  const shell = {
+    role,
+    character,
+    agentName: characterOf(character).name,
+    live: true,
+    check,
+    onCheck: () => router.push(toView(role === 'cro' ? 'm11' : 'sent-req')),
+    unread: 2,
+    openDrawer: () => setOpen(true),
+    openAgent: () => router.push(toView('m10')),
+    openSettings: () => setSheet(true),
+    chatKey: 0,
+    pending: null,
+    handoff: noop,
+  };
   const chats: DrawerItem[] =
     role === 'cro'
       ? [
-          { key: 'a1', label: 'DC-2026-0142 견적', onPress: () => router.push(toView('lab-quote')) },
-          { key: 'a2', label: '랫드 13주 회복군 기간', onPress: noop },
+          { key: 'a1', label: 'DC-2026-0142 견적', pinned: true, onPress: () => router.push(toView('lab-quote')) },
+          { key: 'a2', label: '다 바이오텍 미팅 정리', onPress: noop },
+          { key: 'a3', label: '랫드 13주 참여 검토', onPress: noop },
         ]
       : [
           { key: 'r1', label: '복귀돌연변이시험', onPress: () => router.push(toView('approve')) },
           { key: 'a1', label: '반복투여 회복군 기간', onPress: noop },
         ];
-  const more: DrawerItem[] = [
-    { key: 'sent', label: '보낸 것', icon: ic(PaperPlaneTilt), count: check, onPress: () => router.push(toView(role === 'cro' ? 'sent-cro' : 'sent-req')) },
-    ...(role === 'cro' ? [{ key: 'runs', label: '활동', icon: ic(ClockCounterClockwise), onPress: () => router.push(toView('lab-runs')) }] : []),
-    { key: 'ask', label: '가이드라인 질문', icon: ic(ChatCircleText), onPress: noop },
-    { key: 'account', label: '계정', icon: ic(UserCircle), onPress: () => router.push(toView('account')) },
-  ];
   return (
     <ShellProvider value={shell}>
-      <View style={styles.root}>
-        <View style={{ flex: 1 }}>{children}</View>
-        <TabBarView active={tab} unread={2} onPress={(k) => router.replace(toView(TAB_VIEW[role][k]))} />
-      </View>
-      <Drawer visible={open} onClose={() => setOpen(false)} title={characterOf(character).name} active={tab} onTab={(k) => router.replace(toView(TAB_VIEW[role][k]))} chats={chats} more={more} onSettings={() => router.push(toView('account'))} onNew={noop} />
+      <DrawerFrame visible={open} onClose={() => setOpen(false)} title={characterOf(character).name} active={tab} onTab={(k) => router.replace(toView(TAB_VIEW[role][k]))} chats={chats} onSettings={() => setSheet(true)} onNew={noop}>
+        <View style={styles.root}>
+          <View style={{ flex: 1 }}>{children}</View>
+          <TabBarView active={tab} unread={2} onPress={(k) => router.replace(toView(TAB_VIEW[role][k]))} />
+        </View>
+      </DrawerFrame>
+      <FullSheet visible={sheet} onClose={() => setSheet(false)}>
+        <SettingsBody usage={{ percent: 38, resetsOn: '2026-12-01' }} role={role} demo onClose={() => setSheet(false)} onSwitchRole={noop} />
+      </FullSheet>
     </ShellProvider>
   );
 }
@@ -604,45 +669,100 @@ function PreviewView({ view }: { view: string }) {
     case 'tab-feed-req':
       return (
         <InTabs role="requester" tab="feed">
-          <TabPage title="소식">
-            <AlertsList role="requester" items={ALERTS_REQ} error={null} onRetry={noop} />
-          </TabPage>
+          <FeedView role="requester" items={ALERTS_REQ} error={null} onRetry={noop} />
         </InTabs>
       );
     case 'tab-feed-lab':
+    case 'm04':
       return (
         <InTabs role="cro" tab="feed">
-          <TabPage title="소식">
-            <AlertsList role="cro" items={ALERTS_CRO} error={null} onRetry={noop} />
-          </TabPage>
+          <FeedView role="cro" items={view === 'm04' ? ALERTS_M04 : ALERTS_CRO} error={null} onRetry={noop} />
         </InTabs>
       );
     case 'tab-todo-req':
       return (
         <InTabs role="requester" tab="todo">
-          <InboxScreen inTab role="requester" title="할 일" items={REQ_ITEMS} filters={REQ_FILTERS} hrefOf={() => toView('compare')} />
+          <TodoView cro={false} rows={requesterWatch(REQ_ITEMS)} error={null} onRetry={noop} goal={null} report={null} onGoal={noop} onOpen={() => router.push(toView('compare'))} onCreate={noop} initialDone={[]} />
         </InTabs>
       );
     case 'tab-todo-lab':
+    case 'm07':
       return (
         <InTabs role="cro" tab="todo">
-          <InboxScreen inTab role="cro" title="할 일" items={LAB_ITEMS} filters={LAB_FILTERS} hrefOf={() => toView('lab')} />
+          <TodoView cro rows={labWatch(LAB_LIST)} error={null} onRetry={noop} goal={5} report={{ won: 2, funnel: [{ stage: 'quoted', label: '회신 대기', count: 4 }, { stage: 'nego', label: '협의 중', count: 2 }] }} onGoal={noop} onOpen={() => router.push(toView('lab'))} onCreate={noop} initialDone={[]} now={new Date('2026-12-02T09:00:00+09:00')} />
         </InTabs>
       );
-    case 'tab-ideas':
+    case 'tab-ideas-req':
+      return (
+        <InTabs role="requester" tab="ideas">
+          <IdeasView ideas={requesterIdeas(REQ_ITEMS)} onGo={noop} initialOpen={undefined} />
+        </InTabs>
+      );
+    case 'm05':
+    case 'm06':
       return (
         <InTabs role="cro" tab="ideas">
-          <TabPage title="맡길 일">
-            <EmptyTab Icon={Lightbulb} title="아직 맡길 일이 없어요" body="제가 먼저 할 수 있는 일이 생기면 여기에 올려 둘게요." />
-          </TabPage>
+          <IdeasView ideas={labIdeas(LAB_LIST)} onGo={noop} initialOpen={view === 'm06' ? 'brief' : ''} />
         </InTabs>
       );
-    case 'tab-library':
+    case 'tab-library-req':
+      return (
+        <InTabs role="requester" tab="library">
+          <LibraryView role="requester" rows={libraryRows(SENT_REQ)} error={null} onRetry={noop} />
+        </InTabs>
+      );
+    case 'm08':
       return (
         <InTabs role="cro" tab="library">
-          <TabPage title="자료">
-            <EmptyTab Icon={SquaresFour} title="아직 만든 게 없어요" body="견적서나 보고서를 만들면 여기 모여요." />
-          </TabPage>
+          <LibraryView role="cro" rows={libraryRows(SENT_CRO, ASSIST_RUNS_M)} error={null} onRetry={noop} />
+        </InTabs>
+      );
+    case 'm02':
+    case 'm09':
+    case 'm12':
+      return (
+        <InTabs role="cro" tab="index" drawer={view === 'm09'} settings={view === 'm12'}>
+          <AssistView brief={ASSIST_BRIEF} messages={M02_MESSAGES} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} onTranscript={noop} />
+        </InTabs>
+      );
+    case 'm03':
+      return <DanchuQuoteReview no="DC-2026-0142" line="반복투여 13주, 랫드" quote={QUOTE} initialPreview={QUOTE_DOC_READY} onBack={() => router.back()} />;
+    case 'm03-req':
+      return (
+        <ChatShell title="새 요청" bottom={<Composer disabled />}>
+          <UserMessage text="랫드 4주 반복투여독성 견적이 필요해요" />
+          <AgentText>요청서를 다 채웠어요. 보내기 전에 확인해 주세요.</AgentText>
+          <DanchuApprovalCard sheet={SHEET} body={BODY} choices={{ ...CHOICES, purpose: '허가자료 제출용' }} onChange={noop} sending={false} onClose={noop} onApprove={noop} />
+        </ChatShell>
+      );
+    case 'lab-assist-ask':
+      return (
+        <InTabs role="cro" tab="index">
+          <AssistView
+            brief={ASSIST_BRIEF}
+            messages={[ASSIST_MESSAGES[0]!, { id: 'a1', role: 'agent', text: '다 바이오텍 후속 연락을 할 일로 넣을게요. 권한이 매번 묻기라 먼저 여쭤봐요.' }]}
+            actions={[{ key: 'x0', at: 1, label: '할 일 만들기', outcome: 'pending', message: null, runId: null, undoable: false, undone: false, ask: { action: 'task_create', body: { title: '다 바이오텍 후속 연락', due: '2026-12-01', dealId: 'd2' } } }]}
+            streaming={null}
+            canSend
+            error={null}
+            onSend={noop}
+            onUndo={noop}
+            onAllow={noop}
+            onReject={noop}
+          />
+        </InTabs>
+      );
+    case 'm10':
+    case 'm11':
+      return <AgentProfileView role="cro" character="danchu" live data={{ sent: SENT_CRO, runs: ASSIST_RUNS_M }} error={null} onRetry={noop} initialTab={view === 'm11' ? 'check' : 'activity'} />;
+    case 'm13':
+      return <PermissionsView mode="auto" onMode={noop} />;
+    case 'm14':
+      return <CharacterView current="danchu" initial="bibi" onSave={() => router.push(toView('m15'))} />;
+    case 'm15':
+      return (
+        <InTabs role="cro" tab="index" character="bibi">
+          <AssistView brief={ASSIST_BRIEF} messages={M15_MESSAGES} actions={[]} streaming={null} canSend error={null} onSend={noop} onUndo={noop} onTranscript={noop} />
         </InTabs>
       );
     case 'inbox':

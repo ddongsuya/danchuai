@@ -1,9 +1,9 @@
-import { useEffect, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { motion, space, tokens, u, uc } from '@/constants/theme';
+import { motion, space, tokens } from '@/constants/theme';
 import { KEEP, easeIn, easeOut } from '@/lib/motion';
 
 import { NavBar } from './NavBar';
@@ -34,11 +34,15 @@ export function ChatShell({
     o.set(withTiming(dim ? 0.45 : 1, { duration: dim ? motion.ms.scrimIn : motion.ms.popOut, easing: dim ? easeOut : easeIn, reduceMotion: KEEP }));
   }, [dim, o]);
   const fade = useAnimatedStyle(() => ({ opacity: o.get() }));
+  // 새 말풍선·확인 카드가 붙으면 맨 아래로(대화는 아래에서 자란다)
+  const scroll = useRef<ScrollViewInstance>(null);
   return (
     <SafeAreaView style={styles.root} edges={flushBottom || tabs ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {nav ?? <NavBar title={title} />}
         <ScrollView
+          ref={scroll}
+          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
           style={styles.root}
           contentContainerStyle={styles.content}
           importantForAccessibility={dim ? 'no-hide-descendants' : 'auto'}
@@ -54,8 +58,9 @@ export function ChatShell({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: tokens.bg },
-  content: { paddingHorizontal: uc(18), paddingTop: u(6), paddingBottom: space.lg },
-  stack: { gap: uc(16) },
+  // 시안 원본 .feed: 좌우 14, 위 막대(106) 아래 12부터, 줄 사이 10
+  content: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: space.lg },
+  stack: { gap: 10 },
   bottom: { paddingBottom: space.md },
-  tabBottom: { paddingBottom: 2 },
+  tabBottom: { paddingBottom: 0 },
 });

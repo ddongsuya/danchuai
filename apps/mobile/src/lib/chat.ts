@@ -24,11 +24,13 @@ export interface ActionCard {
   key: string;
   at: number;
   label: string;
-  outcome: 'done' | 'failed' | 'unknown' | 'skipped';
+  outcome: 'done' | 'failed' | 'unknown' | 'skipped' | 'pending';
   message: string | null;
   runId: string | null;
   undoable: boolean;
   undone: boolean;
+  /** outcome pending(권한 "매번 묻기"): 허용하면 앱이 이 동작·본문으로 단추를 부른다 */
+  ask?: { action: string; body: Record<string, unknown> } | null;
 }
 
 /** 기관 비서 찾기 카드(서버 lookup 이벤트). 카드가 이 입력으로 단추를 직접 읽는다(결과는 모델·대화 기록에 없다) */
@@ -187,6 +189,7 @@ export type ChatAction =
   | { type: 'send'; text: string; at: number }
   | { type: 'server'; event: string; data: any }
   | { type: 'undone'; runId: string }
+  | { type: 'patchAction'; key: string; patch: Partial<ActionCard> }
   | { type: 'ended'; at: number }
   | { type: 'failed'; code: ChatErrorCode; at: number };
 
@@ -278,7 +281,8 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           return d.quote && typeof d.quote === 'object' ? { ...s, quote: d.quote as DanchuQuoteDraft } : s;
         case 'action': {
           const run = d.run && typeof d.run === 'object' ? (d.run as { id?: unknown; undoable?: unknown }) : null;
-          const outcome = ['done', 'failed', 'unknown', 'skipped'].includes(d.outcome) ? (d.outcome as ActionCard['outcome']) : 'unknown';
+          const ask = d.outcome === 'pending' && typeof d.action === 'string' && /^[a-z][a-z_]{1,39}$/.test(d.action) && d.body && typeof d.body === 'object' && !Array.isArray(d.body) ? { action: d.action, body: d.body as Record<string, unknown> } : null;
+          const outcome = ask ? 'pending' : ['done', 'failed', 'unknown', 'skipped'].includes(d.outcome) ? (d.outcome as ActionCard['outcome']) : 'unknown';
           const card: ActionCard = {
             key: `x${s.actions.length}`,
             // 답이 내려오면 이 턴의 답 자리(사용자 글 다음)
@@ -289,6 +293,7 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
             runId: run && typeof run.id === 'string' ? run.id : null,
             undoable: !!run && run.undoable === true,
             undone: false,
+            ask,
           };
           return { ...s, actions: [...s.actions, card] };
         }
@@ -303,6 +308,8 @@ export function chatReducer(s: ChatState, a: ChatAction): ChatState {
           return s;
       }
     }
+    case 'patchAction':
+      return { ...s, actions: s.actions.map((c) => (c.key === a.key ? { ...c, ...a.patch } : c)) };
     case 'undone':
       return { ...s, actions: s.actions.map((c) => (c.runId === a.runId ? { ...c, undone: true, undoable: false } : c)) };
     case 'ended':
