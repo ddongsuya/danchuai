@@ -94,8 +94,13 @@ export class PgWorkspaceRepo implements WorkspaceRepo {
     await this.pool.query(`update agent_consents set revoked_at = now() where danchu_user_id = $1 and revoked_at is null`, [userId]);
   }
   async character(userId: string) {
-    const { rows } = await this.pool.query<{ character: string }>(`select character from agent_prefs where danchu_user_id = $1`, [userId]);
-    return rows[0]?.character ?? null;
+    try {
+      const { rows } = await this.pool.query<{ character: string }>(`select character from agent_prefs where danchu_user_id = $1`, [userId]);
+      return rows[0]?.character ?? null;
+    } catch {
+      // 표가 아직 없거나(0013 적용 전) 읽지 못해도 내 정보는 열린다. 앱은 기본 캐릭터를 쓴다
+      return null;
+    }
   }
   async setCharacter(userId: string, id: AgentCharacterId) {
     await this.pool.query(
